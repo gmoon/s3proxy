@@ -1,17 +1,25 @@
+PACKAGE_NAME     := $(shell jq --raw-output '.name'    package.json)
+PACKAGE_VERSION  := $(shell jq --raw-output '.version' package.json)
 
-.PHONY: clean, eslint, mocha, test
+.PHONY : clean eslint mocha test target tar
 
-target:
-	mkdir target
+target :
+	mkdir -p target
 
-clean:
+clean :
 	rm -rf target
 
-eslint: target
-	node_modules/.bin/eslint *.js | tee target/eslint.txt
+eslint : target
+	node_modules/.bin/eslint *.js | tee target/test-eslint.txt
 
-mocha: target
-	node_modules/.bin/mocha | tee target/mocha.txt
+mocha : target
+	node_modules/.bin/mocha | tee target/test-mocha.txt
 
-test: mocha eslint
+test : mocha eslint
 
+tar : target test
+	rm -f target/$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz
+	rm -rf target/source
+	mkdir -p target/source/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/
+	cp {s3proxy.js,README.md,LICENSE} target/source/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/
+	cd target/source; tar -cvzf ../$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz *	

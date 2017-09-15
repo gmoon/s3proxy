@@ -5,5 +5,10 @@ phases:
       - npm install
   build:
     commands:
-      - npm test
-
+      - make -j tar
+  artifacts:
+    files:
+      - *.tar.gz
+      - test-*
+    discard-paths: true
+    base-directory: target
