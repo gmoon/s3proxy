@@ -10,7 +10,7 @@
     "sinon": "^3.2.1"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mkdir -p target; mocha | tee target/mocha.txt"
   },
   "repository": {
     "type": "git",
