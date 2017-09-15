@@ -2,7 +2,7 @@
 
 const EventEmitter = require('events');
 
-module.exports = class s3front extends EventEmitter {
+module.exports = class s3proxy extends EventEmitter {
    constructor() {
       super();
    };
