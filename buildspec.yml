@@ -8,7 +8,7 @@ phases:
       - make -j tar
   artifacts:
     files:
-      - *.tar.gz
-      - test-*
-    discard-paths: true
+      - '*.tar.gz'
+      - 'test-*'
+    discard-paths: yes
     base-directory: target
