@@ -1,5 +1,9 @@
 version: 0.2
 phases:
+  install:
+    commands:
+      - apt-get update -y
+      - make -j builddeps
   build:
     commands:
       - make -j tar
