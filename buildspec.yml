@@ -6,9 +6,9 @@ phases:
   build:
     commands:
       - make -j tar
-  artifacts:
-    files:
-      - '*.tar.gz'
-      - 'test-*'
-    discard-paths: yes
-    base-directory: target
+artifacts:
+  files:
+    - '*.tar.gz'
+    - 'test-*'
+  discard-paths: yes
+  base-directory: target
