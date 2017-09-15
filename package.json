@@ -1,6 +1,6 @@
 {
   "name": "s3proxy",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "Front AWS S3 with a web server that you control",
   "main": "s3proxy.js",
   "dependencies": {},
