@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gmoon/s3front.git"
+    "url": "git+https://github.com/gmoon/s3proxy.git"
   },
   "keywords": [
     "aws",
@@ -27,7 +27,7 @@
   "author": "George Moon <george.moon@gmail.com>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/gmoon/s3front/issues"
+    "url": "https://github.com/gmoon/s3proxy/issues"
   },
-  "homepage": "https://github.com/gmoon/s3front#readme"
+  "homepage": "https://github.com/gmoon/s3proxy#readme"
 }
