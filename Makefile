@@ -21,5 +21,5 @@ tar : target test
 	rm -f target/$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz
 	rm -rf target/source
 	mkdir -p target/source/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/
-	cp {s3proxy.js,README.md,LICENSE} target/source/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/
+	cp s3proxy.js README.md LICENSE target/source/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/
 	cd target/source; tar -cvzf ../$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz *	
