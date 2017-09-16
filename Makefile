@@ -1,5 +1,6 @@
-PACKAGE_NAME     := $(shell jq --raw-output '.name'    package.json)
-PACKAGE_VERSION  := $(shell jq --raw-output '.version' package.json)
+SHELL            := /bin/bash
+PACKAGE_NAME     := $(shell jq --raw-output '.name'    package.json 2>/dev/null)
+PACKAGE_VERSION  := $(shell jq --raw-output '.version' package.json 2>/dev/null)
 
 .PHONY : packagedeps npmdeps clean eslint mocha test target tar
 
