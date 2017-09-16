@@ -18,10 +18,10 @@ clean :
 	rm -rf target
 
 eslint : target
-	node_modules/.bin/eslint *.js | tee target/test-eslint.txt
+	set -o pipefail; node_modules/.bin/eslint *.js | tee target/test-eslint.txt
 
 mocha : target
-	node_modules/.bin/mocha | tee target/test-mocha.txt
+	set -o pipefail; node_modules/.bin/mocha | tee target/test-mocha.txt
 
 test : mocha eslint
 
