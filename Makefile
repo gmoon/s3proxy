@@ -15,7 +15,7 @@ npmdeps:
 
 packagedeps:
 	which jq 2>/dev/null || apt-get -y install jq
-	which docker 2>/dev/null || apt-get -y install docker-ce docker
+	# which docker 2>/dev/null || apt-get -y install docker-ce docker
 
 builddeps: packagedeps npmdeps
 
