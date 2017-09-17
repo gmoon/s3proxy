@@ -4,7 +4,7 @@ PACKAGE_VERSION  := $(shell jq --raw-output '.version' package.json 2>/dev/null)
 UUID             := $(shell date +%s)
 OS               := $(shell source /etc/os-release; echo "$$ID")
 
-.PHONY : install-node install-docker-repo packagedeps npmdeps clean eslint mocha test target tar
+.PHONY : apt-get-update install-node install-docker-repo packagedeps npmdeps clean eslint mocha test target tar
 
 debuginfo:
 	@echo node --version $(shell node --version)
@@ -17,7 +17,10 @@ debuginfo:
 npmdeps: install-node
 	npm install
 
-install-node:
+apt-get-update:
+	apt-get update
+
+install-node: apt-get-update
 	apt-get -y install npm
 	npm install -g n
 	n stable
@@ -32,7 +35,7 @@ install-docker-repo:
 		$(shell lsb_release -cs) \
 		stable"
 
-packagedeps: install-node
+packagedeps: apt-get-update install-node
 	apt-get update
 	apt-get -y install jq
 
