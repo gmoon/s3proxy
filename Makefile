@@ -2,6 +2,7 @@ SHELL            := /bin/bash
 PACKAGE_NAME     := $(shell jq --raw-output '.name'    package.json 2>/dev/null)
 PACKAGE_VERSION  := $(shell jq --raw-output '.version' package.json 2>/dev/null)
 UUID             := $(shell date +%s)
+OS               := $(shell source /etc/os-release; echo "$$ID")
 
 .PHONY : packagedeps npmdeps clean eslint mocha test target tar
 
@@ -11,6 +12,7 @@ debuginfo:
 	@echo debian version $(shell cat /etc/debian_version)
 	@echo os-release 
 	@echo $(shell cat /etc/os-release)
+	@echo Operating System $(OS)
 
 npmdeps: 
 	npm install
@@ -18,10 +20,10 @@ npmdeps:
 install-docker-repo:
 	apt-get update
 	apt-get -y install apt-transport-https ca-certificates curl gnupg2 software-properties-common
-	curl -fsSL https://download.docker.com/linux/$(shell . /etc/os-release; echo "$ID")/gpg | sudo apt-key add -
+	curl -fsSL https://download.docker.com/linux/$(OS)/gpg | sudo apt-key add -
 	apt-key fingerprint 0EBFCD88
 	add-apt-repository \
-		"deb [arch=amd64] https://download.docker.com/linux/$(shell . /etc/os-release; echo "$ID") \
+		"deb [arch=amd64] https://download.docker.com/linux/$(OS) \
 		$(shell lsb_release -cs) \
 		stable"
 
