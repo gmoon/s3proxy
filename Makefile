@@ -8,7 +8,9 @@ UUID             := $(shell date +%s)
 debuginfo:
 	@echo node --version $(shell node --version)
 	@echo npm --version $(shell npm --version)
-	@echo devian version $(shell cat /etc/debian_version)
+	@echo debian version $(shell cat /etc/debian_version)
+	@echo os-release 
+	@echo $(shell cat /etc/os-release)
 
 npmdeps: 
 	npm install
