@@ -64,6 +64,7 @@ tar : target test
 build: 
 	aws --profile forkzero codebuild start-build --project-name s3proxy
 
-docker: LOGIN=$(shell aws --region us-east-1 ecr get-login)
+docker: 
+	$(eval LOGIN=$(shell aws --region us-east-1 ecr get-login))
 	$(LOGIN)
 
