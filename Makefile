@@ -14,6 +14,7 @@ npmdeps:
 	npm install
 
 install-docker-repo:
+	apt-get update
 	apt-get -y install apt-transport-https ca-certificates curl gnupg2 software-properties-common
 	curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | sudo apt-key add -
 	apt-key fingerprint 0EBFCD88
