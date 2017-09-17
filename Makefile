@@ -13,7 +13,8 @@ debuginfo:
 	@echo os-release 
 	@echo $(shell cat /etc/os-release)
 	@echo Operating System $(OS)
-
+	echo $(shell docker version)
+	
 npmdeps: install-node
 	npm install
 
