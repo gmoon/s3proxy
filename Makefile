@@ -36,7 +36,6 @@ install-docker-repo:
 		stable"
 
 packagedeps: apt-get-update install-node
-	apt-get update
 	apt-get -y install jq
 
 builddeps: packagedeps npmdeps
@@ -54,7 +53,6 @@ mocha : target
 	set -o pipefail; node_modules/.bin/mocha | tee target/test-mocha.txt
 
 test : mocha eslint
-	aws --region us-east-1 ecr get-login
 
 tar : target test
 	rm -f target/$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz
@@ -65,4 +63,7 @@ tar : target test
 
 build: 
 	aws --profile forkzero codebuild start-build --project-name s3proxy
-	
+
+docker: LOGIN=$(shell aws --region us-east-1 ecr get-login)
+	$(LOGIN)
+
