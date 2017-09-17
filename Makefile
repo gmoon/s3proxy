@@ -25,10 +25,15 @@ mocha : target
 	set -o pipefail; node_modules/.bin/mocha | tee target/test-mocha.txt
 
 test : mocha eslint
+	aws --region us-east-1 ecr get-login
 
 tar : target test
 	rm -f target/$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz
 	rm -rf target/source
 	mkdir -p target/source/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/
 	cp s3proxy.js README.md LICENSE target/source/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/
-	cd target/source; tar -cvzf ../$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz *	
+	cd target/source; tar -cvzf ../$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz *
+
+build: 
+	aws --profile forkzero codebuild start-build --project-name s3proxy
+	
