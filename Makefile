@@ -1,14 +1,20 @@
 SHELL            := /bin/bash
 PACKAGE_NAME     := $(shell jq --raw-output '.name'    package.json 2>/dev/null)
 PACKAGE_VERSION  := $(shell jq --raw-output '.version' package.json 2>/dev/null)
+UUID             := $(shell date +%s)
 
 .PHONY : packagedeps npmdeps clean eslint mocha test target tar
+
+debuginfo:
+	@echo node --version $(shell node --version)
+	@echo npm --version $(shell npm --version)
 
 npmdeps: 
 	npm install
 
 packagedeps:
 	which jq 2>/dev/null || apt-get -y install jq
+	which docker 2>/dev/null || apt-get -y install docker-ce docker
 
 builddeps: packagedeps npmdeps
 
