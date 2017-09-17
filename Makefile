@@ -8,14 +8,23 @@ UUID             := $(shell date +%s)
 debuginfo:
 	@echo node --version $(shell node --version)
 	@echo npm --version $(shell npm --version)
-	@cat /etc/debian_version
+	@echo devian version $(shell cat /etc/debian_version)
 
 npmdeps: 
 	npm install
 
-packagedeps:
-	which jq 2>/dev/null || apt-get -y install jq
-	# which docker 2>/dev/null || apt-get -y install docker-ce docker
+install-docker-repo:
+	apt-get install apt-transport-https ca-certificates curl gnupg2 software-properties-common
+	curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | sudo apt-key add -
+	apt-key fingerprint 0EBFCD88
+	add-apt-repository \
+		"deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") \
+		$(lsb_release -cs) \
+		stable"
+
+packagedeps: install-docker-repo
+	apt-get update
+	apt-get -y install jq docker-ce
 
 builddeps: packagedeps npmdeps
 
