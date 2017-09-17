@@ -4,6 +4,7 @@ phases:
     commands:
       - apt-get update -y
       - make -j builddeps
+      - make debuginfo
   build:
     commands:
       - make -j tar
