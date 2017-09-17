@@ -2,7 +2,6 @@ version: 0.2
 phases:
   install:
     commands:
-      - apt-get update -y
       - make -j builddeps
       - make debuginfo
   build:
