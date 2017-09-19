@@ -12,7 +12,7 @@ module.exports = class s3proxy extends EventEmitter {
     this.s3 = new AWS.S3(params);
     this.emit('init');
   }
-  get(bucket, key) {
+  createReadStream(bucket, key) {
     const params = { Bucket: bucket, Key: key };
     const s3request = this.s3.getObject(params);
     const s3stream = s3request.createReadStream();

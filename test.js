@@ -21,32 +21,32 @@ describe('s3proxy', () => {
       proxy.init();
     });
   });
-  describe('get error codes', () => {
+  describe('createReadStream error codes', () => {
     const proxy = new S3Proxy();
     before(() => {
       proxy.init();
     });
     it('should return error code NoSuchBucket for nonexistent bucket', (done) => {
-      const stream = proxy.get('.Bucket.name.cannot.start.with.a.period', 'xxxx');
+      const stream = proxy.createReadStream('.Bucket.name.cannot.start.with.a.period', 'xxxx');
       stream.on('error', (error) => {
         expect(error.code).to.equal('NoSuchBucket');
         done();
       });
     });
     it('should return error code NoSuchKey for nonexistent key', (done) => {
-      const stream = proxy.get('codeassist-repo', 'small.txt');
+      const stream = proxy.createReadStream('codeassist-repo', 'small.txt');
       stream.on('error', (error) => {
         expect(error.code).to.equal('NoSuchKey');
         done();
       });
     });
   });
-  describe('get', () => {
+  describe('createReadStream', () => {
     const proxy = new S3Proxy();
     const page = {};
     before((done) => {
       proxy.init();
-      const stream = proxy.get('codeassist-repo', 'index.html');
+      const stream = proxy.createReadStream('codeassist-repo', 'index.html');
       page.length = 0;
       stream.on('data', (chunk) => {
         page.length += chunk.length;
