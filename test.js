@@ -14,6 +14,14 @@ describe('s3proxy', () => {
   });
   describe('initialization', () => {
     const proxy = new S3Proxy();
+    it('should throw an exception if it is not initialized', (done) => {
+      try {
+        proxy.isInitialized();
+      } catch (e) {
+        expect(e.code).to.equal('UninitializedError');
+        done();
+      }
+    });
     it("should emit an 'init' event", (done) => {
       proxy.on('init', () => {
         done();
