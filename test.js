@@ -7,13 +7,13 @@ const { expect } = chai;
 
 describe('s3proxy', () => {
   describe('constructor', () => {
-    it('should be an object', () => {
-      const proxy = new S3Proxy();
+    it('should return an object', () => {
+      const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
       expect(proxy).to.be.an('object');
     });
   });
   describe('initialization', () => {
-    const proxy = new S3Proxy();
+    const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
     it('should throw an exception if it is not initialized', (done) => {
       try {
         proxy.isInitialized();
@@ -29,20 +29,32 @@ describe('s3proxy', () => {
       proxy.init();
     });
   });
-  describe('createReadStream error codes', () => {
-    const proxy = new S3Proxy();
-    before(() => {
-      proxy.init();
+  describe('invalid bucket', () => {
+    let proxy;
+    beforeEach(() => {
+      proxy = new S3Proxy({ bucket: '.Bucket.name.cannot.start.with.a.period' });
     });
-    it('should return error code NoSuchBucket for nonexistent bucket', (done) => {
-      const stream = proxy.createReadStream('.Bucket.name.cannot.start.with.a.period', 'xxxx');
-      stream.on('error', (error) => {
-        expect(error.code).to.equal('NoSuchBucket');
+    it('should return NotFound error via callback', (done) => {
+      proxy.init((error) => {
+        expect(error.code).to.equal('NotFound');
         done();
       });
     });
+    it('should return NotFound error via event emitter', (done) => {
+      proxy.on('error', (error) => {
+        expect(error.code).to.equal('NotFound');
+        done();
+      });
+      proxy.init();
+    });
+  });
+  describe('createReadStream error codes', () => {
+    const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
+    before((done) => {
+      proxy.init(done);
+    });
     it('should return error code NoSuchKey for nonexistent key', (done) => {
-      const stream = proxy.createReadStream('codeassist-repo', 'small.txt');
+      const stream = proxy.createReadStream('small.txt');
       stream.on('error', (error) => {
         expect(error.code).to.equal('NoSuchKey');
         done();
@@ -50,11 +62,11 @@ describe('s3proxy', () => {
     });
   });
   describe('createReadStream', () => {
-    const proxy = new S3Proxy();
+    const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
     const page = {};
     before((done) => {
       proxy.init();
-      const stream = proxy.createReadStream('codeassist-repo', 'index.html');
+      const stream = proxy.createReadStream('index.html');
       page.length = 0;
       stream.on('data', (chunk) => {
         page.length += chunk.length;
