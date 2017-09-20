@@ -48,7 +48,7 @@ clean :
 	rm -rf target
 
 eslint : target
-	set -o pipefail; node_modules/.bin/eslint *.js | tee target/test-eslint.txt
+	set -o pipefail; node_modules/.bin/eslint --fix *.js | tee target/test-eslint.txt
 
 mocha : target
 	set -o pipefail; node_modules/.bin/mocha | tee target/test-mocha.txt
