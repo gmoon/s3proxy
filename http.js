@@ -1,5 +1,6 @@
 const S3Proxy = require('s3proxy');
 const http = require('http');
+const argv = require('minimist')(process.argv.slice(2));
 
 const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
 proxy.init();
@@ -11,6 +12,10 @@ const server = http.createServer((req, res) => {
   });
   stream.pipe(res);
 });
+
+if (argv.port > 0) {
+  server.listen(argv.port);
+}
 
 module.exports = server;
 
