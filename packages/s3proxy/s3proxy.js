@@ -2,11 +2,6 @@
 
 const EventEmitter = require('events');
 const AWS = require('aws-sdk');
-const stream = require('stream');
-
-class HttpHeaderExtendedStream extends stream.Readable {
-
-}
 
 class UserException extends Error {
   constructor(code, message) {
@@ -34,9 +29,6 @@ module.exports = class s3proxy extends EventEmitter {
     this.s3 = new AWS.S3(params);
     this.s3.headBucket({ Bucket: this.bucket }, (error, data) => {
       if (error) {
-        if (error.code === 'NotFound' && error.message === null) {
-          error.message = `AWS S3 Bucket [${this.bucket}] Not Found`;
-        }
         if (typeof done === 'undefined') {
           this.emit('error', error);
         }
