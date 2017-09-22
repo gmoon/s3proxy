@@ -1,17 +1,30 @@
 /* eslint-env mocha, node, es6 */
 const chai = require('chai');
 const chaiHttp = require('chai-http');
-const server = require('./http.js');
+const httpServer = require('./http.js');
+const expressServer = require('./express.js');
 
 const { expect } = chai;
 
 chai.use(chaiHttp);
 
-describe('HTTP server', () => {
-  it('should get index.html', (done) => {
-    chai.request(server).get('/index.html').end((error, res) => {
-      expect(res).to.have.status(200);
-      done();
+describe('Examples', () => {
+  describe('HTTP server', () => {
+    it('should get index.html', (done) => {
+      chai.request(httpServer).get('/index.html').end((error, res) => {
+        expect(res).to.have.status(200);
+        done();
+      });
+    });
+  });
+
+  describe('Express server', () => {
+    it('should get index.html', (done) => {
+      chai.request(expressServer).get('/index.html').end((error, res) => {
+        expect(res).to.have.status(200);
+        done();
+      });
     });
   });
 });
+
