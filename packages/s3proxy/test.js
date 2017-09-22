@@ -29,6 +29,17 @@ describe('s3proxy', () => {
       proxy.init();
     });
   });
+  describe('healthCheck', () => {
+    it('should pass for valid bucket', (done) => {
+      const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
+      proxy.init((error) => {
+        expect(error).to.equal(null);
+        proxy.healthCheck((checkError) => {
+          done(checkError);
+        });
+      });
+    });
+  });
   describe('invalid bucket', () => {
     let proxy;
     beforeEach(() => {

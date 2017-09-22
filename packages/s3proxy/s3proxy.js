@@ -22,20 +22,12 @@ module.exports = class s3proxy extends EventEmitter {
     this.bucket = p.bucket;
   }
   init(done) {
-    const params = {};
-    params.apiVersion = '2006-03-01';
-    this.credentials = new AWS.SharedIniFileCredentials();
-    AWS.config.credentials = this.credentials;
-    this.s3 = new AWS.S3(params);
-    this.s3.headBucket({ Bucket: this.bucket }, (error, data) => {
+    this.awsAddCredentials();
+    this.healthCheck((error, data) => {
       if (error) {
-        if (typeof done === 'undefined') {
-          this.emit('error', error);
-        }
-      } else {
-        this.emit('init', data);
-      }
-      if (typeof done === 'function') { done(error, data); }
+        if (typeof (done) !== typeof (Function)) this.emit('error', error, data);
+      } else this.emit('init', data);
+      if (typeof (done) === typeof (Function)) done(error, data);
     });
   }
   createReadStream(key) {
@@ -56,5 +48,15 @@ module.exports = class s3proxy extends EventEmitter {
   }
   static stripLeadingSlash(str) {
     return str.replace(/^\/+/, '');
+  }
+  awsAddCredentials() {
+    this.credentials = new AWS.SharedIniFileCredentials();
+    AWS.config.credentials = this.credentials;
+    this.s3 = new AWS.S3({ apiVersion: '2006-03-01' });
+  }
+  healthCheck(done) {
+    this.s3.headBucket({ Bucket: this.bucket }, (error, data) => {
+      done(error, data);
+    });
   }
 };
