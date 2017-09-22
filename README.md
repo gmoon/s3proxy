@@ -50,7 +50,7 @@ we do now have to keep the web server available (but we are pretty good at doing
   S3Proxy Express Framework Example
 
   Passes HTTP GET requests to s3proxy
-  Start: node express --port=3000
+  Start: PORT=3000 node express
 */
 
 const express = require('express');

@@ -2,7 +2,7 @@
   S3Proxy Express Framework Example
 
   Passes HTTP GET requests to s3proxy
-  Start: node express --port=3000
+  Start: PORT=3000 node express
   Test: mocha test.js
 
   Author: George Moon <george.moon@gmail.com>
@@ -10,6 +10,7 @@
 
 const express = require('express');
 const S3Proxy = require('s3proxy');
+const debug = require('debug')('s3proxy');
 
 const port = process.env.PORT;
 const app = express();
@@ -26,7 +27,9 @@ app.route('/*')
   });
 
 if (port > 0) {
-  app.listen(port);
+  app.listen(port, () => {
+    debug(`s3proxy listening on port ${port}`);
+  });
 }
 
 module.exports = app;

@@ -12,11 +12,13 @@
     "mocha": "^3.5.3"
   },
   "dependencies": {
+    "debug": "^2.6.9",
     "express": "^4.15.4",
     "s3proxy": "file:./packages/s3proxy"
   },
   "scripts": {
-    "test": "make test"
+    "test": "make -j test",
+    "start": "node express"
   },
   "repository": {
     "type": "git",
