@@ -21,14 +21,15 @@ AWS S3 web hosting only serves static content. By using S3 as the backend, you c
 through your favorite templating engine for dynamic content on the fly.
 
 ## Quick Start
-```
-curl -O https://github.com/gmoon/s3proxy/blob/master/express.js
-node express --port=3000
-```
-To start with pm2:
-```
-pm2 start express.js -- --port=3000
-```
+1. Get the express script
+`curl -O https://github.com/gmoon/s3proxy/blob/master/express.js`
+1. Replace `my-bucket` with the correct S3 bucket name
+1. Start the server
+`node express --port=3000`
+1. Aternately, start it with pm2:
+`pm2 start express.js -- --port=3000`
+1. Test it out (change index.html to the name of a file that exists in your bucket)
+`curl http://localhost:3000/index.html`
 
 ## Installation
 * `npm install s3proxy --save`
@@ -47,7 +48,7 @@ const S3Proxy = require('s3proxy');
 const argv = require('minimist')(process.argv.slice(2));
 
 const app = express();
-const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
+const proxy = new S3Proxy({ bucket: 'my-bucket' });
 proxy.init();
 
 app.route('/*')
@@ -72,7 +73,7 @@ const S3Proxy = require('s3proxy');
 const http = require('http');
 const argv = require('minimist')(process.argv.slice(2));
 
-const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
+const proxy = new S3Proxy({ bucket: 'my-bucket' });
 proxy.init();
 
 const server = http.createServer((req, res) => {
