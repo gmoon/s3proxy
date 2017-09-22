@@ -23,11 +23,7 @@ package-s3proxy-test:
 	$(MAKE) test -C packages/s3proxy
 
 tar : target test
-	rm -f target/$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz
-	rm -rf target/source
-	mkdir -p target/source/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/
-	cp s3proxy.js README.md LICENSE target/source/$(PACKAGE_NAME)-$(PACKAGE_VERSION)/
-	cd target/source; tar -cvzf ../$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz *
+	git archive -v -o target/$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz --format=zip HEAD
 
 build: 
 	aws --profile forkzero codebuild start-build --project-name s3proxy
