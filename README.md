@@ -21,10 +21,13 @@ AWS S3 web hosting only serves static content. By using S3 as the backend, you c
 through your favorite templating engine for dynamic content on the fly.
 
 ## Quick Start
-curl -O https://github.com/gmoon/s3proxy/blob/master/express.js
+```curl -O https://github.com/gmoon/s3proxy/blob/master/express.js
 node express --port=3000
--or-
+```
+To start with pm2:
+```
 pm2 start express.js -- --port=3000
+```
 
 ## Installation
 * `npm install s3proxy --save`
