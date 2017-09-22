@@ -35,9 +35,9 @@ we do now have to keep the web server available (but we are pretty good at doing
 `curl -O https://github.com/gmoon/s3proxy/blob/master/express.js`
 1. Replace `my-bucket` with the correct S3 bucket name
 1. Start the server
-`node express --port=3000`
+`PORT=3000 node express`
 1. Aternately, start it with pm2:
-`pm2 start express.js -- --port=3000`
+`PORT=3000 pm2 start express.js`
 1. Test it out (change index.html to the name of a file that exists in your bucket)
 `curl http://localhost:3000/index.html`
 
@@ -55,8 +55,8 @@ we do now have to keep the web server available (but we are pretty good at doing
 
 const express = require('express');
 const S3Proxy = require('s3proxy');
-const argv = require('minimist')(process.argv.slice(2));
 
+const port = process.env.PORT;
 const app = express();
 const proxy = new S3Proxy({ bucket: 'my-bucket' });
 proxy.init();
@@ -70,8 +70,8 @@ app.route('/*')
     stream.pipe(res);
   });
 
-if (argv.port > 0) {
-  app.listen(3000);
+if (port > 0) {
+  app.listen(port);
 }
 
 module.exports = app;
@@ -81,8 +81,8 @@ module.exports = app;
 ```
 const S3Proxy = require('s3proxy');
 const http = require('http');
-const argv = require('minimist')(process.argv.slice(2));
 
+const port = process.env.PORT;
 const proxy = new S3Proxy({ bucket: 'my-bucket' });
 proxy.init();
 
@@ -94,8 +94,8 @@ const server = http.createServer((req, res) => {
   stream.pipe(res);
 });
 
-if (argv.port > 0) {
-  server.listen(argv.port);
+if (port > 0) {
+  server.listen(port);
 }
 
 module.exports = server;
