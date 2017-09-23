@@ -6,7 +6,7 @@ OS               := $(shell source /etc/os-release; echo "$$ID")
 PKG_LIST_DOCKER  := apt-transport-https ca-certificates curl gnupg2 software-properties-common
 PKG_LIST         := npm jq 
 
-.PHONY : debuginfo install-packages install-node install-docker-repo npm-install npm-install-s3proxy buildenv
+.PHONY : debuginfo install-packages install-node install-docker-repo buildenv
 
 debuginfo:
 	@echo node --version $(shell node --version)
@@ -33,11 +33,5 @@ install-docker-repo: install-packages
 		$(shell lsb_release -cs) \
 		stable"
 
-npm-install: install-node
-	npm install
-
-npm-install-s3proxy: install-node
-	cd packages/s3proxy; npm install
-
-buildenv: install-node npm-install npm-install-s3proxy
+buildenv: install-node
 

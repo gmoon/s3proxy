@@ -2,8 +2,14 @@ SHELL            := /bin/bash
 PACKAGE_NAME     := $(shell jq --raw-output '.name'    package.json 2>/dev/null)
 PACKAGE_VERSION  := $(shell jq --raw-output '.version' package.json 2>/dev/null)
 UUID             := $(shell date +%s)
+ifeq ($(CI_ENGINE),CodeBuild)
+	ESLINT_OPTS := --output-file target/test-eslint.txt
+	MOCHA_OPTS  := | tee target/test-mocha.txt
+else
+	ESLINT_OPTS := --fix
+endif
 
-.PHONY : apt-get-update install-node install-docker-repo packagedeps npmdeps clean eslint mocha test target tar
+.PHONY : clean target npm-install eslint mocha test build docker tar package-s3proxy-test
 
 target :
 	mkdir -p target
@@ -11,11 +17,14 @@ target :
 clean :
 	rm -rf target
 
-eslint : target
-	set -o pipefail; node_modules/.bin/eslint --fix *.js | tee target/test-eslint.txt
+npm-install:
+	npm install
 
-mocha : target
-	set -o pipefail; node_modules/.bin/mocha | tee target/test-mocha.txt
+eslint : target npm-install
+	node_modules/.bin/eslint $(ESLINT_OPTS) *.js
+
+mocha : target npm-install
+	set -o pipefail; node_modules/.bin/mocha $(MOCHA_OPTS)
 
 test : mocha eslint package-s3proxy-test
 
@@ -23,7 +32,7 @@ package-s3proxy-test:
 	$(MAKE) test -C packages/s3proxy
 
 tar : target test
-	git archive -v -o target/$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz --format=zip HEAD
+	git archive -v -o target/$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz --format=tar HEAD
 
 build: 
 	aws --profile forkzero codebuild start-build --project-name s3proxy

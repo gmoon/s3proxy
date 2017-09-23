@@ -1,13 +1,16 @@
 version: 0.2
+env:
+  variables:
+    - CI_ENGINE: "CodeBuild"
 phases:
   install:
     commands:
       - make -j -C provision/build buildenv debuginfo
   build:
     commands:
-      - make -j test tar
+      - make -j tar
 artifacts:
   files:
     - 'target/*.tar.gz'
     - 'target/test-*'
-    - 'target/packages/s3proxy/target/test-*'
+    - 'packages/s3proxy/target/test-*'
