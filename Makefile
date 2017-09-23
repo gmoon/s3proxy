@@ -33,7 +33,7 @@ package-s3proxy-test:
 	$(MAKE) test -C packages/s3proxy
 
 tar : target test
-	git archive -v -o target/$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz --format=tar HEAD
+	git archive -v -o target/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-$(GIT_REV).tar.gz --format=tar HEAD
 
 build: 
 	aws --profile forkzero codebuild start-build --project-name s3proxy
