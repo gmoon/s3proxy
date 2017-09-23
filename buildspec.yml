@@ -12,6 +12,6 @@ phases:
 artifacts:
   files:
     - 'target/*.tar.gz'
-    - 'target/test-*'
-    - 'packages/s3proxy/target/test-*'
+    - 'target/*.txt'
+    - 'packages/s3proxy/target/*.txt'
   discard-paths: yes
