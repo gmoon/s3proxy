@@ -2,7 +2,7 @@ const S3Proxy = require('s3proxy');
 const http = require('http');
 
 const port = process.env.PORT;
-const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
+const proxy = new S3Proxy({ bucket: 's3proxy-public' });
 proxy.init();
 
 const server = http.createServer((req, res) => {

@@ -8,12 +8,12 @@ const { expect } = chai;
 describe('s3proxy', () => {
   describe('constructor', () => {
     it('should return an object', () => {
-      const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
+      const proxy = new S3Proxy({ bucket: 's3proxy-public' });
       expect(proxy).to.be.an('object');
     });
   });
   describe('initialization', () => {
-    const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
+    const proxy = new S3Proxy({ bucket: 's3proxy-public' });
     it('should throw an exception if it is not initialized', (done) => {
       try {
         proxy.isInitialized();
@@ -31,7 +31,7 @@ describe('s3proxy', () => {
   });
   describe('healthCheck', () => {
     it('should pass for valid bucket', (done) => {
-      const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
+      const proxy = new S3Proxy({ bucket: 's3proxy-public' });
       proxy.init((error) => {
         expect(error).to.equal(null);
         proxy.healthCheck((checkError) => {
@@ -60,7 +60,7 @@ describe('s3proxy', () => {
     });
   });
   describe('createReadStream error codes', () => {
-    const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
+    const proxy = new S3Proxy({ bucket: 's3proxy-public' });
     before((done) => {
       proxy.init(done);
     });
@@ -73,7 +73,7 @@ describe('s3proxy', () => {
     });
   });
   describe('createReadStream', () => {
-    const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
+    const proxy = new S3Proxy({ bucket: 's3proxy-public' });
     const page = {};
     before((done) => {
       proxy.init();
@@ -93,8 +93,8 @@ describe('s3proxy', () => {
     it('should have headers', () => {
       expect(page.headers).to.have.keys(['accept-ranges', 'content-length', 'content-type', 'date', 'etag', 'last-modified', 'server', 'x-amz-id-2', 'x-amz-request-id']);
     });
-    it('should have length of 58', () => {
-      expect(page.length).to.equal(58);
+    it('should have length of 338', () => {
+      expect(page.length).to.equal(338);
     });
   });
 });

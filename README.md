@@ -37,7 +37,7 @@ we do now have to keep the web server available (but we are pretty good at doing
 ## Quick Start
 1. Get the express script
 `curl -O https://github.com/gmoon/s3proxy/blob/master/express.js`
-1. Replace `my-bucket` with the correct S3 bucket name
+1. Replace `s3proxy-public` with the correct S3 bucket name
 1. Start the server
 `PORT=3000 node express`
 1. Aternately, start it with pm2:
@@ -62,7 +62,7 @@ const S3Proxy = require('s3proxy');
 
 const port = process.env.PORT;
 const app = express();
-const proxy = new S3Proxy({ bucket: 'my-bucket' });
+const proxy = new S3Proxy({ bucket: 's3proxy-public' });
 proxy.init();
 
 app.route('/health')
@@ -87,7 +87,7 @@ const S3Proxy = require('s3proxy');
 const http = require('http');
 
 const port = process.env.PORT;
-const proxy = new S3Proxy({ bucket: 'my-bucket' });
+const proxy = new S3Proxy({ bucket: 's3proxy-public' });
 proxy.init();
 
 const server = http.createServer((req, res) => {

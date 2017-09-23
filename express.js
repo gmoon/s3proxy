@@ -17,7 +17,7 @@ const port = process.env.PORT;
 const app = express();
 app.use(bodyParser.json());
 
-const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
+const proxy = new S3Proxy({ bucket: 's3proxy-public' });
 proxy.init();
 
 app.route('/health')
