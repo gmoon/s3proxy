@@ -66,7 +66,7 @@ proxy.init();
 
 app.route('/*')
   .get((req, res) => {
-
+    proxy.GET(req,res).pipe(res);
   });
 
 if (port > 0) {
