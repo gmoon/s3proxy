@@ -14,3 +14,4 @@ artifacts:
     - 'target/*.tar.gz'
     - 'target/test-*'
     - 'packages/s3proxy/target/test-*'
+  discard-paths: yes
