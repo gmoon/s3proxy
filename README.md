@@ -29,7 +29,7 @@ through your favorite templating engine for dynamic content on the fly.
 
 A build process pushes RPM artifacts and metadata to a S3 bucket. The linux hosts need to use `yum` to install packages from this repo.
 
-Rather than running [yum-s3]("https://github.com/jbraeuer/yum-s3-plugin") and supplying credentials to each host, we use s3proxy to expose
+Rather than running [yum-s3](https://github.com/jbraeuer/yum-s3-plugin) and supplying credentials to each host, we use s3proxy to expose
 the files via HTTP like `yum` expects. The additional benefit is that only one piece of our infrastructure has a dependency on S3, although
 we do now have to keep the web server available (but we are pretty good at doing that anyway).
 
