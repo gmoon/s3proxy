@@ -1,4 +1,7 @@
 # s3proxy
+[![NPM Version][npm-image]][npm-url]
+[![NPM Downloads][downloads-image]][downloads-url]
+
 Use AWS S3 as the storage backend for a web server.
 
 ## Features
@@ -63,11 +66,7 @@ proxy.init();
 
 app.route('/*')
   .get((req, res) => {
-    const stream = proxy.createReadStream(req.url);
-    stream.on('httpHeaders', (statusCode, headers) => {
-      res.writeHead(statusCode, headers);
-    });
-    stream.pipe(res);
+
   });
 
 if (port > 0) {
@@ -87,11 +86,7 @@ const proxy = new S3Proxy({ bucket: 'my-bucket' });
 proxy.init();
 
 const server = http.createServer((req, res) => {
-  const stream = proxy.createReadStream(req.url);
-  stream.on('httpHeaders', (statusCode, headers) => {
-    res.writeHead(statusCode, headers);
-  });
-  stream.pipe(res);
+  proxy.GET(req,res).pipe(res);
 });
 
 if (port > 0) {
@@ -100,4 +95,8 @@ if (port > 0) {
 
 module.exports = server;
 ```
+[npm-image]: https://img.shields.io/npm/v/s3proxy.svg
+[npm-url]: https://npmjs.org/package/s3proxy
+[downloads-image]: https://img.shields.io/npm/dm/s3proxy.svg
+[downloads-url]: https://npmjs.org/package/s3proxy
 
