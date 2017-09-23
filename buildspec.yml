@@ -1,7 +1,7 @@
 version: 0.2
 env:
   variables:
-    - CI_ENGINE: "CodeBuild"
+    CI_ENGINE: "CodeBuild"
 phases:
   install:
     commands:
