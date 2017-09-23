@@ -2,16 +2,12 @@ version: 0.2
 phases:
   install:
     commands:
-      - make debuginfo
-      - make -j builddeps
-      - make debuginfo
+      - make -j -C provision/build buildenv debuginfo
   build:
     commands:
-      - make -j tar
-      - make docker
+      - make -j test tar
 artifacts:
   files:
-    - '*.tar.gz'
-    - 'test-*'
-  discard-paths: yes
-  base-directory: target
+    - 'target/*.tar.gz'
+    - 'target/test-*'
+    - 'target/packages/s3proxy/target/test-*'
