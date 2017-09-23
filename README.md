@@ -9,6 +9,7 @@ Use AWS S3 as the storage backend for a web server.
 * HTTP GET requests are translated to S3 GetObject calls
 * AWS S3 headers are provided as the HTTP response headers, including content-type and content-length
 * Easily integrated with common nodejs web frameworks; examples include http and express apps.
+* HealthCheck API verifies bucket connectivity and authentication, suitable for ELB health checks or monitoring services
 
 ## Benefits
 
@@ -64,9 +65,13 @@ const app = express();
 const proxy = new S3Proxy({ bucket: 'my-bucket' });
 proxy.init();
 
+app.route('/health')
+  .get((req, res) => {
+    proxy.healthCheckStream(res).pipe(res);
+  });
 app.route('/*')
   .get((req, res) => {
-    proxy.GET(req,res).pipe(res);
+    proxy.get(req,res).pipe(res);
   });
 
 if (port > 0) {
@@ -86,7 +91,7 @@ const proxy = new S3Proxy({ bucket: 'my-bucket' });
 proxy.init();
 
 const server = http.createServer((req, res) => {
-  proxy.GET(req,res).pipe(res);
+  proxy.get(req,res).pipe(res);
 });
 
 if (port > 0) {

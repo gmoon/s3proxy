@@ -38,6 +38,11 @@ module.exports = class s3proxy extends EventEmitter {
     s3request.on('httpHeaders', (statusCode, headers) => {
       s3stream.emit('httpHeaders', statusCode, headers);
     });
+    s3stream.addHeaderEventListener = (res) => {
+      s3stream.on('httpHeaders', (statusCode, headers) => {
+        res.writeHead(statusCode, headers);
+      });
+    };
     return s3stream;
   }
   isInitialized() {
@@ -55,8 +60,28 @@ module.exports = class s3proxy extends EventEmitter {
     this.s3 = new AWS.S3({ apiVersion: '2006-03-01' });
   }
   healthCheck(done) {
-    this.s3.headBucket({ Bucket: this.bucket }, (error, data) => {
+    const s3request = this.s3.headBucket({ Bucket: this.bucket }, (error, data) => {
       done(error, data);
     });
+    return s3request;
+  }
+  healthCheckStream(res) {
+    const s3request = this.s3.headBucket({ Bucket: this.bucket });
+    const s3stream = s3request.createReadStream();
+    s3request.on('httpHeaders', (statusCode, headers) => {
+      res.writeHead(statusCode, headers);
+      s3stream.emit('httpHeaders', statusCode, headers);
+    });
+    return s3stream;
+  }
+  head(req, res) {
+    const stream = this.createReadStream(req.url);
+    stream.addHeaderEventListener(res);
+    return stream;
+  }
+  get(req, res) {
+    const stream = this.createReadStream(req.url);
+    stream.addHeaderEventListener(res);
+    return stream;
   }
 };

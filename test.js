@@ -22,7 +22,13 @@ describe('Examples', () => {
     it('should get index.html', (done) => {
       chai.request(expressServer).get('/index.html').end((error, res) => {
         expect(res).to.have.status(200);
-        done();
+        done(error);
+      });
+    });
+    it('should respond to health check', (done) => {
+      chai.request(expressServer).get('/health').end((error, res) => {
+        expect(res).to.have.status(200);
+        done(error);
       });
     });
   });

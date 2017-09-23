@@ -11,19 +11,22 @@
 const express = require('express');
 const S3Proxy = require('s3proxy');
 const debug = require('debug')('s3proxy');
+const bodyParser = require('body-parser');
 
 const port = process.env.PORT;
 const app = express();
+app.use(bodyParser.json());
+
 const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
 proxy.init();
 
+app.route('/health')
+  .get((req, res) => {
+    proxy.healthCheckStream(res).pipe(res);
+  });
 app.route('/*')
   .get((req, res) => {
-    const stream = proxy.createReadStream(req.url);
-    stream.on('httpHeaders', (statusCode, headers) => {
-      res.writeHead(statusCode, headers);
-    });
-    stream.pipe(res);
+    proxy.get(req, res).pipe(res);
   });
 
 if (port > 0) {

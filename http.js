@@ -6,11 +6,7 @@ const proxy = new S3Proxy({ bucket: 'codeassist-repo' });
 proxy.init();
 
 const server = http.createServer((req, res) => {
-  const stream = proxy.createReadStream(req.url);
-  stream.on('httpHeaders', (statusCode, headers) => {
-    res.writeHead(statusCode, headers);
-  });
-  stream.pipe(res);
+  proxy.get(req, res).pipe(res);
 });
 
 if (port > 0) {

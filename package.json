@@ -1,5 +1,5 @@
 {
-  "name": "s3proxy",
+  "name": "s3proxy-web",
   "version": "0.1.0",
   "description": "Streaming web proxy for AWS S3",
   "main": "http.js",
@@ -12,6 +12,7 @@
     "mocha": "^3.5.3"
   },
   "dependencies": {
+    "body-parser": "^1.18.2",
     "debug": "^2.6.9",
     "express": "^4.15.4",
     "s3proxy": "file:./packages/s3proxy"
