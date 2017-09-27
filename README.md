@@ -2,9 +2,10 @@
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
 
-Use AWS S3 as the storage backend for a web server.
+Use AWS S3 as the storage backend for a nodejs web server.
 
 ## Features
+* Designed to be embedded into your nodejs application
 * Provides stream interface; stream files, even very large files, quickly and with a low memory footprint
 * HTTP GET requests are translated to S3 GetObject calls
 * AWS S3 headers are provided as the HTTP response headers, including content-type and content-length
@@ -35,13 +36,10 @@ the files via HTTP like `yum` expects. The additional benefit is that only one p
 we do now have to keep the web server available (but we are pretty good at doing that anyway).
 
 ## Quick Start
-1. Get the express script
-`curl -O https://github.com/gmoon/s3proxy/blob/master/express.js`
-1. Replace `s3proxy-public` with the correct S3 bucket name
+1. Clone this repo
+1. Edit express.js, replace `s3proxy-public` with your S3 bucket name
 1. Start the server
 `PORT=3000 node express`
-1. Aternately, start it with pm2:
-`PORT=3000 pm2 start express.js`
 1. Test it out (change index.html to the name of a file that exists in your bucket)
 `curl http://localhost:3000/index.html`
 
