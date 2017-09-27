@@ -106,6 +106,9 @@ module.exports = server;
 
 ## Development
 ### Test execution
+The current test suite consists of some unit tests, but most of the tests are functional tests that require AWS S3 acces.
+It uses a pubic bucket called s3proxy-public.
+
 ```
 # Run the test suite
 make test
