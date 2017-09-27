@@ -36,8 +36,9 @@ the files via HTTP like `yum` expects. The additional benefit is that only one p
 we do now have to keep the web server available (but we are pretty good at doing that anyway).
 
 ## Quick Start
-1. Clone this repo
+1. Clone this repo, `cd s3proxy`
 1. Edit express.js, replace `s3proxy-public` with your S3 bucket name
+1. Install dependencies `npm install`
 1. Start the server
 `PORT=3000 node express`
 1. Test it out (change index.html to the name of a file that exists in your bucket)
@@ -102,4 +103,14 @@ module.exports = server;
 [npm-url]: https://npmjs.org/package/s3proxy
 [downloads-image]: https://img.shields.io/npm/dm/s3proxy.svg
 [downloads-url]: https://npmjs.org/package/s3proxy
+
+## Development
+### Test execution
+```
+# Run the test suite
+make test
+
+# Run it faster: execute steps in parallel
+make -j test
+```
 
