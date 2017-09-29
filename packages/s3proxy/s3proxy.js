@@ -55,8 +55,8 @@ module.exports = class s3proxy extends EventEmitter {
     return str.replace(/^\/+/, '');
   }
   awsAddCredentials() {
-    this.credentials = new AWS.SharedIniFileCredentials();
-    AWS.config.credentials = this.credentials;
+    // this.credentials = new AWS.SharedIniFileCredentials();
+    // AWS.config.credentials = this.credentials;
     this.s3 = new AWS.S3({ apiVersion: '2006-03-01' });
   }
   healthCheck(done) {
