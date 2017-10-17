@@ -25,12 +25,12 @@ eslint : target npm-install
 	node_modules/.bin/eslint $(ESLINT_OPTS) *.js
 
 mocha : target npm-install
-	set -o pipefail; node_modules/.bin/mocha $(MOCHA_OPTS)
+	set -o pipefail; istanbul cover _mocha $(MOCHA_OPTS)
 
-test : mocha eslint package-s3proxy-test
+mocha-examples: target npm-install
+	set -o pipefail; mocha examples/ $(MOCHA_OPTS)
 
-package-s3proxy-test:
-	$(MAKE) test -C packages/s3proxy
+test : mocha mocha-examples eslint
 
 tar : target test
 	git archive -v -o target/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-$(GIT_REV).tar.gz --format=tar HEAD
