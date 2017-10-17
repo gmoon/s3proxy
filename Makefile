@@ -10,7 +10,7 @@ else
 	ESLINT_OPTS := --fix
 endif
 
-.PHONY : clean target npm-install eslint mocha test build docker tar package-s3proxy-test
+.PHONY : clean target npm-install eslint mocha test build docker tar mocha-examples 
 
 target :
 	mkdir -p target
