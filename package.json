@@ -1,30 +1,33 @@
 {
-  "name": "s3proxy-web",
-  "version": "0.1.0",
+  "name": "s3proxy",
+  "version": "1.2.0",
   "description": "Streaming web proxy for AWS S3",
-  "main": "http.js",
+  "main": "index.js",
   "devDependencies": {
     "chai": "^4.1.2",
     "chai-http": "^3.0.0",
     "eslint": "^4.7.0",
     "eslint-config-airbnb-base": "^12.0.0",
     "eslint-plugin-import": "^2.7.0",
+    "express": "^4.15.4",
+    "istanbul": "^0.4.5",
     "mocha": "^3.5.3"
   },
   "dependencies": {
-    "body-parser": "^1.18.2",
-    "debug": "^2.6.9",
-    "express": "^4.15.4",
-    "s3proxy": "file:./packages/s3proxy"
+    "aws-sdk": "^2.118.0"
   },
   "scripts": {
-    "test": "make -j test",
-    "start": "node express"
+    "test": "make -j test"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gmoon/s3proxy.git"
   },
+  "files": [
+    "README.md",
+    "LICENSE",
+    "index.js"
+  ],
   "keywords": [
     "aws",
     "s3",
@@ -34,7 +37,7 @@
     "http",
     "express"
   ],
-  "author": "George Moon",
+  "author": "George Moon <george.moon@gmail.com>",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/gmoon/s3proxy/issues"

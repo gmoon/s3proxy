@@ -1,4 +1,4 @@
-const S3Proxy = require('s3proxy');
+const S3Proxy = require('../');
 const http = require('http');
 
 const port = process.env.PORT;

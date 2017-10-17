@@ -1,7 +1,7 @@
 /* eslint-env mocha, node, es6 */
 
 const chai = require('chai');
-const S3Proxy = require('./s3proxy.js');
+const S3Proxy = require('.');
 
 const { expect } = chai;
 
