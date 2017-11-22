@@ -25,6 +25,12 @@ describe('Examples', () => {
         done(error);
       });
     });
+    it('should respond with 404 for invalid key', (done) => {
+      chai.request(expressServer).get('/funk.me').end((error, res) => {
+        expect(res).to.have.status(404);
+        done();
+      });
+    });
     it('should respond to health check', (done) => {
       chai.request(expressServer).get('/health').end((error, res) => {
         expect(res).to.have.status(200);

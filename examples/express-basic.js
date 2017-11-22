@@ -12,6 +12,7 @@ const express = require('express');
 const S3Proxy = require('../');
 const debug = require('debug')('s3proxy');
 const bodyParser = require('body-parser');
+const fs = require('fs');
 
 const port = process.env.PORT;
 const app = express();
@@ -26,14 +27,23 @@ app.route('/health')
     proxy.healthCheckStream(res).pipe(res);
   });
 app.route('/*')
-  .get((req, res) => {
-    proxy.get(req, res).pipe(res);
+  .get((req, res, next) => {
+    proxy.get(req, res).on('error', (err) => {
+      handleError(req, res, err);
+    }).pipe(res);
   });
 
 if (port > 0) {
   app.listen(port, () => {
     debug(`s3proxy listening on port ${port}`);
   });
+}
+
+function handleError(req, res, err) {
+  // sending xml because the AWS SDK sets content-type: application/xml for non-200 responses
+  res.end(`<?xml version="1.0"?>
+    <error time="${err.time}" code="${err.code}" statusCode="${err.statusCode}" url="${req.url}" method="${req.method}">${err.message}</error>
+  `);
 }
 
 module.exports = app;
