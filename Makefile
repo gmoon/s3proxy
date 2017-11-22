@@ -25,10 +25,10 @@ eslint : target npm-install
 	node_modules/.bin/eslint $(ESLINT_OPTS) *.js
 
 mocha : target npm-install
-	set -o pipefail; istanbul cover _mocha $(MOCHA_OPTS)
+	set -o pipefail; NODE_EVN=test istanbul cover _mocha $(MOCHA_OPTS)
 
 mocha-examples: target npm-install
-	set -o pipefail; mocha examples/ $(MOCHA_OPTS)
+	set -o pipefail; NODE_ENV=test mocha examples/ $(MOCHA_OPTS)
 
 test : mocha mocha-examples eslint
 

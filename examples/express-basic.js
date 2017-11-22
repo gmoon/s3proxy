@@ -12,19 +12,41 @@ const express = require('express');
 const S3Proxy = require('../');
 const debug = require('debug')('s3proxy');
 const bodyParser = require('body-parser');
+const morgan = require('morgan');
+const addRequestId = require('express-request-id')({headerName: 'x-request-id'});
 
 const port = process.env.PORT;
 const app = express();
 app.set('view engine', 'pug');
+app.use(addRequestId);
 app.use(bodyParser.json());
 
-const proxy = new S3Proxy({ bucket: 's3proxy-public' });
-proxy.init();
+// Use morgan for request logging except during test execution
+if (process.env.NODE_ENV !== 'test') {
+  app.use(morgan(
+    'request :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ' +
+    '":referrer" ":user-agent" ":response-time ms" :res[x-request-id] :res[x-amz-request-id]'
+  ));
+}
 
+// initialize the s3proxy
+const bucketName = "s3proxy-public";
+const proxy = new S3Proxy({ bucket: bucketName });
+proxy.init();
+proxy.on('error', (err) => { 
+  console.log(`error initializing s3proxy for bucket ${bucketName}: ${err.statusCode} ${err.code}`);
+});
+
+// health check api, suitable for integration with ELB health checking
 app.route('/health')
   .get((req, res) => {
-    proxy.healthCheckStream(res).pipe(res);
+    proxy.healthCheckStream(res).on('error', (err)=>{
+      // just end the request and let the HTTP status code convey the error
+      res.end()
+    }).pipe(res);
   });
+
+// route all get requests to s3proxy
 app.route('/*')
   .get((req, res, next) => {
     proxy.get(req, res).on('error', (err) => {
@@ -44,4 +66,7 @@ function handleError(req, res, err) {
   `);
 }
 
+function requestLogger(req, res, next) {
+ log( { type: "request" } ); 
+}
 module.exports = app;
