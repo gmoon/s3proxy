@@ -12,7 +12,6 @@ const express = require('express');
 const S3Proxy = require('../');
 const debug = require('debug')('s3proxy');
 const bodyParser = require('body-parser');
-const fs = require('fs');
 
 const port = process.env.PORT;
 const app = express();
