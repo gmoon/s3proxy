@@ -25,9 +25,15 @@ describe('Examples', () => {
         done(error);
       });
     });
-    it('should respond with 404 for invalid key', (done) => {
-      chai.request(expressServer).get('/funk.me').end((error, res) => {
+    it('should respond with 404 Not Found for nonexistent key', (done) => {
+      chai.request(expressServer).get('/nonexistent.file').end((error, res) => {
         expect(res).to.have.status(404);
+        done();
+      });
+    });
+    it('should respond with 403 Forbidden for unauthorized access request', (done) => {
+      chai.request(expressServer).get('/unauthorized.html').end((error, res) => {
+        expect(res).to.have.status(403);
         done();
       });
     });

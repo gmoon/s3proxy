@@ -40,8 +40,7 @@ if (port > 0) {
 
 function handleError(req, res, err) {
   // sending xml because the AWS SDK sets content-type: application/xml for non-200 responses
-  res.end(`<?xml version="1.0"?>
-    <error time="${err.time}" code="${err.code}" statusCode="${err.statusCode}" url="${req.url}" method="${req.method}">${err.message}</error>
+  res.end(`<?xml version="1.0"?>\n<error time="${err.time}" code="${err.code}" statusCode="${err.statusCode}" url="${req.url}" method="${req.method}">${err.message}</error>
   `);
 }
 
