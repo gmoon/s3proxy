@@ -16,8 +16,8 @@ Use AWS S3 as the storage backend for a nodejs web server.
 
 ### Private web endpoint
 
-AWS S3 provides native web hosting, but it lacks fine grained security controls. By hosting your own web 
-server, you can use all of the AWS features including Security Groups, Route53, and networks 
+AWS S3 provides native web hosting, but it lacks fine grained security controls. By hosting your own web
+server, you can use all of the AWS features including Security Groups, Route53, and networks
 access control lists to control access to your resources
 
 ### Dynamic content
@@ -68,9 +68,15 @@ app.route('/health')
   .get((req, res) => {
     proxy.healthCheckStream(res).pipe(res);
   });
+
+// Make sure to add an error handler (as shown below), otherwise your server will crash if the stream
+// encounters an error (which occurs, for instance, when the requested object doesn't
+// exist).
 app.route('/*')
   .get((req, res) => {
-    proxy.get(req,res).pipe(res);
+    proxy.get(req,res)
+      .on('error', () => res.end())
+      .pipe(res);
   });
 
 if (port > 0) {
@@ -89,8 +95,13 @@ const port = process.env.PORT;
 const proxy = new S3Proxy({ bucket: 's3proxy-public' });
 proxy.init();
 
+// Make sure to add an error handler (as shown below), otherwise your server will crash if the stream
+// encounters an error (which occurs, for instance, when the requested object doesn't
+// exist).
 const server = http.createServer((req, res) => {
-  proxy.get(req,res).pipe(res);
+  proxy.get(req,res)
+    .on('error', () => res.end());
+    .pipe(res);
 });
 
 if (port > 0) {
