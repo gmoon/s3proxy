@@ -28,6 +28,19 @@ describe('s3proxy', () => {
       });
       proxy.init();
     });
+
+    it('should pass the provided options through to the AWS.S3 constructor', (done) => {
+      const configuredProxy = new S3Proxy({
+        bucket: 's3proxy-public',
+        httpOptions: { connectTimeout: 1 }
+      });
+
+      configuredProxy.init(() => {
+        expect(configuredProxy.s3.config.httpOptions.connectTimeout).to.equal(1);
+
+        done();
+      });
+    });
   });
   describe('healthCheck', () => {
     it('should pass for valid bucket', (done) => {

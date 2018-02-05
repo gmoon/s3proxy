@@ -19,7 +19,9 @@
     "aws-sdk": "^2.118.0"
   },
   "scripts": {
-    "test": "make -j test"
+    "test": "make -j test",
+    "istanbul": "istanbul",
+    "mocha": "mocha"
   },
   "repository": {
     "type": "git",
