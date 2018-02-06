@@ -20,9 +20,17 @@ module.exports = class s3proxy extends EventEmitter {
       throw new UserException('InvalidParameterList', 'bucket parameter is required');
     }
     this.bucket = p.bucket;
+    this.options =
+        Object.getOwnPropertyNames(p)
+          .filter(name => name !== 'bucket')
+          .reduce((obj, name) => {
+            const withName = {};
+            withName[name] = p[name];
+            return Object.assign({}, obj, withName);
+          }, {});
   }
   init(done) {
-    this.awsAddCredentials();
+    this.s3 = new AWS.S3(Object.assign({ apiVersion: '2006-03-01' }, this.options));
     this.healthCheck((error, data) => {
       if (error) {
         if (typeof (done) !== typeof (Function)) this.emit('error', error, data);
@@ -53,11 +61,6 @@ module.exports = class s3proxy extends EventEmitter {
   }
   static stripLeadingSlash(str) {
     return str.replace(/^\/+/, '');
-  }
-  awsAddCredentials() {
-    // this.credentials = new AWS.SharedIniFileCredentials();
-    // AWS.config.credentials = this.credentials;
-    this.s3 = new AWS.S3({ apiVersion: '2006-03-01' });
   }
   healthCheck(done) {
     const s3request = this.s3.headBucket({ Bucket: this.bucket }, (error, data) => {

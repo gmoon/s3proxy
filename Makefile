@@ -10,7 +10,7 @@ else
 	ESLINT_OPTS := --fix
 endif
 
-.PHONY : clean target npm-install eslint mocha test build docker tar mocha-examples 
+.PHONY : clean target npm-install eslint mocha test build docker tar mocha-examples
 
 target :
 	mkdir -p target
@@ -25,20 +25,20 @@ eslint : target npm-install
 	node_modules/.bin/eslint $(ESLINT_OPTS) *.js
 
 mocha : target npm-install
-	set -o pipefail; NODE_EVN=test istanbul cover _mocha $(MOCHA_OPTS)
+	set -o pipefail; NODE_ENV=test npm run istanbul -- cover _mocha $(MOCHA_OPTS)
 
 mocha-examples: target npm-install
-	set -o pipefail; NODE_ENV=test mocha examples/ $(MOCHA_OPTS)
+	set -o pipefail; NODE_ENV=test npm run mocha examples/ $(MOCHA_OPTS)
 
 test : mocha mocha-examples eslint
 
 tar : target test
 	git archive -v -o target/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-$(GIT_REV).tar.gz --format=tar HEAD
 
-build: 
+build:
 	aws --profile forkzero codebuild start-build --project-name s3proxy
 
-docker: 
+docker:
 	$(eval LOGIN=$(shell aws --region us-east-1 ecr get-login))
 	$(LOGIN)
 
