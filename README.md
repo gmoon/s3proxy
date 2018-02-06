@@ -112,8 +112,7 @@ module.exports = server;
 ```
 ## Configuring the AWS.S3 Object
 
-The AWS.S3 object accepts options as defined [here](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#constructor-property). These options can be passed throug
-h via the S3Proxy constructor.
+The AWS.S3 object accepts options as defined [here](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#constructor-property). These options can be passed through via the S3Proxy constructor.
 
 ```
 const configuredProxy = new S3Proxy({
