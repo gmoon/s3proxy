@@ -100,7 +100,7 @@ proxy.init();
 // exist).
 const server = http.createServer((req, res) => {
   proxy.get(req,res)
-    .on('error', () => res.end());
+    .on('error', () => res.end())
     .pipe(res);
 });
 
