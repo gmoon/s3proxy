@@ -110,6 +110,19 @@ if (port > 0) {
 
 module.exports = server;
 ```
+## Configuring the AWS.S3 Object
+
+The AWS.S3 object accepts options as defined [here](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#constructor-property). These options can be passed throug
+h via the S3Proxy constructor.
+
+```
+const configuredProxy = new S3Proxy({
+  bucket: 's3proxy-public',
+  httpOptions: { connectTimeout: 1 },
+  logger: console
+});
+```
+
 [npm-image]: https://img.shields.io/npm/v/s3proxy.svg
 [npm-url]: https://npmjs.org/package/s3proxy
 [downloads-image]: https://img.shields.io/npm/dm/s3proxy.svg
