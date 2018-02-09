@@ -127,6 +127,31 @@ const configuredProxy = new S3Proxy({
 [downloads-image]: https://img.shields.io/npm/dm/s3proxy.svg
 [downloads-url]: https://npmjs.org/package/s3proxy
 
+## init method
+
+S3Proxy is a subclass of EventEmitter. That means you can register event listeners on the async calls.
+```
+proxy.on('init', () => {
+  app.listen();
+});
+proxy.on('error', (error) => {
+  console.error(error);
+});
+proxy.init();
+```
+
+`init` also accepts a callback function:
+```
+proxy.init((error) => {
+  if (error) {
+    console.error(error);
+  }
+  else {
+    app.listen();
+  }
+});
+```
+
 ## Development
 ### Test execution
 The current test suite consists of some unit tests, but most of the tests are functional tests that require AWS S3 acces.
