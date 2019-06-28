@@ -20,15 +20,15 @@ module.exports = class s3proxy extends EventEmitter {
       throw new UserException('InvalidParameterList', 'bucket parameter is required');
     }
     this.bucket = p.bucket;
-    this.options =
-        Object.getOwnPropertyNames(p)
-          .filter(name => name !== 'bucket')
-          .reduce((obj, name) => {
-            const withName = {};
-            withName[name] = p[name];
-            return Object.assign({}, obj, withName);
-          }, {});
+    this.options = Object.getOwnPropertyNames(p)
+      .filter(name => name !== 'bucket')
+      .reduce((obj, name) => {
+        const withName = {};
+        withName[name] = p[name];
+        return Object.assign({}, obj, withName);
+      }, {});
   }
+
   init(done) {
     this.s3 = new AWS.S3(Object.assign({ apiVersion: '2006-03-01' }, this.options));
     this.healthCheck((error, data) => {
@@ -38,6 +38,7 @@ module.exports = class s3proxy extends EventEmitter {
       if (typeof (done) === typeof (Function)) done(error, data);
     });
   }
+
   createReadStream(key) {
     this.isInitialized();
     const params = { Bucket: this.bucket, Key: s3proxy.stripLeadingSlash(key) };
@@ -53,21 +54,25 @@ module.exports = class s3proxy extends EventEmitter {
     };
     return s3stream;
   }
+
   isInitialized() {
     if (!this.s3) {
       const error = new UserException('UninitializedError', 'S3Proxy is uninitialized (call s3proxy.init)');
       throw error;
     }
   }
+
   static stripLeadingSlash(str) {
     return str.replace(/^\/+/, '');
   }
+
   healthCheck(done) {
     const s3request = this.s3.headBucket({ Bucket: this.bucket }, (error, data) => {
       done(error, data);
     });
     return s3request;
   }
+
   healthCheckStream(res) {
     const s3request = this.s3.headBucket({ Bucket: this.bucket });
     const s3stream = s3request.createReadStream();
@@ -77,11 +82,13 @@ module.exports = class s3proxy extends EventEmitter {
     });
     return s3stream;
   }
+
   head(req, res) {
     const stream = this.createReadStream(req.url);
     stream.addHeaderEventListener(res);
     return stream;
   }
+
   get(req, res) {
     const stream = this.createReadStream(req.url);
     stream.addHeaderEventListener(res);
