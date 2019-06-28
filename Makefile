@@ -17,6 +17,8 @@ target :
 
 clean :
 	rm -rf target
+	rm -rf coverage
+	rm -rf .nyc_output
 
 npm-install:
 	npm install
@@ -25,7 +27,7 @@ eslint : target npm-install
 	node_modules/.bin/eslint $(ESLINT_OPTS) *.js
 
 mocha : target npm-install
-	set -o pipefail; NODE_ENV=test npm run istanbul -- cover _mocha $(MOCHA_OPTS)
+	set -o pipefail; NODE_ENV=test npm run nyc-coverage mocha $(MOCHA_OPTS)
 
 mocha-examples: target npm-install
 	set -o pipefail; NODE_ENV=test npm run mocha examples/ $(MOCHA_OPTS)
