@@ -78,7 +78,7 @@ describe('s3proxy', () => {
       proxy.init(done);
     });
     it('should return error code NoSuchKey for nonexistent key', (done) => {
-      const stream = proxy.createReadStream('small.txt');
+      const stream = proxy.createReadStream({ url: 'small.txt' });
       stream.on('error', (error) => {
         expect(error.code).to.equal('NoSuchKey');
         done();
@@ -90,7 +90,7 @@ describe('s3proxy', () => {
     const page = {};
     before((done) => {
       proxy.init();
-      const stream = proxy.createReadStream('index.html');
+      const stream = proxy.createReadStream({ url: 'index.html' });
       page.length = 0;
       stream.on('data', (chunk) => {
         page.length += chunk.length;

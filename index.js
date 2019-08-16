@@ -2,6 +2,7 @@
 
 const EventEmitter = require('events');
 const AWS = require('aws-sdk');
+const url = require('url');
 
 class UserException extends Error {
   constructor(code, message) {
@@ -39,9 +40,10 @@ module.exports = class s3proxy extends EventEmitter {
     });
   }
 
-  createReadStream(key) {
+  createReadStream(req) {
     this.isInitialized();
-    const params = { Bucket: this.bucket, Key: s3proxy.stripLeadingSlash(key) };
+    const r = s3proxy.parseRequest(req);
+    const params = { Bucket: this.bucket, Key: r.key };
     const s3request = this.s3.getObject(params);
     const s3stream = s3request.createReadStream();
     s3request.on('httpHeaders', (statusCode, headers) => {
@@ -60,6 +62,28 @@ module.exports = class s3proxy extends EventEmitter {
       const error = new UserException('UninitializedError', 'S3Proxy is uninitialized (call s3proxy.init)');
       throw error;
     }
+  }
+
+  /*
+    Return key and query from request object, since Express and HTTP
+    modules have different req objects.
+    key is req.path if defined, or pathname from url.parse object
+    key also has any leading slash stripped
+    query is req.query, or query from url.parse object
+  */
+  static parseRequest(req) {
+    const obj = {};
+    // Express objects have path, HTTP objects do not
+    if (typeof req.path === 'undefined') {
+      const parsedUrl = url.parse(req.url, true);
+      obj.query = parsedUrl.query;
+      obj.key = parsedUrl.pathname;
+    } else {
+      obj.query = req.query;
+      obj.key = req.path;
+    }
+    obj.key = s3proxy.stripLeadingSlash(obj.key);
+    return obj;
   }
 
   static stripLeadingSlash(str) {
@@ -84,13 +108,13 @@ module.exports = class s3proxy extends EventEmitter {
   }
 
   head(req, res) {
-    const stream = this.createReadStream(req.url);
+    const stream = this.createReadStream(req);
     stream.addHeaderEventListener(res);
     return stream;
   }
 
   get(req, res) {
-    const stream = this.createReadStream(req.url);
+    const stream = this.createReadStream(req);
     stream.addHeaderEventListener(res);
     return stream;
   }
