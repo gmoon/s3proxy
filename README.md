@@ -8,9 +8,21 @@ Use AWS S3 as the storage backend for a nodejs web server.
 * Designed to be embedded into your nodejs application
 * Provides stream interface; stream files, even very large files, quickly and with a low memory footprint
 * HTTP GET requests are translated to S3 GetObject calls
+* AWS S3 Select is exposed as simple URL query component 
 * AWS S3 headers are provided as the HTTP response headers, including content-type and content-length
 * Easily integrated with common nodejs web frameworks; examples include http and express apps.
 * HealthCheck API verifies bucket connectivity and authentication, suitable for ELB health checks or monitoring services
+
+## AWS S3 Select
+
+AWS S3 Select provides a SQL-like query interface for S3 to retrieve a subset of data from a file. S3Proxy
+exposes this functionality via URL query parameters, e.g.:
+
+`http://localhost:3000/twitter.json?expression=select * from S3Object WHERE foo=bar`
+
+An example using curl (with proper url encoding) would look like:
+
+`curl -v -G http://localhost:3000/twitter.json --data-urlencode 'expression=select * from S3Object WHERE foo=bar'`
 
 ## Benefits
 
