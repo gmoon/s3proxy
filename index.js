@@ -3,6 +3,7 @@
 const EventEmitter = require('events');
 const AWS = require('aws-sdk');
 const url = require('url');
+const { PassThrough } = require('stream');
 const UserException = require('./UserException');
 
 module.exports = class s3proxy extends EventEmitter {
@@ -16,7 +17,7 @@ module.exports = class s3proxy extends EventEmitter {
     }
     this.bucket = p.bucket;
     this.options = Object.getOwnPropertyNames(p)
-      .filter((name) => name !== 'bucket')
+      .filter(name => name !== 'bucket')
       .reduce((obj, name) => {
         const withName = {};
         withName[name] = p[name];
@@ -35,19 +36,69 @@ module.exports = class s3proxy extends EventEmitter {
   }
 
   createReadStream(req) {
+    let s3stream;
     this.isInitialized();
     const r = s3proxy.parseRequest(req);
+    if (typeof r.query.expression !== 'undefined') {
+      console.log('select request');
+      s3stream = this.createSelectObjectContentStream(r);
+    } else {
+      s3stream = this.createGetObjectStream(r);
+    }
+    return s3stream;
+  }
+
+  createSelectObjectContentStream(r, existingStream) {
+    const s3stream = (typeof existingStream === 'undefined') ? new PassThrough() : existingStream;
+    s3stream.on('foo', (data) => { console.log(data); });
+    const params = {
+      Bucket: this.bucket,
+      Key: r.key,
+      Expression: r.query.expression,
+      ExpressionType: 'SQL',
+      InputSerialization: {
+        JSON: {
+          Type: 'DOCUMENT',
+        },
+      },
+      OutputSerialization: {
+        JSON: {},
+      },
+    };
+    const s3request = this.s3.selectObjectContent(params);
+    s3request.on('httpHeaders', (statusCode, headers) => {
+      s3stream.emit('httpHeaders', statusCode, headers);
+    });
+    s3request.send((err, data) => {
+      if (err) {
+        throw err;
+      } else {
+        data.Payload.on('data', (event) => {
+          if (event.Records) {
+            s3stream.write(event.Records.Payload);
+          } else if (event.Stats) {
+            console.log(`stats: ${JSON.stringify(event)}`);
+          } else if (event.Progress) {
+            console.log(`progress: ${JSON.stringify(event)}`);
+          } else if (event.Cont) {
+            console.log(`cont: ${JSON.stringify(event)}`);
+          } else if (event.End) {
+            s3stream.emit('end');
+          }
+        });
+        data.Payload.on('error', (error) => { throw error; });
+      }
+    });
+    return s3stream;
+  }
+
+  createGetObjectStream(r) {
     const params = { Bucket: this.bucket, Key: r.key };
     const s3request = this.s3.getObject(params);
     const s3stream = s3request.createReadStream();
     s3request.on('httpHeaders', (statusCode, headers) => {
       s3stream.emit('httpHeaders', statusCode, headers);
     });
-    s3stream.addHeaderEventListener = (res) => {
-      s3stream.on('httpHeaders', (statusCode, headers) => {
-        res.writeHead(statusCode, headers);
-      });
-    };
     return s3stream;
   }
 
@@ -109,7 +160,9 @@ module.exports = class s3proxy extends EventEmitter {
 
   get(req, res) {
     const stream = this.createReadStream(req);
-    stream.addHeaderEventListener(res);
+    stream.on('httpHeaders', (statusCode, headers) => {
+      res.writeHead(statusCode, headers);
+    });
     return stream;
   }
 };
