@@ -13,6 +13,9 @@ const debug = require('debug')('s3proxy');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const addRequestId = require('express-request-id')({headerName: 'x-request-id'});
+const https = require('https');
+const http = require('http');
+const servers = [];
 
 const port = process.env.PORT;
 const app = express();
@@ -35,13 +38,23 @@ proxy.init();
 proxy.on('init', (err) => {
   debug('s3proxy initialized on bucket %o', bucketName);
   if (port > 0) {
-    app.listen(port, () => {
+    const server = http.createServer(app).listen(port, () => {
       debug(`express listening on port ${port}`);
     });
+    servers.push(server);
   }
 });
 proxy.on('error', (err) => { 
   console.log(`error initializing s3proxy for bucket ${bucketName}: ${err.statusCode} ${err.code}`);
+});
+
+process.on('SIGTERM', () => {
+  debug('graceful shutdown initiated');
+  servers.forEach((server) => {
+    server.close(() => {
+      debug(`closed server`);
+    });
+  });
 });
 
 // health check api, suitable for integration with ELB health checking
