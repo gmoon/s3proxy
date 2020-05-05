@@ -1,3 +1,6 @@
+# SAM build files
+.aws-sam
+
 # Logs
 logs
 *.log
