@@ -8,8 +8,9 @@ proxy.init();
 app.route('/*').get(proxyToS3);
 
 function proxyToS3(req, res) {
-         proxy.get(req,res).on('error', () => res.end()).pipe(res);
+  proxy.get(req,res).on('error', () => res.end()).pipe(res);
 }
 
 const server = awsServerlessExpress.createServer(app, null, ['image/jpeg']);
-exports.lambdaHandler = (event, context) => awsServerlessExpress.proxy(server, event, context);
+exports.lambdaHandler = (event, context) => { awsServerlessExpress.proxy(server, event, context); };
+exports.close = () => { server.close(); };
