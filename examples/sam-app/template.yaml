@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-app
+
+  Sample SAM Template for sam-app
+  
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 30
+
+Resources:
+  APIGateway:
+    Type: AWS::Serverless::Api # More info about API Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-api.html
+    Properties:
+      StageName: Prod
+      BinaryMediaTypes:
+        # Use ~1 instead of / in the mime types
+        - image~1jpeg
+  S3ProxyFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: s3proxy/
+      Handler: app.lambdaHandler
+      Runtime: nodejs10.x
+      Events:
+        S3Proxy:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /{proxy+}
+            Method: get
+            RestApiId:
+              Ref: APIGateway
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  S3ProxyApi:
+    Description: "API Gateway endpoint URL for Prod stage for s3proxy"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  S3ProxyFunction:
+    Description: "S3Proxy Lambda Function ARN"
+    Value: !GetAtt S3ProxyFunction.Arn
+  S3ProxyFunctionIamRole:
+    Description: "Implicit IAM Role created for S3Proxy function"
+    Value: !GetAtt S3ProxyFunctionRole.Arn
