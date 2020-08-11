@@ -1,7 +1,7 @@
 # s3proxy
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
-![Node CI](https://github.com/actions/s3proxy/workflows/Node%20CI/badge.svg)
+![Node CI][actions-image]
 
 Use AWS S3 as the storage backend for a nodejs web server.
 
@@ -127,6 +127,8 @@ const configuredProxy = new S3Proxy({
 [npm-url]: https://npmjs.org/package/s3proxy
 [downloads-image]: https://img.shields.io/npm/dm/s3proxy.svg
 [downloads-url]: https://npmjs.org/package/s3proxy
+[actions-image]: https://github.com/gmoon/s3proxy/workflows/Node%20CI/badge.svg
+
 
 ## init method
 
