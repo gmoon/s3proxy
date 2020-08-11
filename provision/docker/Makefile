@@ -1,5 +1,5 @@
 
-docker-build:
+docker-image:
 	cp ../../index.js s3proxy.js
 	docker build -t 'gmoon/s3proxy' .
 
