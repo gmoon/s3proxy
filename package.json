@@ -4,6 +4,7 @@
   "description": "Streaming web proxy for AWS S3",
   "main": "index.js",
   "devDependencies": {
+    "ava": "^2.4.0",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "eslint": "^7.6.0",
@@ -13,7 +14,9 @@
     "express-request-id": "^1.4.1",
     "mocha": "^8.1.1",
     "morgan": "^1.10.0",
-    "nyc": "^15.1.0"
+    "nyc": "^15.1.0",
+    "nock": "^11.7.0",
+    "sinon": "^7.5.0"
   },
   "dependencies": {
     "aws-sdk": "^2.730.0",

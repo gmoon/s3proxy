@@ -40,7 +40,6 @@ module.exports = class s3proxy extends EventEmitter {
     this.isInitialized();
     const r = s3proxy.parseRequest(req);
     if (typeof r.query.expression !== 'undefined') {
-      console.log('select request');
       s3stream = this.createSelectObjectContentStream(r);
     } else {
       s3stream = this.createGetObjectStream(r);
@@ -50,7 +49,7 @@ module.exports = class s3proxy extends EventEmitter {
 
   createSelectObjectContentStream(r, existingStream) {
     const s3stream = (typeof existingStream === 'undefined') ? new PassThrough() : existingStream;
-    s3stream.on('foo', (data) => { console.log(data); });
+
     const params = {
       Bucket: this.bucket,
       Key: r.key,
@@ -65,10 +64,12 @@ module.exports = class s3proxy extends EventEmitter {
         JSON: {},
       },
     };
+
     const s3request = this.s3.selectObjectContent(params);
     s3request.on('httpHeaders', (statusCode, headers) => {
       s3stream.emit('httpHeaders', statusCode, headers);
     });
+
     s3request.send((err, data) => {
       if (err) {
         throw err;
@@ -89,6 +90,7 @@ module.exports = class s3proxy extends EventEmitter {
         data.Payload.on('error', (error) => { throw error; });
       }
     });
+
     return s3stream;
   }
 
@@ -96,9 +98,9 @@ module.exports = class s3proxy extends EventEmitter {
     const params = { Bucket: this.bucket, Key: r.key };
     const s3request = this.s3.getObject(params);
     const s3stream = s3request.createReadStream();
-    s3request.on('httpHeaders', (statusCode, headers) => {
-      s3stream.emit('httpHeaders', statusCode, headers);
-    });
+    // s3request.on('httpHeaders', (statusCode, headers) => {
+    //   s3stream.emit('httpHeaders', statusCode, headers);
+    // });
     return s3stream;
   }
 
@@ -160,8 +162,16 @@ module.exports = class s3proxy extends EventEmitter {
 
   get(req, res) {
     const stream = this.createReadStream(req);
-    stream.on('httpHeaders', (statusCode, headers) => {
-      res.writeHead(statusCode, headers);
+    stream.on('httpHeaders', () => {
+      console.log('headers event!!!!!');
+    });
+    stream.on('data', (chunk) => {
+      console.log('incoming data');
+      console.log(chunk.toString());
+    });
+    stream.on('extractData', (response) => {
+      console.log(`writing headers ${response.httpResponse.statusCode}: ${response.httpResponse.headers}`);
+      res.writeHead(response.httpResponse.statusCode, response.httpResponse.headers);
     });
     return stream;
   }

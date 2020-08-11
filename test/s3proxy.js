@@ -1,9 +1,11 @@
 /* eslint-env mocha, node, es6 */
 
 const chai = require('chai');
+const nock = require('nock');
 const S3Proxy = require('../');
 
 const { expect } = chai;
+nock.recorder.rec();
 
 describe('s3proxy', () => {
   describe('constructor', () => {
