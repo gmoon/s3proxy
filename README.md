@@ -182,3 +182,8 @@ npm audit
 # address audit issues
 npm audit fix
 ```
+### Setup AWS Credentials for Github Actions
+```
+./setupaws.sh
+```
+Add secrets to GitHub Secrets in the repo, per https://github.com/aws-actions/configure-aws-credentials
