@@ -3,13 +3,7 @@
 const EventEmitter = require('events');
 const AWS = require('aws-sdk');
 const url = require('url');
-
-class UserException extends Error {
-  constructor(code, message) {
-    super(message);
-    this.code = code;
-  }
-}
+const UserException = require('./UserException');
 
 module.exports = class s3proxy extends EventEmitter {
   constructor(p) {
@@ -22,16 +16,16 @@ module.exports = class s3proxy extends EventEmitter {
     }
     this.bucket = p.bucket;
     this.options = Object.getOwnPropertyNames(p)
-      .filter(name => name !== 'bucket')
+      .filter((name) => name !== 'bucket')
       .reduce((obj, name) => {
         const withName = {};
         withName[name] = p[name];
-        return Object.assign({}, obj, withName);
+        return { ...obj, ...withName };
       }, {});
   }
 
   init(done) {
-    this.s3 = new AWS.S3(Object.assign({ apiVersion: '2006-03-01' }, this.options));
+    this.s3 = new AWS.S3({ apiVersion: '2006-03-01', ...this.options });
     this.healthCheck((error, data) => {
       if (error) {
         if (typeof (done) !== typeof (Function)) this.emit('error', error, data);

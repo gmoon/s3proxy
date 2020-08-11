@@ -164,4 +164,21 @@ make test
 # Run it faster: execute steps in parallel
 make -j test
 ```
+### Update dependencies, fix security vulnerabilities in dependencies
+```
+# see the status
+npm outdated
+npm a
 
+# install npm-check-updates
+npm install --global npm-check-updates
+
+# update all dependencies
+ncu -a
+
+# run audit
+npm audit
+
+# address audit issues
+npm audit fix
+```
