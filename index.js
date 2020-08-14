@@ -4,6 +4,7 @@ const EventEmitter = require('events');
 const AWS = require('aws-sdk');
 const url = require('url');
 const UserException = require('./UserException');
+const headerHandler = require('./HeaderHandler');
 
 module.exports = class s3proxy extends EventEmitter {
   constructor(p) {
@@ -40,15 +41,15 @@ module.exports = class s3proxy extends EventEmitter {
     const params = { Bucket: this.bucket, Key: r.key };
     const s3request = this.s3.getObject(params);
     const s3stream = s3request.createReadStream();
-    s3request.on('httpHeaders', (statusCode, headers) => {
-      s3stream.emit('httpHeaders', statusCode, headers);
-    });
-    s3stream.addHeaderEventListener = (res) => {
-      s3stream.on('httpHeaders', (statusCode, headers) => {
-        res.writeHead(statusCode, headers);
-      });
-    };
-    return s3stream;
+    // s3request.on('httpHeaders', (statusCode, headers) => {
+    //   s3stream.emit('httpHeaders', statusCode, headers);
+    // });
+    // s3stream.addHeaderEventListener = (res) => {
+    //   s3stream.on('httpHeaders', (statusCode, headers) => {
+    //     res.writeHead(statusCode, headers);
+    //   });
+    // };
+    return { s3request, s3stream };
   }
 
   isInitialized() {
@@ -108,8 +109,8 @@ module.exports = class s3proxy extends EventEmitter {
   }
 
   get(req, res) {
-    const stream = this.createReadStream(req);
-    stream.addHeaderEventListener(res);
-    return stream;
+    const { s3request, s3stream } = this.createReadStream(req);
+    headerHandler.attach(s3request, s3stream, res);
+    return s3stream;
   }
 };
