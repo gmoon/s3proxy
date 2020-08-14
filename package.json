@@ -13,7 +13,9 @@
     "express-request-id": "^1.4.1",
     "mocha": "^8.1.1",
     "morgan": "^1.10.0",
-    "nyc": "^15.1.0"
+    "nock": "^13.0.4",
+    "nyc": "^15.1.0",
+    "sinon": "^9.0.3"
   },
   "dependencies": {
     "aws-sdk": "^2.730.0",
