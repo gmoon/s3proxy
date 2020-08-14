@@ -9,11 +9,11 @@
 */
 
 const express = require('express');
-const S3Proxy = require('../');
+const S3Proxy = require('..');
 const debug = require('debug')('s3proxy');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
-const addRequestId = require('express-request-id')({headerName: 'x-request-id'});
+const addRequestId = require('express-request-id')({ headerName: 'x-request-id' });
 
 const port = process.env.PORT;
 const app = express();
@@ -24,25 +24,25 @@ app.use(bodyParser.json());
 // Use morgan for request logging except during test execution
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan(
-    'request :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ' +
-    '":referrer" ":user-agent" ":response-time ms" :res[x-request-id] :res[x-amz-request-id]'
+    'request :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] '
+    + '":referrer" ":user-agent" ":response-time ms" :res[x-request-id] :res[x-amz-request-id]',
   ));
 }
 
 // initialize the s3proxy
-const bucketName = "s3proxy-public";
+const bucketName = 's3proxy-public';
 const proxy = new S3Proxy({ bucket: bucketName });
 proxy.init();
-proxy.on('error', (err) => { 
+proxy.on('error', (err) => {
   console.log(`error initializing s3proxy for bucket ${bucketName}: ${err.statusCode} ${err.code}`);
 });
 
 // health check api, suitable for integration with ELB health checking
 app.route('/health')
   .get((req, res) => {
-    proxy.healthCheckStream(res).on('error', (err)=>{
+    proxy.healthCheckStream(res).on('error', (err) => {
       // just end the request and let the HTTP status code convey the error
-      res.end()
+      res.end();
     }).pipe(res);
   });
 
@@ -67,6 +67,6 @@ function handleError(req, res, err) {
 }
 
 function requestLogger(req, res, next) {
- log( { type: "request" } ); 
+  log({ type: 'request' });
 }
 module.exports = app;
