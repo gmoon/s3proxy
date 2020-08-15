@@ -2,7 +2,7 @@ const EventEmitter = require('events');
 const AWS = require('aws-sdk');
 const url = require('url');
 const UserException = require('./UserException');
-const headerHandler = require('./HeaderHandler');
+const HeaderHandler = require('./HeaderHandler');
 
 module.exports = class s3proxy extends EventEmitter {
   constructor(p) {
@@ -100,13 +100,15 @@ module.exports = class s3proxy extends EventEmitter {
     const promise = s3request.promise()
       .catch(() => { res.end(); });
     const stubStream = new EventEmitter();
-    headerHandler.attach(s3request, stubStream, res);
+    const header = new HeaderHandler();
+    header.attach(s3request, stubStream, res);
     return promise;
   }
 
   get(req, res) {
     const { s3request, s3stream } = this.createReadStream(req);
-    headerHandler.attach(s3request, s3stream, res);
+    const header = new HeaderHandler();
+    header.attach(s3request, s3stream, res);
     return s3stream;
   }
 };

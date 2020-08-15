@@ -17,57 +17,67 @@
 //     }
 //
 
-module.exports = {
-  attach: (httpRequest, sourceStream, targetStream) => {
-    let header = {
+module.exports = class HeaderHandler {
+  constructor() {
+    this.httpRequest = null;
+    this.sourceStream = null;
+    this.targetStream = null;
+    this.headersSent = false;
+    this.header = {
       statusCode: null,
       headers: null,
       response: null,
       statusMessage: null,
     };
-    let headersSent = false;
-    const sendHeaders = () => {
-      if (!headersSent) {
-        targetStream.writeHead(header.statusCode, header.headers);
-        headersSent = true;
-      }
-    };
+  }
+
+  attach(httpRequest, sourceStream, targetStream) {
+    this.httpRequest = httpRequest;
+    this.sourceStream = sourceStream;
+    this.targetStream = targetStream;
     httpRequest.on('httpHeaders', (statusCode, headers, response, statusMessage) => {
-      header = {
+      this.header = {
         statusCode, headers, response, statusMessage,
       };
     });
     sourceStream.on('data', () => {
-      sendHeaders();
+      this.sendHeaders();
     });
     httpRequest.on('complete', () => {
-      sendHeaders();
+      this.sendHeaders();
     });
     // callback recieves error and request objects
     httpRequest.on('error', () => {
-      sendHeaders();
+      this.sendHeaders();
     });
     // callback recieves error object
     sourceStream.on('error', () => {
-      sendHeaders();
+      this.sendHeaders();
     });
-    // const debug = true;
-    // if (debug) {
-    //   // To enable debugging, change debug to true
-    //   // and uncomment log function and subcribe function below
-    //   const log = (eventName) => {
-    //     console.log(`[event: ${eventName}]`);
-    //   };
-    //   const subscribe = (obj, events) => {
-    //     events.forEach((event) => {
-    //       obj.on(event, () => { log(event); });
-    //     });
-    //   };
-    //   subscribe(httpRequest, [
-    //     'send', 'retry', 'extractError', 'extractData', 'success',
-    //     'error', 'complete', 'httpHeader', 'httpData', 'httpError', 'httpDone',
-    //   ]);
-    //   subscribe(sourceStream, ['data']);
-    // }
-  },
+  }
+
+  sendHeaders() {
+    if (!this.headersSent) {
+      this.targetStream.writeHead(this.header.statusCode, this.header.headers);
+      this.headersSent = true;
+    }
+  }
+  // const debug = true;
+  // if (debug) {
+  //   // To enable debugging, change debug to true
+  //   // and uncomment log function and subcribe function below
+  //   const log = (eventName) => {
+  //     console.log(`[event: ${eventName}]`);
+  //   };
+  //   const subscribe = (obj, events) => {
+  //     events.forEach((event) => {
+  //       obj.on(event, () => { log(event); });
+  //     });
+  //   };
+  //   subscribe(httpRequest, [
+  //     'send', 'retry', 'extractError', 'extractData', 'success',
+  //     'error', 'complete', 'httpHeader', 'httpData', 'httpError', 'httpDone',
+  //   ]);
+  //   subscribe(sourceStream, ['data']);
+  // }
 };

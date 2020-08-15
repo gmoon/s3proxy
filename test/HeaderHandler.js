@@ -2,7 +2,7 @@
 const EventEmitter = require('events');
 const sinon = require('sinon');
 const chai = require('chai');
-const headerHandler = require('../HeaderHandler');
+const HeaderHandler = require('../HeaderHandler');
 
 const { expect } = chai;
 
@@ -14,7 +14,8 @@ describe('HeaderHandler', () => {
     output = new EventEmitter();
     output.writeHead = () => { };
     writeHeadSpy = sinon.spy(output, 'writeHead');
-    headerHandler.attach(request, input, output);
+    const handler = new HeaderHandler();
+    handler.attach(request, input, output);
   });
   it('request should have one listener for httpHeaders', () => {
     expect(request.listeners('httpHeaders')).lengthOf(1);
@@ -39,5 +40,13 @@ describe('HeaderHandler', () => {
     request.emit('httpHeaders', 999, { ID: '000', Code: 'XXX' }, null, 'Info');
     input.emit('data');
     sinon.assert.calledWith(writeHeadSpy.firstCall, 999, { ID: '000', Code: 'XXX' });
+  });
+  it('writeHead should be called on request error', () => {
+    request.emit('error');
+    sinon.assert.calledOnce(writeHeadSpy);
+  });
+  it('writeHead should be called on request input', () => {
+    input.emit('error');
+    sinon.assert.calledOnce(writeHeadSpy);
   });
 });
