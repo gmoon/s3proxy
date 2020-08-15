@@ -30,6 +30,9 @@ jobs:
       - name: test sam-app
         run: |
           cd examples/sam-app/s3proxy
+          sam build
+          sam local invoke -e events/event.json
+          cd s3proxy
           npm install
           npm run build --if-present
           npm test

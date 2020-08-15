@@ -6,8 +6,17 @@ const app = express();
 const proxy = new S3Proxy({ bucket: 's3proxy-public' });
 proxy.init();
 
+function handleError(req, res, err) {
+  // sending xml because the AWS SDK sets content-type: application/xml for non-200 responses
+  res.end(`<?xml version="1.0"?>\n<error time="${err.time}" code="${err.code}" statusCode="${err.statusCode}" url="${req.url}" method="${req.method}">${err.message}</error>
+  `);
+}
+
 function proxyToS3(req, res) {
-  proxy.get(req, res).on('error', () => res.end()).pipe(res);
+  proxy.get(req, res).on('error', (err) => {
+    handleError(req, res, err);
+    res.end();
+  }).pipe(res);
 }
 
 app.route('/*').get(proxyToS3);
