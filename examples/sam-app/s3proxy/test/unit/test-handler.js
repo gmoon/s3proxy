@@ -1,3 +1,5 @@
+/* eslint-env mocha, node, es6 */
+/* eslint-disable import/no-extraneous-dependencies */
 const chai = require('chai');
 const app = require('../../app.js');
 

@@ -1,5 +1,5 @@
-const S3Proxy = require('../');
 const http = require('http');
+const S3Proxy = require('..');
 
 const port = process.env.PORT;
 const proxy = new S3Proxy({ bucket: 's3proxy-public' });
@@ -14,4 +14,3 @@ if (port > 0) {
 }
 
 module.exports = server;
-

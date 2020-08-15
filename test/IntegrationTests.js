@@ -1,12 +1,12 @@
 /* eslint-env mocha, node, es6 */
 const chai = require('chai');
-const chaiHttp = require('chai-http');
-const httpServer = require('./http.js');
-const expressServer = require('./express-basic.js');
+const http = require('chai-http');
+const httpServer = require('../examples/http.js');
+const expressServer = require('../examples/express-basic.js');
 
 const { expect } = chai;
 
-chai.use(chaiHttp);
+chai.use(http);
 
 describe('Examples', () => {
   describe('HTTP server', () => {

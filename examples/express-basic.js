@@ -1,3 +1,5 @@
+/* eslint-disable import/no-extraneous-dependencies, no-console */
+
 /*
   S3Proxy Express Framework Example
 
@@ -9,17 +11,23 @@
 */
 
 const express = require('express');
-const S3Proxy = require('..');
 const debug = require('debug')('s3proxy');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const addRequestId = require('express-request-id')({ headerName: 'x-request-id' });
+const S3Proxy = require('..');
 
 const port = process.env.PORT;
 const app = express();
 app.set('view engine', 'pug');
 app.use(addRequestId);
 app.use(bodyParser.json());
+
+function handleError(req, res, err) {
+  // sending xml because the AWS SDK sets content-type: application/xml for non-200 responses
+  res.end(`<?xml version="1.0"?>\n<error time="${err.time}" code="${err.code}" statusCode="${err.statusCode}" url="${req.url}" method="${req.method}">${err.message}</error>
+  `);
+}
 
 // Use morgan for request logging except during test execution
 if (process.env.NODE_ENV !== 'test') {
@@ -40,7 +48,7 @@ proxy.on('error', (err) => {
 // health check api, suitable for integration with ELB health checking
 app.route('/health')
   .get((req, res) => {
-    proxy.healthCheckStream(res).on('error', (err) => {
+    proxy.healthCheckStream(res).on('error', () => {
       // just end the request and let the HTTP status code convey the error
       res.end();
     }).pipe(res);
@@ -52,7 +60,7 @@ app.route('/*')
     await proxy.head(req, res);
     res.end();
   })
-  .get((req, res, next) => {
+  .get((req, res) => {
     proxy.get(req, res).on('error', (err) => {
       handleError(req, res, err);
     }).pipe(res);
@@ -64,13 +72,4 @@ if (port > 0) {
   });
 }
 
-function handleError(req, res, err) {
-  // sending xml because the AWS SDK sets content-type: application/xml for non-200 responses
-  res.end(`<?xml version="1.0"?>\n<error time="${err.time}" code="${err.code}" statusCode="${err.statusCode}" url="${req.url}" method="${req.method}">${err.message}</error>
-  `);
-}
-
-function requestLogger(req, res, next) {
-  log({ type: 'request' });
-}
 module.exports = app;

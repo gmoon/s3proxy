@@ -5,7 +5,7 @@ s3proxy and that you can deploy with the SAM CLI. It demonstrates serving binary
 
 - s3proxy - Code for the application's Lambda function.
 - events - Invocation events that you can use to invoke the function.
-- s3proxy/tests - Unit tests for the application code. 
+- s3proxy/test - Unit tests for the application code. 
 - template.yaml - A template that defines the application's AWS resources.
 
 ## Quick Start
