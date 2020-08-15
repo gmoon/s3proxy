@@ -21,7 +21,7 @@ describe('MockExpress', () => {
     nock.disableNetConnect();
     nock.enableNetConnect(/127.0.0.1/);
     // can add , { allowUnmocked: true }
-    scope = nock('https://s3proxy-public.s3.amazonaws.com:443', { allowUnmocked: true })
+    scope = nock('https://s3proxy-public.s3.amazonaws.com:443')
       .head('/')
       .reply(200);
     proxy = new S3Proxy({ bucket: 's3proxy-public' });
@@ -76,9 +76,9 @@ describe('MockExpress', () => {
     });
   });
   it('head method should return headers for valid object', (done) => {
-    // scope
-    //   .head('/large.bin')
-    //   .reply(200);
+    scope
+      .head('/large.bin')
+      .reply(200);
     server.head('/large.bin').end((err, res) => {
       expect(err).to.be.equal(null);
       expect(res.statusCode).to.equal(200);
