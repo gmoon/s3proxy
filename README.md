@@ -167,6 +167,18 @@ make test
 # Run it faster: execute steps in parallel
 make -j test
 ```
+### Load testing
+Artillery can be used to send load to your server.
+```
+npm run artillery
+```
+### Run GitHub Actions locally
+Note: This is currently not working, as this stage fails:
+[Node CI/build-2]   ❌  Failure - Configure AWS Credentials
+```
+brew install nektos/tap/act
+act
+```
 ### Update dependencies, fix security vulnerabilities in dependencies
 ```
 # see the status

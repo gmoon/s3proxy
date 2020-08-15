@@ -1,0 +1,43 @@
+config:
+  target: "http://localhost:3000"
+  plugins:
+    expect: {}
+  phases:
+    - duration: 10
+      arrivalRate: 20
+scenarios:
+  - flow:
+      - get:
+          url: "/index.html"
+          expect:
+            - statusCode: 200
+            - contentType: text/html
+  - flow:
+      - head:
+          url: "/large.bin"
+          expect:
+            - statusCode: 200
+            - contentType: application/octet-stream
+            - headerEquals:
+                - "content-length"
+                - "10485760"
+  - flow:
+      - get:
+          url: "/unauthorized.html"
+          expect:
+            - statusCode: 403
+  - flow:
+      - get:
+          url: "/zerobytefile"
+          expect:
+            - statusCode: 200
+            - contentType: binary/octet-stream
+            - headerEquals:
+                - "content-length"
+                - "0"
+  - flow:
+      - get:
+          url: "/filenotfound"
+          expect:
+            - statusCode: 404
+            - contentType: application/xml

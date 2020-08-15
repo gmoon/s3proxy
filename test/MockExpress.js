@@ -4,6 +4,7 @@ const chai = require('chai');
 const http = require('chai-http');
 const nock = require('nock');
 const express = require('express');
+const Benchmark = require('benchmark');
 const S3Proxy = require('..');
 
 chai.use(http);
@@ -83,6 +84,48 @@ describe('MockExpress', () => {
       expect(err).to.be.equal(null);
       expect(res.statusCode).to.equal(200);
       done();
+    });
+  });
+  describe('Benchmark', () => {
+    it('get method rate should exeed 500 calls per second', async () => {
+      scope
+        .get('/index.html')
+        .times(1000)
+        .reply(200, '<html></html>');
+      let count = 0;
+      const Promises = [];
+      const start = Date.now();
+      while (count < 500) {
+        count += 1;
+        Promises.push(server.get('/index.html'));
+      }
+      return Promise.all(Promises).then(() => {
+        const end = Date.now();
+        const duration = end - start;
+        const ratePerSecond = count / (duration / 1000);
+        console.log(`      duration: ${duration}ms, rate: ${ratePerSecond} calls per second`);
+        expect(ratePerSecond).to.be.greaterThan(500);
+      });
+    });
+    it('head method rate should exeed 500 calls per second', async () => {
+      scope
+        .head('/index.html')
+        .times(1000)
+        .reply(200, '');
+      let count = 0;
+      const Promises = [];
+      const start = Date.now();
+      while (count < 500) {
+        count += 1;
+        Promises.push(server.head('/index.html'));
+      }
+      return Promise.all(Promises).then(() => {
+        const end = Date.now();
+        const duration = end - start;
+        const ratePerSecond = count / (duration / 1000);
+        console.log(`      duration: ${duration}ms, rate: ${ratePerSecond} calls per second`);
+        expect(ratePerSecond).to.be.greaterThan(500);
+      });
     });
   });
 });

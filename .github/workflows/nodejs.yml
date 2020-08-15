@@ -26,4 +26,13 @@ jobs:
         run: |
           npm install
           npm run build --if-present
+          make test
+      - name: test sam-app
+        run: |
+          cd examples/sam-app/s3proxy
+          npm install
+          npm run build -- if-present
           npm test
+      - name: artillery
+        run: |
+          npm artillery-ci
