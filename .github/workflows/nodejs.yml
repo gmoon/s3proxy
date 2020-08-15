@@ -29,7 +29,7 @@ jobs:
           make test
       - name: test sam-app
         run: |
-          cd examples/sam-app/s3proxy
+          cd examples/sam-app
           sam build
           sam local invoke -e events/event.json
           cd s3proxy
