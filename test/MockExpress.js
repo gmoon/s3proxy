@@ -86,7 +86,7 @@ describe('MockExpress', () => {
       done();
     });
   });
-  describe('Benchmark', () => {
+  describe.skip('Benchmark', () => {
     it('get method rate should exeed 500 calls per second', async () => {
       scope
         .get('/index.html')

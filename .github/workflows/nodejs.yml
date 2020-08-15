@@ -35,4 +35,4 @@ jobs:
           npm test
       - name: artillery
         run: |
-          npm artillery-ci
+          npm run artillery-ci
