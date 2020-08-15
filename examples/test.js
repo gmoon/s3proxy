@@ -13,7 +13,7 @@ describe('Examples', () => {
     it('should get index.html', (done) => {
       chai.request(httpServer).get('/index.html').end((error, res) => {
         expect(res).to.have.status(200);
-        done();
+        done(error);
       });
     });
   });
@@ -28,17 +28,23 @@ describe('Examples', () => {
     it('should respond with 404 Not Found for nonexistent key', (done) => {
       chai.request(expressServer).get('/nonexistent.file').end((error, res) => {
         expect(res).to.have.status(404);
-        done();
+        done(error);
       });
     });
     it('should respond with 403 Forbidden for unauthorized access request', (done) => {
       chai.request(expressServer).get('/unauthorized.html').end((error, res) => {
         expect(res).to.have.status(403);
-        done();
+        done(error);
       });
     });
     it('should respond to health check', (done) => {
       chai.request(expressServer).get('/health').end((error, res) => {
+        expect(res).to.have.status(200);
+        done(error);
+      });
+    });
+    it('should respond to head request', (done) => {
+      chai.request(expressServer).head('/index.html').end((error, res) => {
         expect(res).to.have.status(200);
         done(error);
       });

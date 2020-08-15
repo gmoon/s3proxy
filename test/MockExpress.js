@@ -21,12 +21,16 @@ describe('MockExpress', () => {
     nock.disableNetConnect();
     nock.enableNetConnect(/127.0.0.1/);
     // can add , { allowUnmocked: true }
-    scope = nock('https://s3proxy-public.s3.amazonaws.com:443')
+    scope = nock('https://s3proxy-public.s3.amazonaws.com:443', { allowUnmocked: true })
       .head('/')
       .reply(200);
     proxy = new S3Proxy({ bucket: 's3proxy-public' });
     proxy.init(() => {
       const app = express();
+      app.head('/*', async (req, res) => {
+        await proxy.head(req, res);
+        res.end();
+      });
       app.get('/*', (req, res) => {
         proxy.get(req, res).pipe(res);
       });
@@ -56,6 +60,28 @@ describe('MockExpress', () => {
       expect(err).to.be.equal(null);
       expect(res.statusCode).to.equal(200);
       expect(res.headers).to.haveOwnProperty('x-y-z');
+      done();
+    });
+  });
+  it('should send headers for zero byte file', (done) => {
+    scope
+      .get('/zerobytefile')
+      .reply(200, '', ['x-y-z', '999']);
+    server.get('/zerobytefile').end((err, res) => {
+      expect(err).to.be.equal(null);
+      expect(res.statusCode).to.equal(200);
+      expect(res.headers).to.haveOwnProperty('x-y-z');
+      expect(res.text.length).to.be.equal(0);
+      done();
+    });
+  });
+  it('head method should return headers for valid object', (done) => {
+    // scope
+    //   .head('/large.bin')
+    //   .reply(200);
+    server.head('/large.bin').end((err, res) => {
+      expect(err).to.be.equal(null);
+      expect(res.statusCode).to.equal(200);
       done();
     });
   });

@@ -1,5 +1,3 @@
-/* jslint node: true, esversion: 6 */
-
 const EventEmitter = require('events');
 const AWS = require('aws-sdk');
 const url = require('url');
@@ -41,14 +39,6 @@ module.exports = class s3proxy extends EventEmitter {
     const params = { Bucket: this.bucket, Key: r.key };
     const s3request = this.s3.getObject(params);
     const s3stream = s3request.createReadStream();
-    // s3request.on('httpHeaders', (statusCode, headers) => {
-    //   s3stream.emit('httpHeaders', statusCode, headers);
-    // });
-    // s3stream.addHeaderEventListener = (res) => {
-    //   s3stream.on('httpHeaders', (statusCode, headers) => {
-    //     res.writeHead(statusCode, headers);
-    //   });
-    // };
     return { s3request, s3stream };
   }
 
@@ -102,10 +92,16 @@ module.exports = class s3proxy extends EventEmitter {
     return s3stream;
   }
 
-  head(req, res) {
-    const stream = this.createReadStream(req);
-    stream.addHeaderEventListener(res);
-    return stream;
+  async head(req, res) {
+    this.isInitialized();
+    const r = s3proxy.parseRequest(req);
+    const params = { Bucket: this.bucket, Key: r.key };
+    const s3request = this.s3.headObject(params);
+    const promise = s3request.promise()
+      .catch(() => { res.end(); });
+    const stubStream = new EventEmitter();
+    headerHandler.attach(s3request, stubStream, res);
+    return promise;
   }
 
   get(req, res) {

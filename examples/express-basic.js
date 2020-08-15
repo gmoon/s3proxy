@@ -31,7 +31,7 @@ if (process.env.NODE_ENV !== 'test') {
 
 // initialize the s3proxy
 const bucketName = 's3proxy-public';
-const proxy = new S3Proxy({ bucket: bucketName });
+const proxy = new S3Proxy({ bucket: bucketName, logger: console });
 proxy.init();
 proxy.on('error', (err) => {
   console.log(`error initializing s3proxy for bucket ${bucketName}: ${err.statusCode} ${err.code}`);
@@ -48,6 +48,10 @@ app.route('/health')
 
 // route all get requests to s3proxy
 app.route('/*')
+  .head(async (req, res) => {
+    await proxy.head(req, res);
+    res.end();
+  })
   .get((req, res, next) => {
     proxy.get(req, res).on('error', (err) => {
       handleError(req, res, err);
