@@ -9,7 +9,7 @@
     "benchmark": "^2.1.4",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
-    "eslint": "^7.6.0",
+    "eslint": "^7.7.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-plugin-import": "^2.22.0",
     "express": "^4.17.1",
@@ -23,7 +23,7 @@
     "start-server-and-test": "^1.11.3"
   },
   "dependencies": {
-    "aws-sdk": "^2.730.0",
+    "aws-sdk": "^2.734.0",
     "url": "^0.11.0"
   },
   "scripts": {
