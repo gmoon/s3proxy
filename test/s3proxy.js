@@ -1,7 +1,7 @@
 /* eslint-env mocha, node, es6 */
 
 const chai = require('chai');
-const S3Proxy = require('../');
+const S3Proxy = require('..');
 
 const { expect } = chai;
 
@@ -32,7 +32,7 @@ describe('s3proxy', () => {
     it('should pass the provided options through to the AWS.S3 constructor', (done) => {
       const configuredProxy = new S3Proxy({
         bucket: 's3proxy-public',
-        httpOptions: { connectTimeout: 1 }
+        httpOptions: { connectTimeout: 1 },
       });
 
       configuredProxy.init(() => {
@@ -78,8 +78,8 @@ describe('s3proxy', () => {
       proxy.init(done);
     });
     it('should return error code NoSuchKey for nonexistent key', (done) => {
-      const stream = proxy.createReadStream({ url: 'small.txt' });
-      stream.on('error', (error) => {
+      const { s3request, s3stream } = proxy.createReadStream({ url: 'small.txt' });
+      s3stream.on('error', (error) => {
         expect(error.code).to.equal('NoSuchKey');
         done();
       });
@@ -90,16 +90,16 @@ describe('s3proxy', () => {
     const page = {};
     before((done) => {
       proxy.init();
-      const stream = proxy.createReadStream({ url: 'index.html' });
+      const { s3request, s3stream } = proxy.createReadStream({ url: 'index.html' });
       page.length = 0;
-      stream.on('data', (chunk) => {
+      s3stream.on('data', (chunk) => {
         page.length += chunk.length;
       });
-      stream.on('httpHeaders', (statusCode, headers) => {
+      s3request.on('httpHeaders', (statusCode, headers) => {
         page.headers = headers;
         page.statusCode = statusCode;
       });
-      stream.on('end', () => {
+      s3stream.on('end', () => {
         done();
       });
     });

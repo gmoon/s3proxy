@@ -23,16 +23,16 @@ clean :
 npm-install:
 	npm install
 
-eslint : target npm-install
-	node_modules/.bin/eslint $(ESLINT_OPTS) *.js
+eslint : target
+	node_modules/.bin/eslint $(ESLINT_OPTS) *.js examples/*.js
 
-mocha : target npm-install
+mocha : target
 	set -o pipefail; NODE_ENV=test npm run nyc-coverage mocha $(MOCHA_OPTS)
 
-mocha-examples: target npm-install
-	set -o pipefail; NODE_ENV=test npm run mocha examples/ $(MOCHA_OPTS)
+test-sam-app: 
+	cd examples/sam-app/s3proxy; npm install; npm test
 
-test : mocha mocha-examples eslint
+test : mocha test-sam-app eslint
 
 tar : target test
 	git archive -v -o target/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-$(GIT_REV).tar.gz --format=tar HEAD
