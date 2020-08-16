@@ -1,7 +1,7 @@
 # s3proxy
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
-![[Node CI][actions-image]][actions-url]
+[![Node CI][actions-image]][actions-url]
 
 Use AWS S3 as the storage backend for a nodejs web server.
 
