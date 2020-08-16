@@ -1,6 +1,6 @@
 {
   "name": "s3proxy",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Streaming web proxy for AWS S3",
   "main": "index.js",
   "devDependencies": {
@@ -41,7 +41,7 @@
   "files": [
     "README.md",
     "LICENSE",
-    "index.js"
+    "*.js"
   ],
   "keywords": [
     "aws",
