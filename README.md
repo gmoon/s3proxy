@@ -47,6 +47,15 @@ we do now have to keep the web server available (but we are pretty good at doing
 1. Test it out (change index.html to the name of a file that exists in your bucket)
 `curl http://localhost:3000/index.html`
 
+## New Project
+```
+mkdir website
+cd website
+npm init
+npm install --save express express-request-id morgan s3proxy
+curl -O https://raw.githubusercontent.com/gmoon/s3proxy/master/examples/express-s3proxy.js
+PORT=3000 node express-s3proxy
+```
 ## Credentials
 s3proxy needs read access (s3:GetObject) on your bucket, and uses the [AWS javascript sdk](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/welcome.html). You can provide credentials using any method supported:
 
