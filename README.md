@@ -236,6 +236,7 @@ git clone https://github.com/gmoon/s3proxy.git
 
 # Run the test
 cd s3proxy
+npm install
 PORT=3000 node examples/express-basic.js
 ```
 Response time p95 is less than 100ms and median response time is 31ms. This includes 37 requests for a 10M binary (labled as Scenario 1 below).
