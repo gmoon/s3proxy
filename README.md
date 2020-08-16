@@ -64,6 +64,7 @@ https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-creden
 The [Environment Variables](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html) option is easy to get started, just make sure the variables are defined before you start the node process.
 
 Alternatively, you can specify the profile to use on command line:
+
 `AWS_PROFILE=foo PORT=3000 node examples/express-basic.js`
 
 One way to test is to verify that your aws cli works from command line (substitute your bucket name):
