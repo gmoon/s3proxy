@@ -120,6 +120,10 @@ app.route('/health')
 // encounters an error (which occurs, for instance, when the requested object doesn't
 // exist).
 app.route('/*')
+  .head(async (req, res) => {
+    await proxy.head(req, res);
+    res.end();
+  })
   .get((req, res) => {
     proxy.get(req,res)
       .on('error', () => res.end())
