@@ -48,11 +48,11 @@ we do now have to keep the web server available (but we are pretty good at doing
 `curl http://localhost:3000/index.html`
 
 ## Credentials
-s3proxy needs read access (s3:GetObject) on your bucket, and uses the ![AWS javascript sdk](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/welcome.html). You can provide credentials using any method supported:
+s3proxy needs read access (s3:GetObject) on your bucket, and uses the [AWS javascript sdk](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/welcome.html). You can provide credentials using any method supported:
 
 https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html
 
-The ![Environment Variables](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html) option is easy to get started, just make sure the variables are defined before you start the node process.
+The [Environment Variables](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html) option is easy to get started, just make sure the variables are defined before you start the node process.
 
 Alternatively, you can specify the profile to use on command line:
 `AWS_PROFILE=foo PORT=3000 node examples/express-basic.js`
@@ -205,7 +205,7 @@ make test
 make -j test
 ```
 ### Load testing
-Artillery can be used to send load to your endpoint. You can view the scenarios we use ![here](test/artillery.yml).
+Artillery can be used to send load to your endpoint. You can view the scenarios we use [here](test/artillery.yml).
 
 If you run this, please make sure to run it against your bucket.
 #### AWS EC2 Instance
