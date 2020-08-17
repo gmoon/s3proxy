@@ -92,7 +92,9 @@ Performance is highly dependent on the types of files served and the infrastruct
 
 A tip to increase performance is to configure the aws-sdk to [reuse TCP connections](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/node-reusing-connections.html). In Load Testing, setting the `AWS_NODEJS_CONNECTION_REUSE_ENABLED=1` environment variable reduced median response times by nearly 50% over a 60-second period.
 
-Reliability can be achieved by fronting the web server with a Load Balancer. Each instance of s3proxy will utilize retries, which are enabled by default and can be further configured via the [Global Configuration Object](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/global-config-object.html)
+When running s3proxy on an EC2 instance and comparing the artillery run (running on the same instance) against the AWS public S3 website, the response times for s3proxy were about 50% lower. This at least means s3proxy is not adding a lot of overhead over the AWS public S3 website.
+
+Reliability can be achieved by fronting the web server with a Load Balancer. Each instance of s3proxy will utilize retries, which are enabled by the aws-sdk by default and can be further configured via the [AWS SDK Global Configuration Object](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/global-config-object.html)
 
 ## Installation
 * `npm install s3proxy --save`
