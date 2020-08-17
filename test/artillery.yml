@@ -3,7 +3,7 @@ config:
   plugins:
     expect: {}
   phases:
-    - duration: 10
+    - duration: 60
       arrivalRate: 20
 scenarios:
   - flow:

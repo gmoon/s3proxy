@@ -90,6 +90,8 @@ Here is the minimal set of permissions needed to run s3proxy (replace s3proxy-pu
 ## Performance and Reliability
 Performance is highly dependent on the types of files served and the infrastructure. See the [Load Testing](#load-testing) section for some data on different scenarios.
 
+A tip to increase performance is to configure the aws-sdk to [reuse TCP connections](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/node-reusing-connections.html). In Load Testing, setting the `AWS_NODEJS_CONNECTION_REUSE_ENABLED=1` environment variable reduced median response times by nearly 50% over a 60-second period.
+
 Reliability can be achieved by fronting the web server with a Load Balancer. Each instance of s3proxy will utilize retries, which are configurable through the [Global Configuration Object](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/global-config-object.html)
 
 ## Installation
@@ -238,58 +240,62 @@ git clone https://github.com/gmoon/s3proxy.git
 # Run the test
 cd s3proxy
 npm install
-PORT=3000 node examples/express-basic.js
+AWS_NODEJS_CONNECTION_REUSE_ENABLED=1 PORT=3000 node examples/express-basic.js
+
+# In a different console
+cd s3proxy
+npm run artillery
 ```
-Response time p95 is less than 100ms and median response time is 31ms. This includes 37 requests for a 10M binary (labled as Scenario 1 below).
+Response time p95 is less than 35ms and median response time is 12.3ms.
 ```
 All virtual users finished
-Summary report @ 03:01:24(+0000) 2020-08-16
-  Scenarios launched:  200
-  Scenarios completed: 200
-  Requests completed:  200
-  Mean response/sec: 19.25
+Summary report @ 01:36:53(+0000) 2020-08-17
+  Scenarios launched:  1200
+  Scenarios completed: 1200
+  Requests completed:  1200
+  Mean response/sec: 19.87
   Response time (msec):
-    min: 13.1
-    max: 207.5
-    median: 31.9
-    p95: 93.2
-    p99: 147.8
+    min: 8.1
+    max: 275.9
+    median: 12.3
+    p95: 34.4
+    p99: 62.9
   Scenario counts:
-    0: 45 (22.5%)
-    1: 37 (18.5%)
-    2: 40 (20%)
-    3: 43 (21.5%)
-    4: 35 (17.5%)
+    0: 245 (20.417%)
+    1: 225 (18.75%)
+    2: 220 (18.333%)
+    3: 260 (21.667%)
+    4: 250 (20.833%)
   Codes:
-    200: 125
-    403: 40
-    404: 35
+    200: 730
+    403: 220
+    404: 250
 ```
 #### Development Laptop
-Below are the results from a run on a MacBook Pro with home internet (fast.com measured 61Mbps download and 5.0Mbps upload). It shows ~20 responses per second, the p95 response time was just over 400ms, and the median response time was 220ms. This includes serving a 10MB binary file 43 times (labeled Scenario 1 below).
+Below are the results from a run on a MacBook Pro with home internet (fast.com measured 61Mbps download and 5.0Mbps upload). It shows ~20 responses per second, the p95 response time was just under 250ms, and the median response time was 44.7ms.
 ```
 All virtual users finished
-Summary report @ 22:22:14(-0400) 2020-08-15
-  Scenarios launched:  200
-  Scenarios completed: 200
-  Requests completed:  200
-  Mean response/sec: 19.19
+Summary report @ 21:46:11(-0400) 2020-08-16
+  Scenarios launched:  1200
+  Scenarios completed: 1200
+  Requests completed:  1200
+  Mean response/sec: 19.86
   Response time (msec):
-    min: 120
-    max: 608.8
-    median: 220.8
-    p95: 436.8
-    p99: 574.9
+    min: 22.8
+    max: 918.4
+    median: 44.7
+    p95: 246.3
+    p99: 339.6
   Scenario counts:
-    0: 43 (21.5%)
-    1: 43 (21.5%)
-    2: 42 (21%)
-    3: 33 (16.5%)
-    4: 39 (19.5%)
+    0: 248 (20.667%)
+    1: 212 (17.667%)
+    2: 256 (21.333%)
+    3: 266 (22.167%)
+    4: 218 (18.167%)
   Codes:
-    200: 119
-    403: 42
-    404: 39
+    200: 726
+    403: 256
+    404: 218
 ```
 To execute the tests:
 1. start your local web server on port 3000
