@@ -92,7 +92,7 @@ Performance is highly dependent on the types of files served and the infrastruct
 
 A tip to increase performance is to configure the aws-sdk to [reuse TCP connections](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/node-reusing-connections.html). In Load Testing, setting the `AWS_NODEJS_CONNECTION_REUSE_ENABLED=1` environment variable reduced median response times by nearly 50% over a 60-second period.
 
-Reliability can be achieved by fronting the web server with a Load Balancer. Each instance of s3proxy will utilize retries, which are configurable through the [Global Configuration Object](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/global-config-object.html)
+Reliability can be achieved by fronting the web server with a Load Balancer. Each instance of s3proxy will utilize retries, which are enabled by default and can be further configured via the [Global Configuration Object](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/global-config-object.html)
 
 ## Installation
 * `npm install s3proxy --save`
