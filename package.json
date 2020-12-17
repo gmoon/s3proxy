@@ -9,21 +9,21 @@
     "benchmark": "^2.1.4",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
-    "eslint": "^7.7.0",
-    "eslint-config-airbnb-base": "^14.2.0",
-    "eslint-plugin-import": "^2.22.0",
+    "eslint": "^7.15.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
     "express": "^4.17.1",
     "express-request-id": "^1.4.1",
     "microtime": "^3.0.0",
-    "mocha": "^8.1.1",
+    "mocha": "^8.2.1",
     "morgan": "^1.10.0",
-    "nock": "^13.0.4",
+    "nock": "^13.0.5",
     "nyc": "^15.1.0",
-    "sinon": "^9.0.3",
-    "start-server-and-test": "^1.11.3"
+    "sinon": "^9.2.2",
+    "start-server-and-test": "^1.11.6"
   },
   "dependencies": {
-    "aws-sdk": "^2.734.0",
+    "aws-sdk": "^2.813.0",
     "url": "^0.11.0"
   },
   "scripts": {
