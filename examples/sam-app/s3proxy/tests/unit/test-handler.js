@@ -1,8 +1,9 @@
 const chai = require('chai');
+const nock = require('nock');
 const app = require('../../app.js');
 
 const { expect } = chai;
-const event = {
+const apiGatewayEvent = {
   httpMethod: 'GET',
   body: null,
   resource: '/{proxy+}',
@@ -75,6 +76,6 @@ describe('Tests index', () => {
       expect(result.body).to.be.an('string');
       done();
     };
-    app.lambdaHandler(event, { succeed });
+    app.lambdaHandler(apiGatewayEvent, { succeed });
   });
 });

@@ -83,6 +83,7 @@ module.exports = class s3proxy extends EventEmitter {
       obj.key = req.path;
     }
     obj.key = s3proxy.stripLeadingSlash(obj.key);
+    console.log(`request is ${obj}`);
     return obj;
   }
 
@@ -117,5 +118,9 @@ module.exports = class s3proxy extends EventEmitter {
     const stream = this.createReadStream(req);
     stream.addHeaderEventListener(res);
     return stream;
+  }
+
+  lambdaHandler(event, context) {
+    return "{foo: 'bar'}";
   }
 };

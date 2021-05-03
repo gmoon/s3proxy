@@ -12,5 +12,6 @@ function proxyToS3(req, res) {
 }
 
 const server = awsServerlessExpress.createServer(app, null, ['image/jpeg']);
+//exports.lambdaHandler = proxy.lambdaHandler;
 exports.lambdaHandler = (event, context) => { awsServerlessExpress.proxy(server, event, context); };
 exports.close = () => { server.close(); };
