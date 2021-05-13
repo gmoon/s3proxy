@@ -7,11 +7,25 @@ const expressServer = require('../examples/express-basic.js');
 const { expect } = chai;
 
 chai.use(http);
+const testString = "specialCharacters!-_.*'()&$@=;:+  ,?\\{^}%`]\">[~<#|.";
+const encodedTestString = encodeURIComponent(testString);
 
 describe('Examples', () => {
   describe('HTTP server', () => {
     it('should get index.html', (done) => {
       chai.request(httpServer).get('/index.html').end((error, res) => {
+        expect(res).to.have.status(200);
+        done(error);
+      });
+    });
+    it('should respond with 404 Not Found for nonexistent key', (done) => {
+      chai.request(httpServer).get('/nonexistent.file').end((error, res) => {
+        expect(res).to.have.status(404);
+        done(error);
+      });
+    });
+    it("should get object with special characters in the name", (done) => {
+      chai.request(httpServer).get("/"+encodedTestString).end((error, res) => {
         expect(res).to.have.status(200);
         done(error);
       });
