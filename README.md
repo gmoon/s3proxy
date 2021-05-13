@@ -87,6 +87,26 @@ Here is the minimal set of permissions needed to run s3proxy (replace s3proxy-pu
 }
 ```
 
+## Special Characters in Object Names
+As of version 1.5, the request URL is decoded prior to passing the key name to the S3 GetObject method. This has unit and integration test coverage and is tested against the special
+characters specified [here](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html) across all three categories: 
+ * Safe characters
+ * Characters that might require special handling
+ * Characters to avoid
+
+### Testing from command-line:
+start your server:
+```
+PORT=3000 node examples/express-basic.js
+```
+curl the url-encoded object:
+```
+# object name: specialCharacters!-_.*'()&$@=;:+  ,?\{^}%`]">[~<#|.
+# url-encoded object name: specialCharacters!-_.*'()%26%24%40%3D%3B%3A%2B%20%20%2C%3F%5C%7B%5E%7D%25%60%5D%22%3E%5B~%3C%23%7C.
+# bash-safe and url-encoded object name: specialCharacters\!-_.*'()%26%24%40%3D%3B%3A%2B%20%20%2C%3F%5C%7B%5E%7D%25%60%5D%22%3E%5B~%3C%23%7C.
+curl -v "http://localhost:3000/specialCharacters\!-_.*'()%26%24%40%3D%3B%3A%2B%20%20%2C%3F%5C%7B%5E%7D%25%60%5D%22%3E%5B~%3C%23%7C."
+```
+
 ## Performance and Reliability
 Performance is highly dependent on the types of files served and the infrastructure. See the [Load Testing](#load-testing) section for some data on different scenarios.
 
@@ -321,7 +341,7 @@ npm outdated
 npm install --global npm-check-updates
 
 # update all dependencies
-ncu --update
+ncu --upgrade
 
 # run audit
 npm audit

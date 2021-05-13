@@ -4,6 +4,8 @@ const url = require('url');
 const UserException = require('./UserException');
 const HeaderHandler = require('./HeaderHandler');
 
+AWS.config.logger = console;
+
 module.exports = class s3proxy extends EventEmitter {
   constructor(p) {
     super();
@@ -62,10 +64,14 @@ module.exports = class s3proxy extends EventEmitter {
     if (typeof req.path === 'undefined') {
       const parsedUrl = url.parse(req.url, true);
       obj.query = parsedUrl.query;
-      obj.key = parsedUrl.pathname;
+      obj.key = decodeURIComponent(parsedUrl.pathname);
     } else {
-      obj.query = req.query;
-      obj.key = req.path;
+      if (typeof req.query === 'undefined') {
+        obj.query = {};
+      } else {
+        obj.query = req.query;
+      }
+      obj.key = decodeURIComponent(req.path);
     }
     obj.key = s3proxy.stripLeadingSlash(obj.key);
     return obj;
