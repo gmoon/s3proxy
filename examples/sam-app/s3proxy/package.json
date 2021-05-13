@@ -7,16 +7,16 @@
   "author": "SAM CLI",
   "license": "MIT",
   "dependencies": {
-    "aws-serverless-express": "^3.3.8",
-    "axios": "^0.19.2",
+    "aws-serverless-express": "^3.4.0",
+    "axios": "^0.21.1",
     "express": "^4.17.1",
-    "s3proxy": "^1.3.1"
+    "s3proxy": "^1.4.1"
   },
   "scripts": {
     "test": "mocha test/unit/"
   },
   "devDependencies": {
-    "chai": "^4.2.0",
-    "mocha": "^8.1.1"
+    "chai": "^4.3.4",
+    "mocha": "^8.4.0"
   }
 }
