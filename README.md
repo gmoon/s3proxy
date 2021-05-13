@@ -354,3 +354,10 @@ npm audit fix
 ./setupaws.sh
 ```
 Add secrets to GitHub Secrets in the repo, per https://github.com/aws-actions/configure-aws-credentials
+
+### Release npm module
+ 1. git clone https://github.com/gmoon/s3proxy.git
+ 1. npm version minor
+ 1. npm package
+ 1. git push
+ 1. create GitHub Release
