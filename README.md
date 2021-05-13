@@ -341,7 +341,7 @@ npm outdated
 npm install --global npm-check-updates
 
 # update all dependencies
-ncu --update
+ncu --upgrade
 
 # run audit
 npm audit

@@ -39,3 +39,6 @@ jobs:
       - name: artillery
         run: |
           npm run artillery-ci
+      - name: security audit, fail for critical findings
+        run: |
+          npm audit --audit-level critical
