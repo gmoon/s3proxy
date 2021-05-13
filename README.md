@@ -96,9 +96,10 @@ characters specified [here](https://docs.aws.amazon.com/AmazonS3/latest/userguid
 
 ### Testing from command-line:
 start your server:
-`PORT=3000 node examples/express-basic.js`
+```
+PORT=3000 node examples/express-basic.js
+```
 curl the url-encoded object:
-
 ```
 # object name: specialCharacters!-_.*'()&$@=;:+  ,?\{^}%`]">[~<#|.
 # url-encoded object name: specialCharacters!-_.*'()%26%24%40%3D%3B%3A%2B%20%20%2C%3F%5C%7B%5E%7D%25%60%5D%22%3E%5B~%3C%23%7C.
