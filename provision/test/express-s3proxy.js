@@ -23,6 +23,7 @@ app.set('view engine', 'pug');
 app.use(addRequestId);
 app.use(bodyParser.json());
 
+debug(`port is ${port}`);
 function handleError(req, res, err) {
   // sending xml because the AWS SDK sets content-type: application/xml for non-200 responses
   res.end(`<?xml version="1.0"?>\n<error time="${err.time}" code="${err.code}" statusCode="${err.statusCode}" url="${req.url}" method="${req.method}">${err.message}</error>
@@ -37,38 +38,9 @@ if (process.env.NODE_ENV !== 'test') {
   ));
 }
 
-// initialize the s3proxy
-const bucketName = 's3proxy-public';
-const proxy = new S3Proxy({ bucket: bucketName, logger: console });
-proxy.init();
-proxy.on('error', (err) => {
-  console.log(`error initializing s3proxy for bucket ${bucketName}: ${err.statusCode} ${err.code}`);
-});
-
-// health check api, suitable for integration with ELB health checking
-app.route('/health')
-  .get((req, res) => {
-    proxy.healthCheckStream(res).on('error', () => {
-      // just end the request and let the HTTP status code convey the error
-      res.end();
-    }).pipe(res);
-  });
-
-// route all get requests to s3proxy
-app.route('/*')
-  .head(async (req, res) => {
-    await proxy.head(req, res);
-    res.end();
-  })
-  .get((req, res) => {
-    proxy.get(req, res).on('error', (err) => {
-      handleError(req, res, err);
-    }).pipe(res);
-  });
-
 if (port > 0) {
   app.listen(port, () => {
-    debug(`listening on port ${port}`);
+    debug(`s3proxy listening on port ${port}`);
   });
 }
 

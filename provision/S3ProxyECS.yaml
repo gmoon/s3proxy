@@ -1,7 +1,34 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: S3Proxy ECS Stack
-
+Parameters:
+  ContainerPort:
+    Type: Number
+    Default: 8080
+  LoadBalancerPort:
+    Type: Number
+    Default: 443
 Resources: 
+  S3ProxyContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: S3ProxyContainerSecurityGroup
+      VpcId: vpc-00d1ce4fd1a58786a
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref ContainerPort
+          ToPort: !Ref ContainerPort
+          #SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+          CidrIp: 0.0.0.0/0
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: S3ProxyLoadBalancerSecurityGroup
+      VpcId: vpc-00d1ce4fd1a58786a
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref LoadBalancerPort
+          ToPort: !Ref LoadBalancerPort
+          CidrIp: 0.0.0.0/0
   S3ProxyECSLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -72,6 +99,10 @@ Resources:
           Environment: 
             - Name: AWS_NODEJS_CONNECTION_REUSE_ENABLED
               Value: 1
+            - Name: DEBUG
+              Value: s3proxy
+            - Name: PORT
+              Value: !Ref ContainerPort
           #EnvironmentFiles: 
           #  - EnvironmentFile
           Essential: true
@@ -79,8 +110,12 @@ Resources:
           #  - HostEntry
           #FirelensConfiguration: 
           #  FirelensConfiguration
-          #HealthCheck: 
-          #  HealthCheck
+          HealthCheck: 
+            Command: [ "CMD-SHELL", "curl -f http://localhost:${PORT}/health || exit 1" ]
+            Interval: 60
+            Retries: 3
+            StartPeriod: 0
+            Timeout: 5
           # Hostname: String
           Image: 624920530251.dkr.ecr.us-east-1.amazonaws.com/s3proxy:latest
           Interactive: false
@@ -100,8 +135,7 @@ Resources:
           #  - MountPoint
           Name: S3ProxyTask
           PortMappings:
-            - ContainerPort: 80
-              HostPort: 80
+            - ContainerPort: !Ref ContainerPort
               Protocol: tcp
           #Privileged: Boolean
           PseudoTerminal: false
@@ -165,9 +199,10 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups: 
-            - sg-035cad0aaf1192d3d
+            - !Ref S3ProxyContainerSecurityGroup
           Subnets: 
             - subnet-045344ab6e9eb9916
+            - subnet-063e832a899050f71
       #PlacementConstraints: 
       #  - PlacementConstraint
       #PlacementStrategies: 
