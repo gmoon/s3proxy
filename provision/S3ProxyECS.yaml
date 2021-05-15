@@ -1,0 +1,190 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: S3Proxy ECS Stack
+
+Resources: 
+  S3ProxyECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/S3ProxyTask
+  S3ProxyECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument: 
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: "root"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "s3:*"
+                Resource: "*"
+  S3ProxyECSExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: S3ProxyECSExecutionRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+  S3ProxyECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      CapacityProviders:
+        - FARGATE
+      ClusterName: S3Proxy
+      #ClusterSettings:
+      #  - ClusterSettings
+      #Configuration:
+      #  ClusterConfiguration
+      #DefaultCapacityProviderStrategy:
+      #  - CapacityProviderStrategyItem
+  S3ProxyTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties: 
+      ContainerDefinitions: 
+        -
+          #Command: 
+          #  - String
+          Cpu: 256
+          #DependsOn: 
+          #  - ContainerDependency
+          #DisableNetworking: Boolean
+          #DnsSearchDomains: 
+          #  - String
+          #DnsServers: 
+          #  - String
+          #DockerLabels: 
+          #  Key : Value
+          #DockerSecurityOptions: 
+          #  - String
+          #EntryPoint: 
+          #  - String
+          Environment: 
+            - Name: AWS_NODEJS_CONNECTION_REUSE_ENABLED
+              Value: 1
+          #EnvironmentFiles: 
+          #  - EnvironmentFile
+          Essential: true
+          #ExtraHosts: 
+          #  - HostEntry
+          #FirelensConfiguration: 
+          #  FirelensConfiguration
+          #HealthCheck: 
+          #  HealthCheck
+          # Hostname: String
+          Image: 624920530251.dkr.ecr.us-east-1.amazonaws.com/s3proxy:latest
+          Interactive: false
+          #Links: 
+          #  - String
+          #LinuxParameters: 
+          #  LinuxParameters
+          LogConfiguration: 
+            LogDriver: awslogs
+            Options:
+              awslogs-region: us-east-1
+              awslogs-group: !Ref S3ProxyECSLogGroup
+              awslogs-stream-prefix: ecs
+          Memory: 512
+          #MemoryReservation: Integer
+          #MountPoints: 
+          #  - MountPoint
+          Name: S3ProxyTask
+          PortMappings:
+            - ContainerPort: 80
+              HostPort: 80
+              Protocol: tcp
+          #Privileged: Boolean
+          PseudoTerminal: false
+          ReadonlyRootFilesystem: false
+          #RepositoryCredentials: 
+          #  RepositoryCredentials
+          #ResourceRequirements: 
+          #  - ResourceRequirement
+          #Secrets: 
+          #  - Secret
+          #StartTimeout: Integer
+          #StopTimeout: Integer
+          #SystemControls: 
+          #  - SystemControl
+          #Ulimits: 
+          #  - Ulimit
+          #User: String
+          #VolumesFrom: 
+          #  - VolumeFrom
+          #WorkingDirectory: String
+      Cpu: 256
+      #EphemeralStorage: 
+      #  EphemeralStorage
+      ExecutionRoleArn: !Ref S3ProxyECSExecutionRole
+      Family: express-s3proxy
+      #InferenceAccelerators: 
+      #  - InferenceAccelerator
+      #IpcMode: String
+      Memory: 512
+      NetworkMode: awsvpc
+      #PidMode: String
+      #PlacementConstraints: 
+      #  - TaskDefinitionPlacementConstraint
+      #ProxyConfiguration: 
+      #  ProxyConfiguration
+      #RequiresCompatibilities: 
+      #  - String
+      #Tags: 
+      #  - Tag
+      TaskRoleArn: !Ref S3ProxyECSTaskRole
+      #Volumes: 
+      #  - Volume
+  S3ProxyECSService:
+    Type: AWS::ECS::Service
+    Properties: 
+      #CapacityProviderStrategy: 
+      #  - CapacityProviderStrategyItem
+      Cluster: !Ref S3ProxyECSCluster
+      #DeploymentConfiguration: 
+      #  DeploymentConfiguration
+      #DeploymentController:
+      #  Type: ECS
+      DesiredCount: 1
+      #EnableECSManagedTags: true
+      #EnableExecuteCommand: false
+      #HealthCheckGracePeriodSeconds: Integer
+      LaunchType: FARGATE
+      #LoadBalancers: 
+      #  - LoadBalancer
+      NetworkConfiguration: 
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups: 
+            - sg-035cad0aaf1192d3d
+          Subnets: 
+            - subnet-045344ab6e9eb9916
+      #PlacementConstraints: 
+      #  - PlacementConstraint
+      #PlacementStrategies: 
+      #  - PlacementStrategy
+      #PlatformVersion: LATEST
+      #PropagateTags: String
+      #Role: 
+      #SchedulingStrategy: REPLICA
+      ServiceName: S3ProxyService
+      #ServiceRegistries: 
+      #  - ServiceRegistry
+      #Tags: 
+      #  - Tag
+      TaskDefinition: !Ref S3ProxyTask
+Outputs:
+  LogicalID:
+    Description: Information about the value
+    Value: Ref S3ProxyTask
+    Export: 
+      Name: TaskDefinitionArn
