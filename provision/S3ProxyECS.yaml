@@ -7,28 +7,53 @@ Parameters:
   LoadBalancerPort:
     Type: Number
     Default: 443
+  ServiceName:
+    Type: String
+    Default: S3Proxy
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-00d1ce4fd1a58786a
+  SubnetA:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-045344ab6e9eb9916
+  SubnetB:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-063e832a899050f71
+  HostedZoneName:
+    Type: String
+    Default: forkzero.com
+  Subdomain:
+    Type: String
+    Default: s3proxy
 Resources: 
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 63
+      # will look for a 200 status code by default unless specified otherwise
+      HealthCheckPath: /health
+      HealthCheckTimeoutSeconds: 5
+      UnhealthyThresholdCount: 2
+      HealthyThresholdCount: 2
+      Name: S3ProxyTargetGroup
+      Port: !Ref ContainerPort
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: "60" # default is 300
+      TargetType: ip
+      VpcId: !Ref VPC
   S3ProxyContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: S3ProxyContainerSecurityGroup
-      VpcId: vpc-00d1ce4fd1a58786a
+      VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: !Ref ContainerPort
           ToPort: !Ref ContainerPort
-          #SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
-          CidrIp: 0.0.0.0/0
-  LoadBalancerSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: S3ProxyLoadBalancerSecurityGroup
-      VpcId: vpc-00d1ce4fd1a58786a
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: !Ref LoadBalancerPort
-          ToPort: !Ref LoadBalancerPort
-          CidrIp: 0.0.0.0/0
+          SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+          #CidrIp: 0.0.0.0/0
   S3ProxyECSLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -98,7 +123,7 @@ Resources:
           #  - String
           Environment: 
             - Name: AWS_NODEJS_CONNECTION_REUSE_ENABLED
-              Value: 1
+              Value: "1"
             - Name: DEBUG
               Value: s3proxy
             - Name: PORT
@@ -133,13 +158,13 @@ Resources:
           #MemoryReservation: Integer
           #MountPoints: 
           #  - MountPoint
-          Name: S3ProxyTask
+          Name: S3ProxyContainer
           PortMappings:
             - ContainerPort: !Ref ContainerPort
               Protocol: tcp
           #Privileged: Boolean
           PseudoTerminal: false
-          ReadonlyRootFilesystem: false
+          ReadonlyRootFilesystem: true
           #RepositoryCredentials: 
           #  RepositoryCredentials
           #ResourceRequirements: 
@@ -156,7 +181,7 @@ Resources:
           #VolumesFrom: 
           #  - VolumeFrom
           #WorkingDirectory: String
-      Cpu: 256
+      Cpu: "256"
       #EphemeralStorage: 
       #  EphemeralStorage
       ExecutionRoleArn: !Ref S3ProxyECSExecutionRole
@@ -164,7 +189,7 @@ Resources:
       #InferenceAccelerators: 
       #  - InferenceAccelerator
       #IpcMode: String
-      Memory: 512
+      Memory: "512"
       NetworkMode: awsvpc
       #PidMode: String
       #PlacementConstraints: 
@@ -180,6 +205,8 @@ Resources:
       #  - Volume
   S3ProxyECSService:
     Type: AWS::ECS::Service
+    DependsOn:
+      - ListenerHTTPS
     Properties: 
       #CapacityProviderStrategy: 
       #  - CapacityProviderStrategyItem
@@ -193,8 +220,10 @@ Resources:
       #EnableExecuteCommand: false
       #HealthCheckGracePeriodSeconds: Integer
       LaunchType: FARGATE
-      #LoadBalancers: 
-      #  - LoadBalancer
+      LoadBalancers:
+        - ContainerName: S3ProxyContainer
+          ContainerPort: !Ref ContainerPort
+          TargetGroupArn: !Ref TargetGroup
       NetworkConfiguration: 
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
@@ -217,9 +246,66 @@ Resources:
       #Tags: 
       #  - Tag
       TaskDefinition: !Ref S3ProxyTask
+
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: S3ProxyLoadBalancerSecurityGroup
+      VpcId: vpc-00d1ce4fd1a58786a
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref LoadBalancerPort
+          ToPort: !Ref LoadBalancerPort
+          CidrIp: 0.0.0.0/0
+  ListenerCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties: 
+      #CertificateAuthorityArn: String
+      #CertificateTransparencyLoggingPreference: String
+      DomainName: s3proxy.forkzero.com
+      #DomainValidationOptions: 
+      #  - DomainValidationOption
+      #SubjectAlternativeNames: 
+      #  - String
+      #Tags: 
+      #  - Tag
+      ValidationMethod: DNS
+  ListenerHTTPS:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: !Ref LoadBalancerPort
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref ListenerCertificate
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes:
+        # this is the default, but is specified here in case it needs to be changed
+        - Key: idle_timeout.timeout_seconds
+          Value: 60
+      Name: !Join ['', [!Ref ServiceName, LoadBalancer]]
+      # "internal" is also an option
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Subnets:
+        - !Ref SubnetA
+        - !Ref SubnetB
+  DNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Join ['', [!Ref HostedZoneName, .]]
+      Name: !Join ['', [!Ref Subdomain, ., !Ref HostedZoneName, .]]
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LoadBalancer.DNSName
+        HostedZoneId: !GetAtt LoadBalancer.CanonicalHostedZoneID
 Outputs:
-  LogicalID:
-    Description: Information about the value
-    Value: Ref S3ProxyTask
-    Export: 
-      Name: TaskDefinitionArn
+  Endpoint:
+    Description: Endpoint
+    Value: !Join ['', ['https://', !Ref DNSRecord]]
