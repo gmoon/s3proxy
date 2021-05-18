@@ -16,6 +16,15 @@ scenarios:
                 - "content-length"
                 - "338"
   - flow:
+      - head:
+          url: "/large.bin"
+          expect:
+            - statusCode: 200
+            - contentType: application/octet-stream
+            - headerEquals:
+                - "content-length"
+                - "10485760"
+  - flow:
       - get:
           url: "/unauthorized.html"
           expect:
