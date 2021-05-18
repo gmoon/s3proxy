@@ -4,7 +4,7 @@ const url = require('url');
 const UserException = require('./UserException');
 const HeaderHandler = require('./HeaderHandler');
 
-AWS.config.logger = console;
+// AWS.config.logger = console;
 
 module.exports = class s3proxy extends EventEmitter {
   constructor(p) {
