@@ -1,6 +1,13 @@
 name: Node CI
 on: [push]
 jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: security audit, fail for critical findings
+        run: |
+          npm audit --audit-level critical
   build:
     runs-on: ubuntu-latest
     strategy:
@@ -35,12 +42,9 @@ jobs:
       - name: artillery
         run: |
           npm run artillery-ci
-      - name: security audit, fail for critical findings
-        run: |
-          npm audit --audit-level critical
-      - name: npm pack
+      - name: package module into tarball
         run: | 
-          npm run pack
+          npm run package
       - name: test package via docker
         run: |
           npm run artillery-docker

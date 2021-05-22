@@ -1,5 +1,6 @@
 # NPM Pack files
 s3proxy*.tgz
+version.txt
 
 .DS_Store
 

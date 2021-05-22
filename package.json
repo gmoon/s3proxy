@@ -35,7 +35,7 @@
     "artillery": "artillery run test/artillery.yml",
     "artillery-ci": "start-server-and-test start :3000 artillery",
     "artillery-docker": "npm run dockerize-for-test && docker run --rm --name s3proxy-test -d -p 3000:3000 -e PORT=3000 -t s3proxy:test && wait-on http://localhost:3000/index.html && npm run artillery && docker kill s3proxy-test",
-    "pack": "npm pack && cp s3proxy-*.tgz provision/s3proxy.tgz",
+    "package": "npm pack && mv s3proxy-*.tgz provision/ && jq -r .version package.json > provision/version.txt",
     "dockerize-for-test": "cd provision && aws sts get-session-token --duration 900 > secrets.json && docker buildx build --target test --load -t s3proxy:test . && rm secrets.json",
     "dockerize-for-prod": "cd provision && docker buildx build --push -t ${ACCOUNT}.dkr.ecrx.us-east-1.amazonaws.com/s3proxy:latest --platform=linux/amd64,linux/arm64 .",
     "cleanup": "rm -fv s3proxy*.tgz; rm -fv provision/s3proxy*.tgz"
