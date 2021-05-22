@@ -55,6 +55,9 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 16
+      - name: install
+        run: |
+          npm install
       - name: artillery
         run: |
           npm run artillery-ci
@@ -64,6 +67,3 @@ jobs:
       - name: test package via docker
         run: |
           npm run artillery-docker
-
-
-
