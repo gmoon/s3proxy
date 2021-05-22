@@ -358,6 +358,8 @@ Add secrets to GitHub Secrets in the repo, per https://github.com/aws-actions/co
 ### Release npm module
  1. git clone https://github.com/gmoon/s3proxy.git
  1. npm version minor
- 1. npm package
+ 1. npm run pack
+ 1. npm run artillery-docker
+ 1. npm publish
  1. git push
  1. create GitHub Release

@@ -1,15 +1,11 @@
 name: Node CI
-
 on: [push]
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [14, 16]
-
     steps:
       - uses: actions/checkout@v2
       - name: Configure AWS Credentials
@@ -42,3 +38,10 @@ jobs:
       - name: security audit, fail for critical findings
         run: |
           npm audit --audit-level critical
+      - name: npm pack
+        run: | 
+          npm run pack
+      - name: test package via docker
+        run: |
+          npm run artillery-docker
+          

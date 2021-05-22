@@ -1,3 +1,6 @@
+# NPM Pack files
+s3proxy*.tgz
+
 .DS_Store
 
 # SAM build files

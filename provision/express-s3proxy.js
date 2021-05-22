@@ -66,10 +66,12 @@ app.route('/*')
     }).pipe(res);
   });
 
-if (port > 0) {
-  app.listen(port, () => {
-    debug(`listening on port ${port}`);
-  });
-}
+proxy.on('init', () => {
+  if (port > 0) {
+    app.listen(port, () => {
+      debug(`listening on port ${port}`);
+    });
+  }  
+});
 
 module.exports = app;
