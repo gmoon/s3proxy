@@ -1,14 +1,15 @@
 FROM node:current-alpine as base
+ARG VERSION
 WORKDIR /src
-COPY version.txt .
 COPY express-s3proxy.js .
-COPY s3proxy-*.tgz .
-RUN apk update; apk upgrade; apk add curl bash
-RUN npm install ./s3proxy-`cat version.txt`.tgz express body-parser morgan express-request-id
+COPY s3proxy-${VERSION}.tgz .
+RUN apk update \
+    && apk upgrade \
+    && npm install ./s3proxy-${VERSION}.tgz express body-parser morgan express-request-id
 
 FROM base as test
 COPY secrets.json .
-RUN apk add jq
+RUN apk add jq curl bash
 EXPOSE $PORT
 CMD DEBUG=* \
     NODE_ENV=test \
