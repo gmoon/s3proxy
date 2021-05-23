@@ -29,15 +29,12 @@ jobs:
       - name: install
         run: |
           npm install
-      - name: coverage
-        run: |
-          npm run nyc-coverage
       - name: lint
         run: |
           npm run eslint
       - name: unit tests (mocha)
         run: |
-          npm run mocha
+          npm run nyc-coverage mocha
       - name: test sam-app
         run: |
           cd examples/sam-app
