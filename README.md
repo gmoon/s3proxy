@@ -59,10 +59,10 @@ DEBUG=s3proxy PORT=3000 node express-s3proxy
 
 ## Deployment Examples
 
-  1. Popular nodejs web frameworks (express)[examples/express-s3proxy.js] and (http)[examples/http.js]
-  1. (Docker image)[examples/docker/]
-  1. (AWS Elastic Container Service)[examples/aws-ecs/]
-  1. (AWS Serverless Application Model (SAM))[/examples/sam-app/]
+  1. Popular nodejs web frameworks [express](examples/express-s3proxy.js] and (http)[examples/http.js)
+  1. [Docker image](examples/docker/)
+  1. [AWS Elastic Container Service](examples/aws-ecs/)
+  1. [AWS Serverless Application Model (SAM)](/examples/sam-app/)
 
 ## Credentials
 s3proxy needs read access (s3:GetObject) on your bucket, and uses the [AWS javascript sdk](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/welcome.html). You can provide credentials using any method supported:
