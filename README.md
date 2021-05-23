@@ -59,7 +59,7 @@ DEBUG=s3proxy PORT=3000 node express-s3proxy
 
 ## Deployment Examples
 
-  1. Popular nodejs web frameworks [express](examples/express-s3proxy.js] and (http)[examples/http.js)
+  1. Popular nodejs web frameworks [express](examples/express-s3proxy.js) and [http](examples/http.js)
   1. [Docker image](examples/docker/)
   1. [AWS Elastic Container Service](examples/aws-ecs/)
   1. [AWS Serverless Application Model (SAM)](/examples/sam-app/)
