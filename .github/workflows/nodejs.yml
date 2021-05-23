@@ -71,6 +71,9 @@ jobs:
       - name: test package via docker
         run: |
           npm run artillery-docker
+      - name: scan container
+        run: |
+          docker scan s3proxy:test
   dockerize:
     runs-on: ubuntu-latest
     needs: functional-tests

@@ -9,7 +9,7 @@ RUN apk --update-cache upgrade \
 FROM base as test
 # to generate credentials use: aws sts get-session-token --duration 900 > secrets.json
 COPY secrets.json .
-RUN apk add jq curl bash
+RUN apk add --no-cache jq curl bash
 EXPOSE $PORT
 USER node
 CMD DEBUG=* \
