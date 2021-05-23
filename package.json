@@ -28,6 +28,7 @@
     "url": "^0.11.0"
   },
   "scripts": {
+    "eslint": "eslint *.js examples/*.js",
     "start": "PORT=3000 node examples/express-basic.js",
     "test": "make test",
     "nyc-coverage": "nyc --reporter=html --reporter=text",
