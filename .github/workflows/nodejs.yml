@@ -90,5 +90,6 @@ jobs:
         env:
           AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
         run: |
+          npm run package
           npm run docker-login
           npm run dockerize-for-prod
