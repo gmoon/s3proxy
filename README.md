@@ -54,8 +54,16 @@ cd website
 npm init
 npm install --save express express-request-id morgan s3proxy
 curl -O https://raw.githubusercontent.com/gmoon/s3proxy/master/examples/express-s3proxy.js
-PORT=3000 node express-s3proxy
+DEBUG=s3proxy PORT=3000 node express-s3proxy
 ```
+
+## Deployment Examples
+
+  1. Popular nodejs web frameworks (express)[examples/express-s3proxy.js] and (http)[examples/http.js]
+  1. (Docker image)[examples/docker/]
+  1. (AWS Elastic Container Service)[examples/aws-ecs/]
+  1. (AWS Serverless Application Model (SAM))[/examples/sam-app/]
+
 ## Credentials
 s3proxy needs read access (s3:GetObject) on your bucket, and uses the [AWS javascript sdk](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/welcome.html). You can provide credentials using any method supported:
 
@@ -358,9 +366,9 @@ Add secrets to GitHub Secrets in the repo, per https://github.com/aws-actions/co
 ### Release npm module
  1. git clone https://github.com/gmoon/s3proxy.git
  1. npm version minor
- 1. npm run pack
+ 1. npm test
+ 1. npm run package
  1. npm run artillery-docker
  1. npm publish
  1. git push
  1. create GitHub Release
- 
