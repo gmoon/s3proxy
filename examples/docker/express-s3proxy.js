@@ -10,6 +10,7 @@
   Author: George Moon <george.moon@gmail.com>
 */
 
+const helmet = require('helmet');
 const express = require('express');
 const debug = require('debug')('s3proxy');
 const bodyParser = require('body-parser');
@@ -22,6 +23,7 @@ const app = express();
 app.set('view engine', 'pug');
 app.use(addRequestId);
 app.use(bodyParser.json());
+app.use(helmet());
 
 function handleError(req, res, err) {
   // sending xml because the AWS SDK sets content-type: application/xml for non-200 responses
@@ -55,6 +57,7 @@ app.route('/health')
   });
 
 // route all get requests to s3proxy
+app.get('/', (req, res) => { res.redirect("/index.html")});
 app.route('/*')
   .head(async (req, res) => {
     await proxy.head(req, res);
