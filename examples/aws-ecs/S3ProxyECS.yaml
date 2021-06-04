@@ -164,7 +164,7 @@ Resources:
               Protocol: tcp
           #Privileged: Boolean
           PseudoTerminal: false
-          ReadonlyRootFilesystem: true
+          ReadonlyRootFilesystem: false
           #RepositoryCredentials: 
           #  RepositoryCredentials
           #ResourceRequirements: 

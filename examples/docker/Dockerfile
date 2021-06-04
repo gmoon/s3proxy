@@ -3,6 +3,7 @@ ARG VERSION
 WORKDIR /src
 COPY express-s3proxy.js s3proxy-${VERSION}.tgz ./
 RUN apk --update-cache upgrade \
+    apk add --no-cache curl \
     && npm install --production -g npm \
     && npm install --production ./s3proxy-${VERSION}.tgz express body-parser morgan express-request-id helmet \
     && npm install --production -g pm2
@@ -10,7 +11,7 @@ RUN apk --update-cache upgrade \
 FROM base as test
 # to generate credentials use: aws sts get-session-token --duration 900 > secrets.json
 COPY secrets.json start-express-test.sh ./
-RUN apk add --no-cache jq curl bash netcat-openbsd
+RUN apk add --no-cache jq bash netcat-openbsd
 EXPOSE $PORT
 USER node
 CMD AWS_ACCESS_KEY_ID=`jq -r .Credentials.AccessKeyId secrets.json` \
