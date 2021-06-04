@@ -1,12 +1,13 @@
 config:
-  target: "https://wagk3mtyg2.us-east-1.awsapprunner.com"
+  # target: "https://wagk3mtyg2.us-east-1.awsapprunner.com"
+  target: "https://s3proxy.forkzero.com"
   plugins:
     expect: {}
   phases:
     - duration: 60
       arrivalRate: 10
       name: warm up phase
-    - duration: 120
+    - duration: 600 
       arrivalRate: 5
       rampTo: 50
       name: Ramp up load
