@@ -3,10 +3,10 @@ ARG VERSION
 WORKDIR /src
 COPY express-s3proxy.js s3proxy-${VERSION}.tgz ./
 RUN apk --update-cache upgrade \
-    apk add --no-cache curl \
     && npm install --production -g npm \
     && npm install --production ./s3proxy-${VERSION}.tgz express body-parser morgan express-request-id helmet \
-    && npm install --production -g pm2
+    && npm install --production -g pm2 \
+    && apk add --no-cache curl
 
 FROM base as test
 # to generate credentials use: aws sts get-session-token --duration 900 > secrets.json
