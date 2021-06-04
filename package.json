@@ -35,7 +35,7 @@
     "mocha": "mocha",
     "artillery": "artillery run test/artillery.yml",
     "artillery-ci": "start-server-and-test start :3000 artillery",
-    "artillery-docker": "npm run dockerize-for-test && docker run --rm --name s3proxy-test -d -p 8080:8080 -t s3proxy:test && wait-on http://localhost:8080/index.html && npm run artillery && docker kill s3proxy-test",
+    "artillery-docker": "npm run dockerize-for-test && docker run --rm --name s3proxy-test -d -p 8080:8080 -e PORT=8080 -t s3proxy:test && wait-on http://localhost:8080/index.html && npm run artillery && docker kill s3proxy-test",
     "artillery-performance": "artillery run test/artillery-performance.yml",
     "package": "npm pack && mv s3proxy-*.tgz examples/docker/",
     "dockerize-for-test": "cd examples/docker && aws sts get-session-token --duration 900 > secrets.json && docker buildx build --build-arg VERSION=$npm_package_version --target test --load -t s3proxy:test . && rm secrets.json",
