@@ -1,7 +1,7 @@
 FROM node:current-alpine as base
 ARG VERSION
 WORKDIR /src
-COPY express-s3proxy.js s3proxy-${VERSION}.tgz express-s3proxy-config.js ./
+COPY express-s3proxy.js s3proxy-${VERSION}.tgz ./
 RUN apk --update-cache upgrade \
     && npm install --production -g npm \
     && npm install --production ./s3proxy-${VERSION}.tgz express body-parser morgan express-request-id helmet \
