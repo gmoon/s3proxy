@@ -15,6 +15,13 @@ Use AWS S3 as the storage backend for a nodejs web server.
 * Easily integrated with common nodejs web frameworks; examples include http and express apps.
 * HealthCheck API verifies bucket connectivity and authentication, suitable for ELB health checks or monitoring services
 
+## Deployment Examples
+
+* Docker image source is [here](examples/docker/) and a public image is available on [DockerHub](https://hub.docker.com/repository/docker/forkzero/s3proxy)
+* Popular nodejs web frameworks [express](examples/express-s3proxy.js) and [http](examples/http.js)
+* [AWS Elastic Container Service](examples/aws-ecs/) CloudFormation stack
+* [AWS Serverless Application Model (SAM)](/examples/sam-app/)
+
 ## Benefits
 
 ### Private web endpoint
@@ -39,6 +46,7 @@ the files via HTTP like `yum` expects. The additional benefit is that only one p
 we do now have to keep the web server available (but we are pretty good at doing that anyway).
 
 ## Quick Start
+
 1. Clone this repo, `cd s3proxy`
 1. Edit examples/express-basic.js, replace `s3proxy-public` with your S3 bucket name
 1. Install dependencies `npm install`
@@ -56,13 +64,6 @@ npm install --save express express-request-id morgan s3proxy
 curl -O https://raw.githubusercontent.com/gmoon/s3proxy/master/examples/express-s3proxy.js
 DEBUG=s3proxy PORT=3000 node express-s3proxy
 ```
-
-## Deployment Examples
-
-  1. Popular nodejs web frameworks [express](examples/express-s3proxy.js) and [http](examples/http.js)
-  1. [Docker image](examples/docker/)
-  1. [AWS Elastic Container Service](examples/aws-ecs/)
-  1. [AWS Serverless Application Model (SAM)](/examples/sam-app/)
 
 ## Credentials
 s3proxy needs read access (s3:GetObject) on your bucket, and uses the [AWS javascript sdk](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/welcome.html). You can provide credentials using any method supported:

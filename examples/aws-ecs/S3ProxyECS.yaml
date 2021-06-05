@@ -128,6 +128,8 @@ Resources:
               Value: s3proxy
             - Name: PORT
               Value: !Ref ContainerPort
+            - Name: BUCKET
+              Value: s3proxy-public
           #EnvironmentFiles: 
           #  - EnvironmentFile
           Essential: true
