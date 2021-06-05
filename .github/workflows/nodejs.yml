@@ -108,10 +108,18 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 16
-      - name: docker build and push
+      - name: docker build and push to aws
         env:
           AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
         run: |
           npm run package
-          npm run docker-login
-          npm run dockerize-for-prod
+          npm run docker-login-aws
+          npm run dockerize-for-prod-aws
+      - name: docker build and push to dockerhub
+        env:
+          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
+          DOCKERHUB_ACCESS_TOKEN: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+        run: |
+          npm run docker-login-dockerhub
+          npm run dockerize-for-prod-dockerhub
+
