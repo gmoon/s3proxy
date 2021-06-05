@@ -107,7 +107,7 @@ Resources:
         -
           #Command: 
           #  - String
-          Cpu: 256
+          #Cpu: 1024
           #DependsOn: 
           #  - ContainerDependency
           #DisableNetworking: Boolean
@@ -154,7 +154,7 @@ Resources:
               awslogs-region: us-east-1
               awslogs-group: !Ref S3ProxyECSLogGroup
               awslogs-stream-prefix: ecs
-          Memory: 512
+          #Memory: 512
           #MemoryReservation: Integer
           #MountPoints: 
           #  - MountPoint
@@ -181,7 +181,7 @@ Resources:
           #VolumesFrom: 
           #  - VolumeFrom
           #WorkingDirectory: String
-      Cpu: "256"
+      Cpu: "1024"
       #EphemeralStorage: 
       #  EphemeralStorage
       ExecutionRoleArn: !Ref S3ProxyECSExecutionRole
@@ -189,7 +189,7 @@ Resources:
       #InferenceAccelerators: 
       #  - InferenceAccelerator
       #IpcMode: String
-      Memory: "512"
+      Memory: "2048"
       NetworkMode: awsvpc
       #PidMode: String
       #PlacementConstraints: 
@@ -287,7 +287,7 @@ Resources:
       LoadBalancerAttributes:
         # this is the default, but is specified here in case it needs to be changed
         - Key: idle_timeout.timeout_seconds
-          Value: 60
+          Value: "60"
       Name: !Join ['', [!Ref ServiceName, LoadBalancer]]
       # "internal" is also an option
       Scheme: internet-facing
