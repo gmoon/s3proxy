@@ -4,7 +4,7 @@ WORKDIR /src
 # Set default environment variables. Can be overridden via docker run -e
 ENV PORT=8080 DEBUG=s3proxy AWS_NODEJS_CONNECTION_REUSE_ENABLED=1 NODE_ENV=production PM2_INSTANCES=max
 EXPOSE $PORT
-COPY express-s3proxy.js s3proxy-${VERSION}.tgz ./
+COPY checkenv.sh express-s3proxy.js s3proxy-${VERSION}.tgz ./
 RUN apk --update-cache upgrade \
     && npm install --production -g npm \
     && npm install --production ./s3proxy-${VERSION}.tgz express body-parser morgan express-request-id helmet \
@@ -23,7 +23,7 @@ CMD AWS_ACCESS_KEY_ID=`jq -r .Credentials.AccessKeyId secrets.json` \
     AWS_SESSION_TOKEN=`jq -r .Credentials.SessionToken secrets.json` \
     DEBUG=s3proxy,express \
     NODE_ENV=development \
-    pm2-runtime -i $PM2_INSTANCES express-s3proxy.js
+    ./checkenv.sh pm2-runtime -i $PM2_INSTANCES express-s3proxy.js
 
 FROM base as production
 RUN rm -rf /var/cache/apk/

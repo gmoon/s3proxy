@@ -19,6 +19,7 @@ const addRequestId = require('express-request-id')({ headerName: 'x-request-id' 
 const S3Proxy = require('s3proxy');
 
 const port = process.env.PORT;
+const bucket = process.env.BUCKET;
 const app = express();
 app.set('view engine', 'pug');
 app.use(addRequestId);
@@ -40,11 +41,10 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // initialize the s3proxy
-const bucketName = 's3proxy-public';
-const proxy = new S3Proxy({ bucket: bucketName, logger: console });
+const proxy = new S3Proxy({ bucket: bucket, logger: console });
 proxy.init();
 proxy.on('error', (err) => {
-  console.log(`error initializing s3proxy for bucket ${bucketName}: ${err.statusCode} ${err.code}`);
+  console.log(`error initializing s3proxy for bucket ${bucket}: ${err.statusCode} ${err.code}`);
 });
 
 // basic health check
