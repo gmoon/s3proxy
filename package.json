@@ -38,6 +38,7 @@
     "artillery-docker": "npm run dockerize-for-test && docker run --rm --name s3proxy-test -d -p 8080:8080 -e BUCKET=s3proxy-public -e PORT=8080 -t s3proxy:test && wait-on http://localhost:8080/index.html && npm run artillery; docker kill s3proxy-test",
     "artillery-performance": "artillery run --quiet --output artillery.json test/artillery-performance.yml && artillery report --output artillery.html artillery.json",
     "package": "npm pack && mv s3proxy-*.tgz examples/docker/",
+    "docker": "echo running s3proxy:test && docker run -p 8080:8080 -e BUCKET=s3proxy-public -t s3proxy:test",
     "dockerize-for-test": "cd examples/docker && aws sts get-session-token --duration 900 > secrets.json && docker buildx build --build-arg VERSION=$npm_package_version --target test --load -t s3proxy:test . && rm secrets.json",
     "dockerize-for-prod-aws": "cd examples/docker && docker buildx build --build-arg VERSION=$npm_package_version --push --target production -t ${AWS_ACCOUNT}.dkr.ecr.us-east-1.amazonaws.com/s3proxy:latest -t ${AWS_ACCOUNT}.dkr.ecr.us-east-1.amazonaws.com/s3proxy:$npm_package_version --platform=linux/amd64,linux/arm64 .",
     "dockerize-for-prod-dockerhub": "cd examples/docker && docker buildx build --build-arg VERSION=$npm_package_version --push --target production -t forkzero/s3proxy:$npm_package_version --platform=linux/amd64,linux/arm64 .",
