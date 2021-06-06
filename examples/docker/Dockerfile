@@ -5,6 +5,7 @@ WORKDIR /src
 ENV PORT=8080 DEBUG=s3proxy AWS_NODEJS_CONNECTION_REUSE_ENABLED=1 NODE_ENV=production PM2_INSTANCES=max
 EXPOSE $PORT
 COPY checkenv.sh express-s3proxy.js s3proxy-${VERSION}.tgz ./
+HEALTHCHECK CMD curl -f http://localhost:${PORT}/health || exit 1
 RUN apk --update-cache upgrade \
     && npm install --production -g npm \
     && npm install --production ./s3proxy-${VERSION}.tgz express body-parser morgan express-request-id helmet \

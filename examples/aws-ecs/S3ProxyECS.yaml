@@ -137,12 +137,12 @@ Resources:
           #  - HostEntry
           #FirelensConfiguration: 
           #  FirelensConfiguration
-          HealthCheck: 
-            Command: [ "CMD-SHELL", "curl -f http://localhost:${PORT}/health || exit 1" ]
-            Interval: 60
-            Retries: 3
-            StartPeriod: 0
-            Timeout: 5
+          #HealthCheck: 
+            #Command: [ "CMD-SHELL", "curl -f http://localhost:${PORT}/health || exit 1" ]
+            #Interval: 60
+            #Retries: 3
+            #StartPeriod: 0
+            #Timeout: 5
           # Hostname: String
           Image: 624920530251.dkr.ecr.us-east-1.amazonaws.com/s3proxy:latest
           Interactive: false
@@ -186,7 +186,7 @@ Resources:
       Cpu: "1024"
       #EphemeralStorage: 
       #  EphemeralStorage
-      ExecutionRoleArn: !Ref S3ProxyECSExecutionRole
+      ExecutionRoleArn: !GetAtt S3ProxyECSExecutionRole.Arn
       Family: express-s3proxy
       #InferenceAccelerators: 
       #  - InferenceAccelerator
