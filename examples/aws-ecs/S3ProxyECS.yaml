@@ -25,6 +25,11 @@ Parameters:
   Subdomain:
     Type: String
     Default: s3proxy
+  BucketName:
+    Type: String
+  ContainerImage:
+    Type: String
+    Default: forkzero/s3proxy:1.5.1
 Resources: 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -75,7 +80,7 @@ Resources:
             Statement:
               - Effect: "Allow"
                 Action: "s3:GetObject"
-                Resource: "arn:aws:s3:::s3proxy-public/*"
+                Resource: !Join ['', ['arn:aws:s3:::', !Ref BucketName, '/*']]
   S3ProxyECSExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -129,7 +134,7 @@ Resources:
             - Name: PORT
               Value: !Ref ContainerPort
             - Name: BUCKET
-              Value: s3proxy-public
+              Value: !Ref BucketName
           #EnvironmentFiles: 
           #  - EnvironmentFile
           Essential: true
@@ -144,7 +149,7 @@ Resources:
             #StartPeriod: 0
             #Timeout: 5
           # Hostname: String
-          Image: 624920530251.dkr.ecr.us-east-1.amazonaws.com/s3proxy:latest
+          Image: !Ref ContainerImage
           Interactive: false
           #Links: 
           #  - String
