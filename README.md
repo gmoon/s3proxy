@@ -11,6 +11,11 @@ docker run --env BUCKET=mybucket --publish 8080:8080 -t forkzero/s3proxy:latest
 curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
 ```
 
+``` bash
+PORT=8080 node ./express-s3proxy
+curl http://localhost:8080/index.html # serves s3://mybucket/index.html
+```
+
 ## Features
 * Designed to be embedded into your nodejs application
 * Provides stream interface; stream files, even very large files, quickly and with a low memory footprint
