@@ -5,6 +5,12 @@
 
 Use AWS S3 as the storage backend for a nodejs web server.
 
+## Usage
+``` bash
+docker run --env BUCKET=mybucket --publish 8080:8080 -t forkzero/s3proxy:latest
+curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
+```
+
 ## Features
 * Designed to be embedded into your nodejs application
 * Provides stream interface; stream files, even very large files, quickly and with a low memory footprint
@@ -81,7 +87,7 @@ One way to test is to verify that your aws cli works from command line (substitu
 `aws s3 ls s3://s3proxy-public/`
 
 ## Permissions
-Here is the minimal set of permissions needed to run s3proxy (replace s3proxy-public with your bucket name):
+Here is the minimal set of permissions needed to run s3proxy (replace mybucket with your bucket name):
 ```
 {
     "Version": "2012-10-17",
@@ -90,7 +96,7 @@ Here is the minimal set of permissions needed to run s3proxy (replace s3proxy-pu
             "Sid": "s3proxyAccess",
             "Effect": "Allow",
             "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::s3proxy-public/*"
+            "Resource": "arn:aws:s3:::mybucket/*"
         }
     ]
 }
