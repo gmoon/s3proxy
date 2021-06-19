@@ -15,8 +15,6 @@ RUN apk --update-cache upgrade \
     && rm -rf ~/.npm
 
 FROM base as test
-# to generate credentials use: aws sts get-session-token --duration 900 > secrets.json
-COPY credentials.json ./
 RUN apk add --no-cache jq bash netcat-openbsd
 USER node
 CMD DEBUG=s3proxy,express \

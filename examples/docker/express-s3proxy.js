@@ -51,7 +51,6 @@ function getCredentials() {
     };
     debug(`using credentials from ${file}`);
   } catch (e) {
-    debug(e.message);
     debug(`using sdk credential chain`);
   }
   return contents;
