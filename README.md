@@ -2,6 +2,7 @@
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
 [![Node CI][actions-image]][actions-url]
+![Docker Pulls](https://img.shields.io/docker/pulls/forkzero/s3proxy?style=flat-square)
 
 Use AWS S3 as the storage backend for a nodejs web server.
 
@@ -12,8 +13,8 @@ curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
 ```
 
 ``` bash
-PORT=8080 node ./express-s3proxy
-curl http://localhost:8080/index.html # serves s3://mybucket/index.html
+PORT=8080 BUCKET=mybucket node ./examples/express-s3proxy
+curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
 ```
 
 ## Features
