@@ -10,6 +10,7 @@
   Author: George Moon <george.moon@gmail.com>
 */
 
+const helmet = require('helmet');
 const express = require('express');
 const debug = require('debug')('s3proxy');
 const bodyParser = require('body-parser');
@@ -18,10 +19,12 @@ const addRequestId = require('express-request-id')({ headerName: 'x-request-id' 
 const S3Proxy = require('s3proxy');
 
 const port = process.env.PORT;
+const bucket = process.env.BUCKET;
 const app = express();
 app.set('view engine', 'pug');
 app.use(addRequestId);
 app.use(bodyParser.json());
+app.use(helmet());
 
 function handleError(req, res, err) {
   // sending xml because the AWS SDK sets content-type: application/xml for non-200 responses
@@ -38,23 +41,31 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // initialize the s3proxy
-const bucketName = 's3proxy-public';
-const proxy = new S3Proxy({ bucket: bucketName, logger: console });
+const proxy = new S3Proxy({ bucket: bucket, logger: console });
 proxy.init();
 proxy.on('error', (err) => {
-  console.log(`error initializing s3proxy for bucket ${bucketName}: ${err.statusCode} ${err.code}`);
+  console.log(`error initializing s3proxy for bucket ${bucket}: ${err.statusCode} ${err.code}`);
 });
 
-// health check api, suitable for integration with ELB health checking
-app.route('/health')
-  .get((req, res) => {
-    proxy.healthCheckStream(res).on('error', () => {
-      // just end the request and let the HTTP status code convey the error
-      res.end();
-    }).pipe(res);
-  });
+// basic health check
+app.get('/health', (req, res) => { 
+  res.writeHead(200); 
+  res.end();
+})
+
+// health check s3
+app.get('/health/s3', (req, res) => {
+  proxy.healthCheckStream(res).on('error', () => {
+    // just end the request and let the HTTP status code convey the error
+    res.end();
+  }).pipe(res);
+})
 
 // route all get requests to s3proxy
+app.get('/', (req, res) => { 
+  res.redirect("/index.html")
+});
+
 app.route('/*')
   .head(async (req, res) => {
     await proxy.head(req, res);
@@ -66,10 +77,13 @@ app.route('/*')
     }).pipe(res);
   });
 
-if (port > 0) {
-  app.listen(port, () => {
-    debug(`s3proxy listening on port ${port}`);
-  });
-}
+proxy.on('init', () => {
+  if (port > 0) {
+    app.listen(port, () => {
+      debug(`listening on port ${port}`);
+      process.send('ready'); // for pm2-runtime wait_ready option
+    });
+  }  
+});
 
 module.exports = app;
