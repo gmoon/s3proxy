@@ -26,4 +26,4 @@ CMD DEBUG=s3proxy,express \
 FROM base as production
 RUN rm -rf /var/cache/apk/
 USER node
-CMD pm2-runtime -i $PM2_INSTANCES express-s3proxy.js
+CMD ./checkenv.sh pm2-runtime -i $PM2_INSTANCES express-s3proxy.js
