@@ -41,17 +41,17 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // initialize the s3proxy
-const proxy = new S3Proxy({ bucket: bucket, logger: console });
+const proxy = new S3Proxy({ bucket, logger: console });
 proxy.init();
 proxy.on('error', (err) => {
   console.log(`error initializing s3proxy for bucket ${bucket}: ${err.statusCode} ${err.code}`);
 });
 
 // basic health check
-app.get('/health', (req, res) => { 
-  res.writeHead(200); 
+app.get('/health', (req, res) => {
+  res.writeHead(200);
   res.end();
-})
+});
 
 // health check s3
 app.get('/health/s3', (req, res) => {
@@ -59,11 +59,11 @@ app.get('/health/s3', (req, res) => {
     // just end the request and let the HTTP status code convey the error
     res.end();
   }).pipe(res);
-})
+});
 
 // route all get requests to s3proxy
-app.get('/', (req, res) => { 
-  res.redirect("/index.html")
+app.get('/', (req, res) => {
+  res.redirect('/index.html');
 });
 
 app.route('/*')
@@ -83,7 +83,7 @@ proxy.on('init', () => {
       debug(`listening on port ${port}`);
       process.send('ready'); // for pm2-runtime wait_ready option
     });
-  }  
+  }
 });
 
 module.exports = app;
