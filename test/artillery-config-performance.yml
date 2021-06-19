@@ -1,0 +1,15 @@
+config:
+  target: "https://s3proxy.forkzero.com"
+  plugins:
+    expect: {}
+  phases:
+    - duration: 60
+      arrivalRate: 10
+      name: warm up phase
+    - duration: 600 
+      arrivalRate: 5
+      rampTo: 50
+      name: Ramp up load
+    - duration: 600
+      arrivalRate: 50
+      name: Sustained load

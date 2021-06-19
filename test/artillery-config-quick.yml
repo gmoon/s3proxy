@@ -1,0 +1,7 @@
+config:
+  target: "http://localhost:8080"
+  plugins:
+    expect: {}
+  phases:
+    - duration: 5
+      arrivalRate: 4

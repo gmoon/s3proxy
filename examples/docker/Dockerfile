@@ -16,13 +16,10 @@ RUN apk --update-cache upgrade \
 
 FROM base as test
 # to generate credentials use: aws sts get-session-token --duration 900 > secrets.json
-COPY secrets.json ./
+COPY credentials.json ./
 RUN apk add --no-cache jq bash netcat-openbsd
 USER node
-CMD AWS_ACCESS_KEY_ID=`jq -r .Credentials.AccessKeyId secrets.json` \
-    AWS_SECRET_ACCESS_KEY=`jq -r .Credentials.SecretAccessKey secrets.json` \
-    AWS_SESSION_TOKEN=`jq -r .Credentials.SessionToken secrets.json` \
-    DEBUG=s3proxy,express \
+CMD DEBUG=s3proxy,express \
     NODE_ENV=development \
     ./checkenv.sh pm2-runtime -i $PM2_INSTANCES express-s3proxy.js
 

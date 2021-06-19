@@ -9,7 +9,7 @@
 
   Author: George Moon <george.moon@gmail.com>
 */
-
+const fs = require('fs');
 const helmet = require('helmet');
 const express = require('express');
 const debug = require('debug')('s3proxy');
@@ -32,6 +32,31 @@ function handleError(req, res, err) {
   `);
 }
 
+// In non-production environments, if a credentials file exists, return the credentials
+// To create a temporary credentials file:
+//     aws sts get-session-token --duration 900 > credentials.json
+//
+function getCredentials() {
+  const file = './credentials.json';
+  var contents = undefined;
+  try {
+    const credentials = JSON.parse(fs.readFileSync(file)).Credentials;
+    if (process.env.NODE_ENV.match(/^prod/i)) {
+      throw new Error('will not use a credentials file in production');
+    }
+    contents = {
+      accessKeyId: credentials.AccessKeyId,
+      secretAccessKey: credentials.SecretAccessKey,
+      sessionToken: credentials.SessionToken
+    };
+    debug(`using credentials from ${file}`);
+  } catch (e) {
+    debug(e.message);
+    debug(`using sdk credential chain`);
+  }
+  return contents;
+}
+
 // Use morgan for request logging except during test execution
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan(
@@ -41,8 +66,10 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // initialize the s3proxy
-const proxy = new S3Proxy({ bucket, logger: console });
+const credentials = getCredentials();
+const proxy = new S3Proxy({ bucket, logger: console, credentials });
 proxy.init();
+
 proxy.on('error', (err) => {
   console.log(`error initializing s3proxy for bucket ${bucket}: ${err.statusCode} ${err.code}`);
 });
@@ -81,7 +108,9 @@ proxy.on('init', () => {
   if (port > 0) {
     app.listen(port, () => {
       debug(`listening on port ${port}`);
-      process.send('ready'); // for pm2-runtime wait_ready option
+      if (process.send) { // test to determine if this is running in a child process
+        process.send('ready'); // for pm2-runtime wait_ready option
+      }
     });
   }
 });
