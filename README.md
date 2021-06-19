@@ -74,7 +74,7 @@ the files via HTTP like `yum` expects. The additional benefit is that only one p
 1. Edit examples/express-basic.js, replace `s3proxy-public` with your S3 bucket name
 1. Install dependencies `npm install`
 1. Start the server
-`PORT=3000 node express-basic`
+`PORT=8080 node express-basic`
 1. Test it out (change index.html to the name of a file that exists in your bucket)
 `curl http://localhost:3000/index.html`
 
@@ -85,7 +85,7 @@ cd website
 npm init
 npm install --save express express-request-id morgan s3proxy
 curl -O https://raw.githubusercontent.com/gmoon/s3proxy/master/examples/express-s3proxy.js
-DEBUG=s3proxy PORT=3000 node express-s3proxy
+DEBUG=s3proxy PORT=8080 BUCKET=mybucket node express-s3proxy
 ```
 
 ## Credentials
@@ -97,7 +97,7 @@ The [Environment Variables](https://docs.aws.amazon.com/sdk-for-javascript/v2/de
 
 Alternatively, you can specify the profile to use on command line:
 
-`AWS_PROFILE=foo PORT=3000 node examples/express-basic.js`
+`AWS_PROFILE=foo PORT=8080 node examples/express-basic.js`
 
 One way to test is to verify that your aws cli works from command line (substitute your bucket name):
 
