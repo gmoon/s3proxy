@@ -8,7 +8,7 @@ Use AWS S3 as the storage backend for a nodejs web server.
 
 ## Usage
 ``` bash
-docker run --env BUCKET=mybucket --publish 8080:8080 -t forkzero/s3proxy:latest
+docker run --env BUCKET=mybucket --publish 8080:8080 -t forkzero/s3proxy:1.5.1
 curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
 ```
 
