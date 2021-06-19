@@ -15,9 +15,11 @@ If you need to pass temporary AWS credentials to your docker container (for loca
 ``` bash
 aws sts get-session-token --duration 900 > credentials.json
 docker run -v $PWD/credentials.json:/src/credentials.json:ro --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:1.5.1
+curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
 ```
-
+Run it locally without docker:
 ``` bash
+npm install s3proxy express body-parser morgan express-request-id helmet
 PORT=8080 BUCKET=mybucket node ./examples/express-s3proxy
 curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
 ```
