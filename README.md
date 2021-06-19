@@ -11,7 +11,7 @@ Use AWS S3 as the storage backend for a nodejs web server.
 docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:1.5.1
 curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
 ```
-If you need to pass temporary AWS credentials to your docker container (for local development, for example), generate the temporary credentials with the AWS CLI, store it in a file called credentials.json, and then mount that file into your container at `/src/credentials.json`. *Note:* this capability is disabled if `NODE_ENV=prod` or `NODE_ENV=production`.
+If you need to pass temporary AWS credentials to your docker container (for local development, for example), generate the temporary credentials with the `aws cli`, store it in a file called `credentials.json`, and then mount that file into your container at `/src/credentials.json`. *Note:* this capability is disabled if `NODE_ENV=prod` or `NODE_ENV=production`.
 ``` bash
 aws sts get-session-token --duration 900 > credentials.json
 docker run \
