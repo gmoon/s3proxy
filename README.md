@@ -2,7 +2,7 @@
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
 [![Node CI][actions-image]][actions-url]
-![Docker Pulls](https://img.shields.io/docker/pulls/forkzero/s3proxy?style=flat-square)
+[![Docker Pulls][dockerpulls-image]][dockerpulls-url]
 
 Use AWS S3 as the storage backend for a nodejs web server.
 
@@ -224,6 +224,8 @@ const configuredProxy = new S3Proxy({
 [downloads-url]: https://npmjs.org/package/s3proxy
 [actions-image]: https://github.com/gmoon/s3proxy/workflows/Node%20CI/badge.svg
 [actions-url]: https://github.com/gmoon/s3proxy/actions?query=workflow%3A%22Node+CI%22
+[dockerpulls-image]: https://img.shields.io/docker/pulls/forkzero/s3proxy?style=flat-square
+[dockerpulls-url]: https://hub.docker.com/repository/docker/forkzero/s3proxy
 
 
 ## init method
