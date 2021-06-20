@@ -1,6 +1,40 @@
-### build the docker container
-I am building a multi-platform container because I have a Mac ARM and want to deploy on Fargate which only
-supports x86_64 currently. Building multi-platform containers is probably a good idea these days anyway...
+## S3Proxy Docker Container
+
+A docker container that runs S3Proxy via an Express app
+
+### Build
+
+#### Test Target
+Build the `s3proxy:test` image and load/output it into your local docker system.
+``` bash
+docker buildx build --build-arg VERSION=$npm_package_version --target test --load -t s3proxy:test .
+```
+
+#### Production Target
+``` bash
+npm package
+docker buildx build --build-arg VERSION=1.5.1 \
+  --push \
+  --target production \
+  -t forkzero/s3proxy:$npm_package_version \
+  --platform=linux/amd64,linux/arm64 .
+```
+
+This builds a multi-platform container which is useful if you are targeting multiple runtime architectures. For example, a Mac M1 (arm64) and AWS Fargate (amd64).
 
 You may need to enable QEMU on your build machine: 
 `docker buildx create --use --name=qemu`
+
+### Test
+``` bash
+aws sts get-session-token --duration 900 > credentials.json
+docker run -v $PWD/credentials.json:/src/credentials.json:ro \
+  --rm \
+  --name s3proxy-test \
+  -d \
+  -p 8080:8080 \
+  -e BUCKET=mybucket \
+  -e PORT=8080 \
+  -t s3proxy:test
+curl http://localhost:8080/index.html     # serves s3://mybucket/index.html
+```
