@@ -7,7 +7,7 @@ A docker container that runs S3Proxy via an Express app
 #### Test Target
 Build the `s3proxy:test` image and load/output it into your local docker system.
 ``` bash
-docker buildx build --build-arg VERSION=$npm_package_version --target test --load -t s3proxy:test .
+docker buildx build --build-arg VERSION=1.5.1 --target test --load -t s3proxy:test .
 ```
 
 #### Production Target
