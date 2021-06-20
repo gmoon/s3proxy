@@ -1,10 +1,10 @@
-## S3Proxy Docker Container
+# S3Proxy Docker Container
 
 A docker container that runs S3Proxy via an Express app
 
-### Build
+## Build
 
-#### Test Target
+### Test Target
 Build the `s3proxy:test` image and load/output it into your local docker system.
 ``` bash
 npm pack
@@ -12,7 +12,7 @@ cd examples/docker
 docker buildx build --build-arg VERSION=1.5.1 --target test --load -t s3proxy:test .
 ```
 
-#### Production Target
+### Production Target
 ``` bash
 npm pack
 cd examples/docker
@@ -28,7 +28,7 @@ This builds a multi-platform container which is useful if you are targeting mult
 You may need to enable QEMU on your build machine: 
 `docker buildx create --use --name=qemu`
 
-### Test
+## Test
 ``` bash
 aws sts get-session-token --duration 900 > credentials.json
 docker run -v $PWD/credentials.json:/src/credentials.json:ro \
