@@ -40,4 +40,5 @@ docker run -v $PWD/credentials.json:/src/credentials.json:ro \
   -e PORT=8080 \
   -t s3proxy:test
 curl http://localhost:8080/index.html     # serves s3://mybucket/index.html
+docker kill s3proxy-test
 ```
