@@ -393,8 +393,8 @@ Add secrets to GitHub Secrets in the repo, per https://github.com/aws-actions/co
  1. git clone https://github.com/gmoon/s3proxy.git
  1. npm version minor (or major or patch)
     * if you make a mistake: 
-    `git reset --hard HEAD~1` (Delete the most recent commit, destroying the work you've done)
-    `git tag -d <tag_name>` Delete the tag that was just created
+      1. `git reset --hard HEAD~1` Delete the most recent commit, destroying the work you've done
+      1. `git tag -d <tag_name>` Delete the tag that was just created
  1. npm test
  1. npm publish
  1. git push
