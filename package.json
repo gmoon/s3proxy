@@ -36,7 +36,7 @@
     "mocha": "mocha",
     "artillery": "artillery run --config test/artillery-config-quick.yml test/artillery.yml",
     "artillery-ci": "start-server-and-test start :8080 artillery",
-    "artillery-docker": "npm run dockerize-for-test && docker run -v $PWD/credentials.json:/src/credentials.json:ro --rm --name s3proxy-test -d -p 8080:8080 -e BUCKET=s3proxy-public -e PORT=8080 -t s3proxy:test && wait-on http://localhost:8080/index.html && npm run artillery; docker kill s3proxy-test",
+    "artillery-docker": "npm run dockerize-for-test && npm run credentials && docker run -v $PWD/credentials.json:/src/credentials.json:ro --rm --name s3proxy-test -d -p 8080:8080 -e BUCKET=s3proxy-public -e PORT=8080 -t s3proxy:test && wait-on http://localhost:8080/index.html && npm run artillery; docker kill s3proxy-test",
     "artillery-performance": "artillery run --quiet --output artillery.json --config test/artillery-config-performance.yml test/artillery.yml && artillery report --output artillery.html artillery.json",
     "package": "npm pack && mv s3proxy-*.tgz examples/docker/",
     "credentials": "aws sts get-session-token --duration 900 > credentials.json",
