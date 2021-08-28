@@ -31,7 +31,7 @@
   "scripts": {
     "eslint": "eslint *.js examples/*.js",
     "start": "PORT=8080 node examples/express-basic.js",
-    "test": "npm run eslint && npm run nyc-coverage mocha && npm run artillery-ci && npm run artillery-docker",
+    "test": "npm run eslint && npm run nyc-coverage mocha && npm run artillery-ci && npm run package && npm run artillery-docker",
     "nyc-coverage": "nyc --reporter=html --reporter=text",
     "mocha": "mocha",
     "artillery": "artillery run --config test/artillery-config-quick.yml test/artillery.yml",
