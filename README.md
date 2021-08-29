@@ -1,6 +1,7 @@
 # s3proxy
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
+[![GitHub Super-Linter][github-linter-image]][github-linter-url]
 [![Node CI][actions-image]][actions-url]
 [![Docker Pulls][dockerpulls-image]][dockerpulls-url]
 
@@ -238,7 +239,8 @@ const configuredProxy = new S3Proxy({
 [actions-url]: https://github.com/gmoon/s3proxy/actions?query=workflow%3A%22Node+CI%22
 [dockerpulls-image]: https://img.shields.io/docker/pulls/forkzero/s3proxy?style=flat-square
 [dockerpulls-url]: https://hub.docker.com/repository/docker/forkzero/s3proxy
-
+[github-linter-image]: https://github.com/gmoon/s3proxy/workflows/Lint%20Code%20Base/badge.svg
+[github-linter-url]: https://github.com/marketplace/actions/super-linter
 
 ## init method
 
