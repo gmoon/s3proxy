@@ -38,7 +38,8 @@ module.exports = class s3proxy extends EventEmitter {
   createReadStream(req) {
     this.isInitialized();
     const r = s3proxy.parseRequest(req);
-    const params = { Bucket: this.bucket, Key: r.key };
+    let params = { Bucket: this.bucket, Key: r.key };
+    req.headers.range ? params.Range = req.headers.range : undefined;
     const s3request = this.s3.getObject(params);
     const s3stream = s3request.createReadStream();
     return { s3request, s3stream };
