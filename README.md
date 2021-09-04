@@ -53,6 +53,10 @@ curl --range 0-99 http://localhost:8080/large.bin -o range.bin
 
 ## Benefits
 
+### Avoid S3 Dependencies for Your Application
+
+Efficient, high-performance HTTP-based access to your S3 objects.
+
 ### Private web endpoint
 
 AWS S3 provides native web hosting, but it lacks fine-grained security controls. By hosting your own web
