@@ -8,7 +8,7 @@ Use AWS S3 as the storage backend for a nodejs web server.
 
 ## Usage
 ``` bash
-docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:1.5.1
+docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:1.6.0
 curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
 ```
 If you need to pass temporary AWS credentials to your docker container (for local development, for example), generate the temporary credentials with the `aws cli`, store it in a file called `credentials.json`, and then mount that file into your container at `/src/credentials.json`. *Note:* this capability is disabled if `NODE_ENV=prod` or `NODE_ENV=production`.
@@ -19,7 +19,7 @@ docker run \
   -e BUCKET=mybucket \
   -e PORT=8080 \
   -p 8080:8080 \
-  -t forkzero/s3proxy:1.5.1
+  -t forkzero/s3proxy:1.6.0
 curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
 ```
 Run it locally without docker:
@@ -27,6 +27,10 @@ Run it locally without docker:
 npm install s3proxy express body-parser morgan express-request-id helmet
 PORT=8080 BUCKET=mybucket node ./examples/express-s3proxy
 curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
+```
+Use the Range feature to get a certain byte range:
+``` bash
+curl --range 0-99 http://localhost:8080/large.bin -o range.bin
 ```
 
 ## Features
