@@ -6,7 +6,6 @@ on:
 jobs:
   dockerize:
     runs-on: ubuntu-latest
-    needs: functional-tests
     env:
       DOCKER_CONTENT_TRUST: 0
     steps:
