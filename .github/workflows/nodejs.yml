@@ -1,5 +1,5 @@
 name: Node CI
-on: [push]
+on: [push, pull_request]
 jobs:
   audit:
     runs-on: ubuntu-latest
@@ -86,4 +86,4 @@ jobs:
           run-quality-checks: true
       - name: scan container
         run: |
-          # docker scan s3proxy:test
+          docker scan s3proxy:test || exit 0
