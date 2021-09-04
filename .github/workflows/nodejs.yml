@@ -86,4 +86,5 @@ jobs:
           run-quality-checks: true
       - name: scan container
         run: |
+          docker --version
           docker scan s3proxy:test || exit 0
