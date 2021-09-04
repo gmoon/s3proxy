@@ -35,13 +35,45 @@ module.exports = class s3proxy extends EventEmitter {
     });
   }
 
+  /*
+    If headerKey is present in the http headers, then return an object whose
+    key is paramKey and whose value is the value of headerKey in the http
+    header.
+
+    If headerKey is not present in the http headers, then return an empty
+    object: {}
+
+    This return value is designed to be merged to the S3 params via the
+    spread operator (...)
+    */
+  static mapHeaderToParam(req, headerKey, paramKey) {
+    let retval = {};
+    if (typeof req.headers !== 'undefined') {
+      if (typeof req.headers[headerKey] !== 'undefined') {
+        retval = { [paramKey]: req.headers[headerKey] };
+      }
+    }
+    return retval;
+  }
+
+  /*
+    From s3proxy object and http request, return S3 Params
+      - Bucket: (required) name of bucket, taken from s3proxy object
+      - Key: (required) name of key to stream
+      - Range: (optional) byte range to return
+  */
+  getS3Params(req) {
+    const r = s3proxy.parseRequest(req);
+    const params = {
+      ...{ Bucket: this.bucket, Key: r.key },
+      ...s3proxy.mapHeaderToParam(req, 'range', 'Range'),
+    };
+    return params;
+  }
+
   createReadStream(req) {
     this.isInitialized();
-    const r = s3proxy.parseRequest(req);
-    const params = { Bucket: this.bucket, Key: r.key };
-    if (req.headers.range) {
-      params.Range = req.headers.range;
-    }
+    const params = this.getS3Params(req);
     const s3request = this.s3.getObject(params);
     const s3stream = s3request.createReadStream();
     return { s3request, s3stream };

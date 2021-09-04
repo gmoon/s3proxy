@@ -34,6 +34,7 @@ curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
 * Provides stream interface; stream files, even very large files, quickly and with a low memory footprint
 * HTTP GET requests are translated to S3 GetObject calls
 * HTTP HEAD requests are translated to S3 HeadObject calls
+* [HTTP Range](https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.35) header is translated to S3 Range parameter (useful for working with large files, media files, etc)
 * Transparently handles retries against the AWS S3 backend
 * AWS S3 headers are provided as the HTTP response headers, including content-type and content-length
 * Easily integrated with common nodejs web frameworks; examples include http and express apps.
@@ -272,10 +273,7 @@ It uses a public bucket called s3proxy-public.
 
 ```
 # Run the test suite
-make test
-
-# Run it faster: execute steps in parallel
-make -j test
+npm test
 ```
 ### Load testing
 Artillery can be used to send load to your endpoint. You can view the scenarios we use [here](test/artillery.yml).

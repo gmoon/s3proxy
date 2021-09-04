@@ -37,7 +37,6 @@ describe('s3proxy', () => {
 
       configuredProxy.init(() => {
         expect(configuredProxy.s3.config.httpOptions.connectTimeout).to.equal(1);
-
         done();
       });
     });

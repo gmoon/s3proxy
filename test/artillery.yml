@@ -2,6 +2,16 @@
 scenarios:
   - flow:
       - get:
+          url: "/large.bin"
+          headers:
+            'range': "bytes=0-99"
+          expect:
+            - statusCode: 206
+            - contentType: application/octet-stream
+            - headerEquals:
+                - "content-length"
+                - "100"
+      - get:
           url: "/index.html"
           expect:
             - statusCode: 200

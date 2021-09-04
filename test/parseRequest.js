@@ -24,3 +24,13 @@ describe('s3proxy.parseRequest', () => {
     expect(S3Proxy.parseRequest({ path: encodedTestString})).to.deep.equal({ key: testString, query: {}});
   })
 });
+describe('s3proxy.getS3Params', () => {
+  it('should set Bucket and Key', () => {
+    const s3proxy = new S3Proxy({ bucket: 's3proxy-public' });
+    expect(s3proxy.getS3Params({ path:'/index.html' })).to.deep.equal({ Bucket: 's3proxy-public', Key: 'index.html'});
+  })
+  it('should set Range parameter', () => {
+    const s3proxy = new S3Proxy({ bucket: 's3proxy-public' });
+    expect(s3proxy.getS3Params({ path:'/index.html', headers: { range: 'bytes=0-100'} })).to.deep.equal({ Bucket: 's3proxy-public', Key: 'index.html', Range: 'bytes=0-100'});
+  })
+})
