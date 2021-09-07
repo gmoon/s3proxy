@@ -87,6 +87,13 @@ app.get('/health/s3', (req, res) => {
   }).pipe(res);
 });
 
+// echo s3proxy version number. You probably want to protect this route as it can expose
+// information that could be used for nefarious purposes
+app.get('/version', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.end(`{"version": "${S3Proxy.version()}"}\n`);
+});
+
 // route all get requests to s3proxy
 app.get('/', (req, res) => {
   res.redirect('/index.html');
