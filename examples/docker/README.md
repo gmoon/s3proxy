@@ -7,20 +7,15 @@ A docker container that runs S3Proxy via an Express app
 ### Test Target
 Build the `s3proxy:test` image and load/output it into your local docker system.
 ``` bash
-npm pack
-cd examples/docker
-docker buildx build --build-arg VERSION=1.5.1 --target test --load -t s3proxy:test .
+npm run package
+npm run credentials
+npm run dockerize-for-test
 ```
 
 ### Production Target
 ``` bash
-npm pack
-cd examples/docker
-docker buildx build --build-arg VERSION=1.5.1 \
-  --push \
-  --target production \
-  -t forkzero/s3proxy:$npm_package_version \
-  --platform=linux/amd64,linux/arm64 .
+npm run package
+npm run dockerize-for-prod
 ```
 
 This builds a multi-platform container which is useful if you are targeting multiple runtime architectures. For example, a Mac M1 (arm64) and AWS Fargate (amd64).
