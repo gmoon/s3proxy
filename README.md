@@ -18,6 +18,7 @@ docker run \
   -v $PWD/credentials.json:/src/credentials.json:ro \
   -e BUCKET=mybucket \
   -e PORT=8080 \
+  -e NODE_ENV=dev \
   -p 8080:8080 \
   -t forkzero/s3proxy:1.6.0
 curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
