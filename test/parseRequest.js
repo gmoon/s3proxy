@@ -34,3 +34,8 @@ describe('s3proxy.getS3Params', () => {
     expect(s3proxy.getS3Params({ path:'/index.html', headers: { range: 'bytes=0-100'} })).to.deep.equal({ Bucket: 's3proxy-public', Key: 'index.html', Range: 'bytes=0-100'});
   })
 })
+describe('s3proxy.version', () => {
+  it('should return a version number as major.minor.patch', () => {
+    expect(S3Proxy.version()).to.match(/\d+\.\d+\.\d+/);
+  })
+})

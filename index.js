@@ -3,6 +3,7 @@ const AWS = require('aws-sdk');
 const url = require('url');
 const UserException = require('./UserException');
 const HeaderHandler = require('./HeaderHandler');
+const s3proxyVersion = require('./package.json').version;
 
 // AWS.config.logger = console;
 
@@ -54,6 +55,11 @@ module.exports = class s3proxy extends EventEmitter {
       }
     }
     return retval;
+  }
+
+  static version() {
+    console.log(`version=${s3proxyVersion}`);
+    return s3proxyVersion;
   }
 
   /*
