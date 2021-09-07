@@ -58,7 +58,6 @@ module.exports = class s3proxy extends EventEmitter {
   }
 
   static version() {
-    console.log(`version=${s3proxyVersion}`);
     return s3proxyVersion;
   }
 
