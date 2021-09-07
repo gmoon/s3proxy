@@ -106,7 +106,7 @@ app.route('/*')
 proxy.on('init', () => {
   if (port > 0) {
     app.listen(port, () => {
-      debug(`listening on port ${port}`);
+      debug(`[version=${S3Proxy.version()}] listening on port ${port}`);
       if (process.send) { // test to determine if this is running in a child process
         process.send('ready'); // for pm2-runtime wait_ready option
       }
