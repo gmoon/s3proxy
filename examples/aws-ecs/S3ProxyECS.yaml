@@ -188,7 +188,7 @@ Resources:
           #VolumesFrom: 
           #  - VolumeFrom
           #WorkingDirectory: String
-      Cpu: "1024"
+      Cpu: "256"
       #EphemeralStorage: 
       #  EphemeralStorage
       ExecutionRoleArn: !GetAtt S3ProxyECSExecutionRole.Arn
