@@ -307,7 +307,7 @@ AWS_NODEJS_CONNECTION_REUSE_ENABLED=1 PORT=3000 node examples/express-basic.js
 
 # In a different console
 cd s3proxy
-npm run artillery
+npm run artillery-local
 ```
 Response time p95 is less than 35ms and median response time is 12.3ms.
 ```
@@ -361,10 +361,10 @@ Summary report @ 21:46:11(-0400) 2020-08-16
     404: 218
 ```
 To execute the tests:
-1. start your local web server on port 3000
+1. start your local web server on port 8080
 1. run artillery
 ```
-npm run artillery
+npm run artillery-local
 ```
 ### Run GitHub Actions locally
 Note: This is currently not working, as this stage fails:

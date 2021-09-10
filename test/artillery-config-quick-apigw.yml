@@ -1,0 +1,7 @@
+config:
+  target: "https://bvn83uv9g8.execute-api.us-east-1.amazonaws.com/prod"
+  plugins:
+    expect: {}
+  phases:
+    - duration: 5
+      arrivalRate: 4
