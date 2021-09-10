@@ -71,7 +71,9 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: ecs-tasks.amazonaws.com
+              Service: 
+                - ecs-tasks.amazonaws.com
+                - apigateway.amazonaws.com
             Action: sts:AssumeRole
       Policies:
         - PolicyName: "root"
@@ -188,7 +190,7 @@ Resources:
           #VolumesFrom: 
           #  - VolumeFrom
           #WorkingDirectory: String
-      Cpu: "256"
+      Cpu: "1024"
       #EphemeralStorage: 
       #  EphemeralStorage
       ExecutionRoleArn: !GetAtt S3ProxyECSExecutionRole.Arn
@@ -336,8 +338,8 @@ Resources:
           PredefinedMetricType: ECSServiceAverageCPUUtilization
         ScaleInCooldown: 10
         ScaleOutCooldown: 10
-        # Keep things at or lower than 50% CPU utilization, for example
-        TargetValue: 50
+        # Keep things at or lower than 80% CPU utilization, for example
+        TargetValue: 80
   DNSRecord:
     Type: AWS::Route53::RecordSet
     Properties:
