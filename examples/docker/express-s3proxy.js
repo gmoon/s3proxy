@@ -12,6 +12,7 @@
 const fs = require('fs');
 const helmet = require('helmet');
 const express = require('express');
+const AWSXRay = require('aws-xray-sdk');
 const debug = require('debug')('s3proxy');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
@@ -21,6 +22,7 @@ const S3Proxy = require('s3proxy');
 const port = process.env.PORT;
 const bucket = process.env.BUCKET;
 const app = express();
+app.use(AWSXRay.express.openSegment('s3proxy'));
 app.set('view engine', 'pug');
 app.use(addRequestId);
 app.use(bodyParser.json());
@@ -109,6 +111,8 @@ app.route('/*')
       handleError(req, res, err);
     }).pipe(res);
   });
+
+app.use(AWSXRay.express.closeSegment());
 
 proxy.on('init', () => {
   if (port > 0) {
