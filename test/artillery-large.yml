@@ -9,6 +9,15 @@ scenarios:
                 - "content-length"
                 - "338"
   - flow:
+      - get:
+          url: "/test1m.tmp"
+          expect:
+            - statusCode: 200
+            - contentType: binary/octet-stream
+            - headerEquals:
+                - "content-length"
+                - "1048576"
+  - flow:
       - head:
           url: "/large.bin"
           expect:
