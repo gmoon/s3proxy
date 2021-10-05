@@ -4,7 +4,7 @@
   "description": "Streaming web proxy for AWS S3",
   "main": "index.js",
   "devDependencies": {
-    "artillery": "^1.7.8",
+    "artillery": "^1.7.9",
     "artillery-plugin-expect": "^1.5.0",
     "benchmark": "^2.1.4",
     "chai": "^4.3.4",
@@ -16,7 +16,7 @@
     "express-request-id": "^1.4.1",
     "helmet": "^4.6.0",
     "microtime": "^3.0.0",
-    "mocha": "^9.1.1",
+    "mocha": "^9.1.2",
     "morgan": "^1.10.0",
     "nock": "^13.1.3",
     "nyc": "^15.1.0",
@@ -25,7 +25,7 @@
     "wait-on": "^6.0.0"
   },
   "dependencies": {
-    "aws-sdk": "^2.983.0",
+    "aws-sdk": "^2.1001.0",
     "url": "^0.11.0"
   },
   "scripts": {
@@ -47,6 +47,7 @@
     "dockerize-for-test": "npm run package && cd examples/docker && docker buildx build --build-arg VERSION=$npm_package_version --target test --load -t s3proxy:test .",
     "dockerize-for-prod-aws": "cd examples/docker && docker buildx build --build-arg VERSION=$npm_package_version --push --target production -t ${AWS_ACCOUNT}.dkr.ecr.us-east-1.amazonaws.com/s3proxy:latest -t ${AWS_ACCOUNT}.dkr.ecr.us-east-1.amazonaws.com/s3proxy:$npm_package_version --platform=linux/amd64,linux/arm64 .",
     "dockerize-for-prod-dockerhub": "cd examples/docker && docker buildx build --build-arg VERSION=$npm_package_version --push --target production -t forkzero/s3proxy:$npm_package_version --platform=linux/amd64,linux/arm64 .",
+    "software-bill-of-materials": "cd examples/docker && docker buildx build --build-arg VERSION=$npm_package_version --load --target production -t forkzero/s3proxy:$npm_package_version . && syft forkzero/s3proxy:$npm_package_version",
     "docker-login-aws": "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ACCOUNT}.dkr.ecr.us-east-1.amazonaws.com",
     "docker-login-dockerhub": "docker login --username ${DOCKERHUB_USER} --password ${DOCKERHUB_ACCESS_TOKEN}",
     "cleanup": "rm -fv s3proxy*.tgz; rm -fv examples/docker/s3proxy*.tgz"
