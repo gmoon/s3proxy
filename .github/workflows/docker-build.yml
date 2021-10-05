@@ -18,4 +18,5 @@ jobs:
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
       - name: docker
         run: |
+          npm run package
           npm run software-bill-of-materials
