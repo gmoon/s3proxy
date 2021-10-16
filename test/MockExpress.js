@@ -40,7 +40,7 @@ describe('MockExpress', () => {
       done();
     });
   });
-  it.only('should get header(s) from getObject call', (done) => {
+  it('should get header(s) from getObject call', (done) => {
     scope
       .get('/index.html')
       .reply(200, 'OK', ['x-y-z', '999']);
