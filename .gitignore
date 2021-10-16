@@ -12,6 +12,8 @@ credentials.json
 logs
 *.log
 target/
+test-results/
+test-results.xml
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

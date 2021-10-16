@@ -8,9 +8,9 @@ UUID             := $(shell date +%s)
 eslint:
 	npm run eslint 
 
-.PHONY: mocha
-mocha:
-	npm run nyc-coverage mocha 
+.PHONY: unit-tests
+unit-tests:
+	npm run nyc-coverage
 
 .PHONY: artillery
 artillery-ci:
@@ -44,7 +44,7 @@ artillery-docker: dockerize-for-test
 ###################################################################
 
 .PHONY: test
-test : eslint mocha artillery-ci sam-app sam-app-s3proxy
+test : eslint unit-tests artillery-ci sam-app sam-app-s3proxy
 
 .PHONY: functional-tests
 functional-test: dockerize-for-test artillery-docker
