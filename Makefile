@@ -27,9 +27,6 @@ sam-app-s3proxy:
 	cd examples/sam-app/s3proxy && npm run build --if-present
 	cd examples/sam-app/s3proxy && npm test
 
-.PHONY: test
-test : eslint mocha artillery-ci sam-app sam-app-s3proxy
-
 .PHONY: dockerize-for-test
 dockerize-for-test:
 	npm run dockerize-for-test
@@ -38,8 +35,19 @@ dockerize-for-test:
 artillery-docker: dockerize-for-test
 	npm run artillery-docker
 
-.PHONY: functional-test
+###################################################################
+##
+## These are the top level targets: test, functional-tests, all.
+## They are expected to pass using parallel mode (make -j), 
+## e.g. make -j all
+##
+###################################################################
+
+.PHONY: test
+test : eslint mocha artillery-ci sam-app sam-app-s3proxy
+
+.PHONY: functional-tests
 functional-test: dockerize-for-test artillery-docker
 
 .PHONY: all
-all: test functional-test
+all: test functional-tests
