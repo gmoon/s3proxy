@@ -13,25 +13,33 @@ mocha:
 	npm run nyc-coverage mocha 
 
 .PHONY: artillery
-artillery:
-	npm run artillery-ci 
-
-.PHONY: artillery-docker
-artillery-docker:
-	npm run package
-	npm run artillery-docker
+artillery-ci:
+	npm run artillery-ci
 
 .PHONY: sam-app
 sam-app:
-	cd examples/sam-app && \
-	sam build && \
-	sam local invoke -e events/event.json && \
-	cd s3proxy && \
-	npm install && \
-	npm run build --if-present && \
-	npm test
+	cd examples/sam-app && sam build
+	cd examples/sam-app && sam local invoke -e events/event.json
+
+.PHONY: sam-app-s3proxy
+sam-app-s3proxy:
+	cd examples/sam-app/s3proxy && npm install
+	cd examples/sam-app/s3proxy && npm run build --if-present
+	cd examples/sam-app/s3proxy && npm test
 
 .PHONY: test
-test : eslint mocha artillery artillery-docker sam-app
+test : eslint mocha artillery-ci sam-app sam-app-s3proxy
 
+.PHONY: dockerize-for-test
+dockerize-for-test:
+	npm run dockerize-for-test
 
+.PHONY: artillery-docker
+artillery-docker: dockerize-for-test
+	npm run artillery-docker
+
+.PHONY: functional-test
+functional-test: dockerize-for-test artillery-docker
+
+.PHONY: all
+all: test functional-test

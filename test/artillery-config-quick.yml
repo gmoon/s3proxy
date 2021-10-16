@@ -1,5 +1,6 @@
 config:
-  target: "https://s3proxy.forkzero.com"
+  ensure:
+    maxErrorRate: 1
   plugins:
     expect: {}
   phases:

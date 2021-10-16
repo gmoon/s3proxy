@@ -20,7 +20,8 @@ describe('MockExpress', () => {
   beforeEach((done) => {
     nock.cleanAll();
     nock.disableNetConnect();
-    nock.enableNetConnect(/127.0.0.1/);
+    // allow localhost and AWS metadata API (relevant when running on AWS EC2)
+    nock.enableNetConnect(/127.0.0.1|169.254.169.254/);
     // can add , { allowUnmocked: true }
     scope = nock('https://s3proxy-public.s3.amazonaws.com:443')
       .head('/')
@@ -39,7 +40,7 @@ describe('MockExpress', () => {
       done();
     });
   });
-  it('should get header(s) from getObject call', (done) => {
+  it.only('should get header(s) from getObject call', (done) => {
     scope
       .get('/index.html')
       .reply(200, 'OK', ['x-y-z', '999']);
