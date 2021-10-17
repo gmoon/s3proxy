@@ -9,7 +9,7 @@ jobs:
         run: |
           npm audit --audit-level critical
   build-and-test:
-    name: "Build and Run Unit Tests"
+    name: "Unit Tests"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -56,7 +56,7 @@ jobs:
         with:
           files: artifacts/**/*.xml
   functional-tests:
-    name: "Build s3proxy:test, Run Functional Tests, Scan Container"
+    name: "Container Tests, Scan"
     runs-on: ubuntu-latest
     env:
       # https://docs.docker.com/engine/security/trust/trust_automation/
