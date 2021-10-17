@@ -8,7 +8,8 @@ jobs:
       - name: security audit, fail for critical findings
         run: |
           npm audit --audit-level critical
-  build:
+  build-and-test:
+    name: "Build and Run Unit Tests"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -41,7 +42,7 @@ jobs:
           path: test-results/**/*.xml
   publish-test-results:
     name: "Publish Unit Tests Results"
-    needs: build
+    needs: build-and-test
     runs-on: ubuntu-latest
     # the build-and-test job might be skipped, we don't need to run this job then
     if: success() || failure()
@@ -55,6 +56,7 @@ jobs:
         with:
           files: artifacts/**/*.xml
   functional-tests:
+    name: "Build s3proxy:test, Run Functional Tests, Scan Container"
     runs-on: ubuntu-latest
     env:
       # https://docs.docker.com/engine/security/trust/trust_automation/
