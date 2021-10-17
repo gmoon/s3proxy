@@ -7,9 +7,8 @@ EXPOSE $PORT
 COPY checkenv.sh express-s3proxy.js s3proxy-${VERSION}.tgz ./
 HEALTHCHECK CMD curl -f http://localhost:${PORT}/health || exit 1
 RUN apk --update-cache upgrade \
-    && npm install --production -g npm \
-    && npm install --production ./s3proxy-${VERSION}.tgz express body-parser morgan express-request-id helmet aws-xray-sdk \
-    && npm install --production -g pm2 \
+    && npm install --no-audit --no-fund --production ./s3proxy-${VERSION}.tgz express body-parser morgan express-request-id helmet aws-xray-sdk \
+    && npm install --no-audit --no-fund --production -g pm2 \
     && apk add --no-cache curl \
     && npm cache clean --force \
     && rm -rf ~/.npm

@@ -47,7 +47,7 @@ artillery-docker: dockerize-for-test
 test : eslint unit-tests artillery-ci sam-app sam-app-s3proxy
 
 .PHONY: functional-tests
-functional-test: dockerize-for-test artillery-docker
+functional-tests: dockerize-for-test artillery-docker
 
 .PHONY: all
 all: test functional-tests
