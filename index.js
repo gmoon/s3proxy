@@ -72,6 +72,7 @@ module.exports = class s3proxy extends EventEmitter {
     const params = {
       ...{ Bucket: this.bucket, Key: r.key },
       ...s3proxy.mapHeaderToParam(req, 'range', 'Range'),
+      ResponseContentDisposition: 'inline'
     };
     return params;
   }
