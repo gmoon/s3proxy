@@ -1,26 +1,8 @@
-FROM node:current-alpine as base
+FROM forkzero/s3proxy:1.0.1 as base
 ARG VERSION
-WORKDIR /src
-# Set default environment variables. Can be overridden via docker run -e
-ENV PORT=8080 DEBUG=s3proxy AWS_NODEJS_CONNECTION_REUSE_ENABLED=1 NODE_ENV=production PM2_INSTANCES=max
-EXPOSE $PORT
-COPY checkenv.sh express-s3proxy.js s3proxy-${VERSION}.tgz ./
-HEALTHCHECK CMD curl -f http://localhost:${PORT}/health || exit 1
-RUN apk --update-cache upgrade \
-    && npm install --no-audit --no-fund --production ./s3proxy-${VERSION}.tgz express body-parser morgan express-request-id helmet aws-xray-sdk \
-    && npm install --no-audit --no-fund --production -g pm2 \
-    && apk add --no-cache curl \
-    && npm cache clean --force \
-    && rm -rf ~/.npm
 
-FROM base as test
-RUN apk add --no-cache jq bash netcat-openbsd
-USER node
-CMD DEBUG=s3proxy,express \
-    NODE_ENV=development \
-    ./checkenv.sh pm2-runtime -i $PM2_INSTANCES express-s3proxy.js
+USER root
+COPY s3proxy-${VERSION}.tgz ./
+RUN npm install --no-audit --no-fund --omit=dev ./s3proxy-${VERSION}.tgz
 
-FROM base as production
-RUN rm -rf /var/cache/apk/
-USER node
-CMD ./checkenv.sh pm2-runtime -i $PM2_INSTANCES express-s3proxy.js
+ENV DEBUG=s3proxy,express NODE_ENV=development
