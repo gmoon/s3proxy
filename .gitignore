@@ -8,6 +8,9 @@ credentials.json
 # SAM build files
 .aws-sam
 
+# megalinter
+megalinter-reports/
+
 # Logs
 logs
 *.log
