@@ -29,7 +29,7 @@ Parameters:
     Type: String
   ContainerImage:
     Type: String
-    Default: forkzero/s3proxy:1.6.4
+    Default: forkzero/s3proxy:1.6.5
 Resources: 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup

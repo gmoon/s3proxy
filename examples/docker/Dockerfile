@@ -1,4 +1,4 @@
-FROM forkzero/s3proxy:1.6.4 as base
+FROM forkzero/s3proxy:1.6.5 as base
 ARG VERSION
 
 USER root
