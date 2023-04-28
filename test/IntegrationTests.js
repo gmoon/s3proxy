@@ -33,6 +33,12 @@ describe('Examples', () => {
   });
 
   describe('Express server', () => {
+    it('should get head of index.html', (done) => {
+      chai.request(expressServer).head('/index.html').end((error, res) => {
+        expect(res).to.have.status(200);
+        done(error);
+      });
+    })  
     it('should get index.html', (done) => {
       chai.request(expressServer).get('/index.html').end((error, res) => {
         expect(res).to.have.status(200);
