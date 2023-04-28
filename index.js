@@ -177,9 +177,15 @@ module.exports = class s3proxy extends EventEmitter {
     );
     try {
       const item = await this.s3.send(command);
-      s3stream = (item.Body === undefined) ? new Readable() : item.Body;
+      if (item.Body === undefined) {
+        s3stream = new Readable();
+        s3stream.push(null);
+      } else {
+        s3stream = Readable.from(item.Body);
+      }
     } catch (e) {
       s3stream = new Readable();
+      s3stream.push(null);
     }
     res.writeHead(statusCode, headers);
     return s3stream;
