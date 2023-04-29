@@ -93,37 +93,6 @@ module.exports = class s3proxy extends EventEmitter {
     return params;
   }
 
-  async createReadStream(req) {
-    this.isInitialized();
-    const params = this.getS3Params(req);
-    const command = new GetObjectCommand(params);
-    let headers; let statusCode; let
-      s3stream;
-    command.middlewareStack.add(
-      (next) => async (args) => {
-        const result = await next(args);
-        headers = result.response.headers;
-        statusCode = result.response.statusCode;
-        return result;
-      },
-      // priority: low is important here, otherwise middleware is never
-      // executed for non-2xxx responses. Not sure why
-      // Link: https://aws.amazon.com/blogs/developer/middleware-stack-modular-aws-sdk-js/
-      { step: 'deserialize', priority: 'low' },
-    );
-    try {
-      const item = await this.s3.send(command);
-      s3stream = s3proxy.getReadstream(item.Body);
-    } catch (e) {
-      if (s3proxy.isNonFatalError(e)) {
-        s3stream = s3proxy.createEmptyReadstream();
-      } else {
-        throw (e);
-      }
-    }
-    return { s3stream, statusCode, headers };
-  }
-
   isInitialized() {
     if (!this.s3) {
       const error = new UserException('UninitializedError', 'S3Proxy is uninitialized (call s3proxy.init)');
@@ -187,14 +156,10 @@ module.exports = class s3proxy extends EventEmitter {
     return stream;
   }
 
-  async healthCheck() {
-    const command = new HeadBucketCommand({ Bucket: this.bucket });
-    await this.s3.send(command);
-  }
-
-  async healthCheckStream(res) {
+  async getObject(req) {
     this.isInitialized();
-    const command = new HeadBucketCommand({ Bucket: this.bucket });
+    const params = this.getS3Params(req);
+    const command = new GetObjectCommand(params);
     let headers; let statusCode; let
       s3stream;
     command.middlewareStack.add(
@@ -219,8 +184,7 @@ module.exports = class s3proxy extends EventEmitter {
         throw (e);
       }
     }
-    res.writeHead(statusCode, headers);
-    return s3stream;
+    return { s3stream, statusCode, headers };
   }
 
   async headObject(req) {
@@ -254,6 +218,54 @@ module.exports = class s3proxy extends EventEmitter {
     return { s3stream, statusCode, headers };
   }
 
+  async headBucket() {
+    this.isInitialized();
+    const command = new HeadBucketCommand({ Bucket: this.bucket });
+    let headers = []; let statusCode = '000'; let
+      s3stream;
+    command.middlewareStack.add(
+      (next) => async (args) => {
+        const result = await next(args);
+        headers = result.response.headers;
+        statusCode = result.response.statusCode;
+        return result;
+      },
+      // priority: low is important here, otherwise middleware is never
+      // executed for non-2xxx responses. Not sure why
+      // Link: https://aws.amazon.com/blogs/developer/middleware-stack-modular-aws-sdk-js/
+      { step: 'deserialize', priority: 'low' },
+    );
+    try {
+      const item = await this.s3.send(command);
+      s3stream = s3proxy.getReadstream(item.Body);
+    } catch (e) {
+      if (s3proxy.isNonFatalError(e)) {
+        s3stream = s3proxy.createEmptyReadstream();
+      } else {
+        throw (e);
+      }
+    }
+    return { s3stream, statusCode, headers };
+  }
+
+  /*
+  =========================================================================================
+
+    Public Methods
+
+  =========================================================================================
+  */
+  async healthCheck() {
+    const command = new HeadBucketCommand({ Bucket: this.bucket });
+    await this.s3.send(command);
+  }
+
+  async healthCheckStream(res) {
+    const { s3stream, statusCode, headers } = await this.headBucket();
+    res.writeHead(statusCode, headers);
+    return s3stream;
+  }
+
   async head(req, res) {
     const { s3stream, statusCode, headers } = await this.headObject(req);
     res.writeHead(statusCode, headers);
@@ -261,7 +273,7 @@ module.exports = class s3proxy extends EventEmitter {
   }
 
   async get(req, res) {
-    const { s3stream, statusCode, headers } = await this.createReadStream(req);
+    const { s3stream, statusCode, headers } = await this.getObject(req);
     res.writeHead(statusCode, headers);
     return s3stream;
   }

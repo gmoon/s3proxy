@@ -58,22 +58,22 @@ describe('s3proxy', () => {
       proxy.init();
     });
   });
-  describe('createReadStream error codes', () => {
+  describe('getObject error codes', () => {
     const proxy = new S3Proxy({ bucket: 's3proxy-public' });
     before( async () => {
       await proxy.init();
     });
     it('should return error code NoSuchKey for nonexistent key', async () => {
-      const { s3stream, statusCode, headers } = await proxy.createReadStream({ url: 'small.txt' });
+      const { s3stream, statusCode, headers } = await proxy.getObject({ url: 'small.txt' });
       expect(statusCode).to.equal(404);
     });
   });
-  describe('createReadStream', () => {
+  describe('getObject', () => {
     const proxy = new S3Proxy({ bucket: 's3proxy-public' });
     let length, page;
     before( async () => {
       await proxy.init();
-      page = await proxy.createReadStream({ url: 'index.html' });
+      page = await proxy.getObject({ url: 'index.html' });
       const chunks = [];
       for await (const chunk of page.s3stream) {
         chunks.push(Buffer.from(chunk));
