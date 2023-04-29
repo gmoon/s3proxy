@@ -33,6 +33,7 @@
   },
   "scripts": {
     "eslint": "eslint *.js examples/*.js",
+    "eslint-fix": "eslint --fix *.js examples/*.js",
     "start": "PORT=3000 node examples/express-basic.js",
     "test": "npm run eslint && npm run nyc-coverage && npm run artillery-ci && npm run package && npm run artillery-docker",
     "nyc-coverage": "MOCHA_FILE=test-results/mocha-junit.xml nyc --reporter=html --reporter=text mocha --reporter mocha-junit-reporter",
