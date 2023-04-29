@@ -27,23 +27,6 @@ module.exports = class s3proxy extends EventEmitter {
       }, {});
   }
 
-  async init() {
-    try {
-      this.s3 = new S3Client({ ...this.options });
-      await this.healthCheck();
-      this.emit('init');
-    } catch (e) {
-      this.emit('error', e);
-      throw e;
-    }
-    // this.healthCheck((error, data) => {
-    //   if (error) {
-    //     if (typeof (done) !== typeof (Function)) this.emit('error', error, data);
-    //   } else this.emit('init', data);
-    //   if (typeof (done) === typeof (Function)) done(error, data);
-    // });
-  }
-
   /*
     If headerKey is present in the http headers, then return an object whose
     key is paramKey and whose value is the value of headerKey in the http
@@ -137,6 +120,43 @@ module.exports = class s3proxy extends EventEmitter {
   }
 
   /*
+    1. Send provided command through the s3 client
+    2. Use middleware to capture
+      2a. item.Body as Readable s3stream (empty if item.Body is missing)
+      2b. req.headers as headers
+      2c. req.statusCode as statusCode
+    3. return { s3stream, statusCode, headers }
+  */
+  async send(command) {
+    this.isInitialized();
+    let headers; let statusCode; let
+      s3stream;
+    command.middlewareStack.add(
+      (next) => async (args) => {
+        const result = await next(args);
+        headers = result.response.headers;
+        statusCode = result.response.statusCode;
+        return result;
+      },
+      // priority: low is important here, otherwise middleware is never
+      // executed for non-2xx responses. Not sure why
+      // Link: https://aws.amazon.com/blogs/developer/middleware-stack-modular-aws-sdk-js/
+      { step: 'deserialize', priority: 'low' },
+    );
+    try {
+      const item = await this.s3.send(command);
+      s3stream = s3proxy.getReadstream(item.Body);
+    } catch (e) {
+      if (s3proxy.isNonFatalError(e)) {
+        s3stream = s3proxy.createEmptyReadstream();
+      } else {
+        throw (e);
+      }
+    }
+    return { s3stream, statusCode, headers };
+  }
+
+  /*
     Get a Readstream from Body.
     Type definition is:
       Body?: SdkStream<undefined | Readable | Blob | ReadableStream<any>>
@@ -156,96 +176,21 @@ module.exports = class s3proxy extends EventEmitter {
     return stream;
   }
 
-  async getObject(req) {
-    this.isInitialized();
+  getObject(req) {
     const params = this.getS3Params(req);
     const command = new GetObjectCommand(params);
-    let headers; let statusCode; let
-      s3stream;
-    command.middlewareStack.add(
-      (next) => async (args) => {
-        const result = await next(args);
-        headers = result.response.headers;
-        statusCode = result.response.statusCode;
-        return result;
-      },
-      // priority: low is important here, otherwise middleware is never
-      // executed for non-2xxx responses. Not sure why
-      // Link: https://aws.amazon.com/blogs/developer/middleware-stack-modular-aws-sdk-js/
-      { step: 'deserialize', priority: 'low' },
-    );
-    try {
-      const item = await this.s3.send(command);
-      s3stream = s3proxy.getReadstream(item.Body);
-    } catch (e) {
-      if (s3proxy.isNonFatalError(e)) {
-        s3stream = s3proxy.createEmptyReadstream();
-      } else {
-        throw (e);
-      }
-    }
-    return { s3stream, statusCode, headers };
+    return this.send(command);
   }
 
-  async headObject(req) {
-    this.isInitialized();
+  headObject(req) {
     const params = this.getS3Params(req);
     const command = new HeadObjectCommand(params);
-    let headers = []; let statusCode = '000'; let
-      s3stream;
-    command.middlewareStack.add(
-      (next) => async (args) => {
-        const result = await next(args);
-        headers = result.response.headers;
-        statusCode = result.response.statusCode;
-        return result;
-      },
-      // priority: low is important here, otherwise middleware is never
-      // executed for non-2xxx responses. Not sure why
-      // Link: https://aws.amazon.com/blogs/developer/middleware-stack-modular-aws-sdk-js/
-      { step: 'deserialize', priority: 'low' },
-    );
-    try {
-      const item = await this.s3.send(command);
-      s3stream = s3proxy.getReadstream(item.Body);
-    } catch (e) {
-      if (s3proxy.isNonFatalError(e)) {
-        s3stream = s3proxy.createEmptyReadstream();
-      } else {
-        throw (e);
-      }
-    }
-    return { s3stream, statusCode, headers };
+    return this.send(command);
   }
 
-  async headBucket() {
-    this.isInitialized();
+  headBucket() {
     const command = new HeadBucketCommand({ Bucket: this.bucket });
-    let headers = []; let statusCode = '000'; let
-      s3stream;
-    command.middlewareStack.add(
-      (next) => async (args) => {
-        const result = await next(args);
-        headers = result.response.headers;
-        statusCode = result.response.statusCode;
-        return result;
-      },
-      // priority: low is important here, otherwise middleware is never
-      // executed for non-2xxx responses. Not sure why
-      // Link: https://aws.amazon.com/blogs/developer/middleware-stack-modular-aws-sdk-js/
-      { step: 'deserialize', priority: 'low' },
-    );
-    try {
-      const item = await this.s3.send(command);
-      s3stream = s3proxy.getReadstream(item.Body);
-    } catch (e) {
-      if (s3proxy.isNonFatalError(e)) {
-        s3stream = s3proxy.createEmptyReadstream();
-      } else {
-        throw (e);
-      }
-    }
-    return { s3stream, statusCode, headers };
+    return this.send(command);
   }
 
   /*
@@ -255,6 +200,17 @@ module.exports = class s3proxy extends EventEmitter {
 
   =========================================================================================
   */
+  async init() {
+    try {
+      this.s3 = new S3Client({ ...this.options });
+      await this.healthCheck();
+      this.emit('init');
+    } catch (e) {
+      this.emit('error', e);
+      throw e;
+    }
+  }
+
   async healthCheck() {
     const command = new HeadBucketCommand({ Bucket: this.bucket });
     await this.s3.send(command);
