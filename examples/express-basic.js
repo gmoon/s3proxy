@@ -39,7 +39,7 @@ if (process.env.NODE_ENV !== 'test') {
 
 // initialize the s3proxy
 const bucketName = 's3proxy-public';
-const proxy = new S3Proxy({ bucket: bucketName, logger: console });
+const proxy = new S3Proxy({ bucket: bucketName });
 proxy.init();
 proxy.on('error', (err) => {
   console.log(`error initializing s3proxy for bucket ${bucketName}: ${err.statusCode} ${err.code}`);
@@ -47,21 +47,27 @@ proxy.on('error', (err) => {
 
 // health check api, suitable for integration with ELB health checking
 app.route('/health')
-  .get((req, res) => {
-    proxy.healthCheckStream(res).on('error', () => {
+  .get(async (req, res) => {
+    (await proxy.healthCheckStream(res)).on('error', () => {
       // just end the request and let the HTTP status code convey the error
       res.end();
     }).pipe(res);
   });
 
+// redirect requests to root
+app.get('/', (req, res) => {
+  res.redirect('/index.html');
+});
+
 // route all get requests to s3proxy
 app.route('/*')
   .head(async (req, res) => {
-    await proxy.head(req, res);
-    res.end();
+    (await proxy.head(req, res)).on('error', (err) => {
+      handleError(req, res, err);
+    }).pipe(res);
   })
-  .get((req, res) => {
-    proxy.get(req, res).on('error', (err) => {
+  .get(async (req, res) => {
+    (await proxy.get(req, res)).on('error', (err) => {
       handleError(req, res, err);
     }).pipe(res);
   });

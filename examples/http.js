@@ -5,8 +5,8 @@ const port = process.env.PORT;
 const proxy = new S3Proxy({ bucket: 's3proxy-public' });
 proxy.init();
 
-const server = http.createServer((req, res) => {
-  proxy.get(req, res).on('error', () => {
+const server = http.createServer(async (req, res) => {
+  (await proxy.get(req, res)).on('error', () => {
     // just end the request and let the HTTP status code convey the error
     res.end();
   }).pipe(res);

@@ -17,32 +17,31 @@ describe('MockExpress', () => {
     nock.cleanAll();
     nock.enableNetConnect();
   });
-  beforeEach((done) => {
+  beforeEach(async () => {
     nock.cleanAll();
     nock.disableNetConnect();
     // allow localhost and AWS metadata API (relevant when running on AWS EC2)
     nock.enableNetConnect(/127.0.0.1|169.254.169.254/);
     // can add , { allowUnmocked: true }
-    scope = nock('https://s3proxy-public.s3.amazonaws.com:443')
+    scope = nock('https://s3proxy-public.s3.us-east-1.amazonaws.com')
       .head('/')
       .reply(200);
     proxy = new S3Proxy({ bucket: 's3proxy-public' });
-    proxy.init(() => {
-      const app = express();
-      app.head('/*', async (req, res) => {
-        await proxy.head(req, res);
-        res.end();
-      });
-      app.get('/*', (req, res) => {
-        proxy.get(req, res).pipe(res);
-      });
-      server = chai.request(app);
-      done();
+    await proxy.init();
+    const app = express();
+    app.head('/*', async (req, res) => {
+      await proxy.head(req, res);
+      res.end();
     });
+    app.get('/*', async (req, res) => {
+      (await proxy.get(req, res)).pipe(res);
+    });
+    server = chai.request(app);
   });
   it('should get header(s) from getObject call', (done) => {
     scope
       .get('/index.html')
+      .query(true)
       .reply(200, 'OK', ['x-y-z', '999']);
     server.get('/index.html').end((err, res) => {
       expect(err).to.be.equal(null);
@@ -54,20 +53,24 @@ describe('MockExpress', () => {
   it('should succeed via retry if first call to aws-sdk fails', (done) => {
     scope
       .get('/index.html')
-      .reply(500, 'Internal Server Error', ['x-y-z', '999']);
+      .query(true)
+      .reply(500);
     scope
       .get('/index.html')
-      .reply(200, '<html></html>', ['x-y-z', '999']);
+      .query(true)
+      .reply(200, 'success', ['x-y-z', '999']);
     server.get('/index.html').end((err, res) => {
       expect(err).to.be.equal(null);
       expect(res.statusCode).to.equal(200);
       expect(res.headers).to.haveOwnProperty('x-y-z');
+      expect(res.text).to.equal('success');
       done();
     });
   });
   it('should send headers for zero byte file', (done) => {
     scope
       .get('/zerobytefile')
+      .query(true)
       .reply(200, '', ['x-y-z', '999']);
     server.get('/zerobytefile').end((err, res) => {
       expect(err).to.be.equal(null);
@@ -80,6 +83,7 @@ describe('MockExpress', () => {
   it('head method should return headers for valid object', (done) => {
     scope
       .head('/large.bin')
+      .query(true)
       .reply(200);
     server.head('/large.bin').end((err, res) => {
       expect(err).to.be.equal(null);
