@@ -42,7 +42,7 @@ const bucketName = 's3proxy-public';
 const proxy = new S3Proxy({ bucket: bucketName });
 proxy.init();
 proxy.on('error', (err) => {
-  console.log(`error initializing s3proxy for bucket ${bucketName}: ${err.statusCode} ${err.code}`);
+  console.log(`error initializing s3proxy for bucket ${bucketName}: ${err.name} ${err.message}`);
 });
 
 // health check api, suitable for integration with ELB health checking
