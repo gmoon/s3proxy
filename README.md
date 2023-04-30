@@ -400,7 +400,7 @@ Add secrets to GitHub Secrets in the repo, per https://github.com/aws-actions/co
 
 ### Release npm module
  1. git clone https://github.com/gmoon/s3proxy.git
- 1. The version number exists in the documentation, search files that need to change: `grep -r --exclude-dir node_modules --exclude package.json --exclude package-lock.json '1\.6\.' *`
+ 1. The version number exists in the documentation, search files that need to change: `grep -r --exclude-dir node_modules --exclude package.json --exclude package-lock.json '2\.0\.' *`
  1. Search and replace on OSX: grep -rli --exclude-dir node_modules --exclude package.json --exclude package-lock.json '2\.0\.' * | xargs -I@ sed -i '' 's/2.0.0/2.0.1/g' @
  1. npm version minor (or major or patch)
     * if you make a mistake: 
