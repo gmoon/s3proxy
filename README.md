@@ -6,9 +6,20 @@
 
 Use AWS S3 as the storage backend for a nodejs web server.
 
+> **Note**
+> s3proxy >= version 2.0 uses async methods *only* with no callbacks, just like `head()` in previous releases. This
+> impacts `init()`, `get()`, and `healthCheckStream()`. The [express-basic.js example](examples/express-basic.js) was updated like this:
+> ```diff
+> -  .get((req, res) => {
+> -    proxy.get(req, res).on('error', (err) => {
+> +  .get(async (req, res) => {
+> +    (await proxy.get(req, res)).on('error', (err) => {
+> ```
+
 ## Usage
+
 ``` bash
-docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:1.6.5
+docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:2.0.0
 curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
 ```
 If you need to pass temporary AWS credentials to your docker container (for local development, for example), generate the temporary credentials with the `aws cli`, store it in a file called `credentials.json`, and then mount that file into your container at `/src/credentials.json`. *Note:* this capability is disabled if `NODE_ENV` is undefined or `NODE_ENV` matches `/^prod/i` (e.g. `prod` or `production`, not case-sensitive).
@@ -20,7 +31,7 @@ docker run \
   -e PORT=8080 \
   -e NODE_ENV=dev \
   -p 8080:8080 \
-  -t forkzero/s3proxy:1.6.5
+  -t forkzero/s3proxy:2.0.0
 curl http://localhost:8080/index.html  # serves s3://mybucket/index.html
 ```
 Run it locally without docker:
@@ -399,7 +410,7 @@ Add secrets to GitHub Secrets in the repo, per https://github.com/aws-actions/co
 ### Release npm module
  1. git clone https://github.com/gmoon/s3proxy.git
  1. The version number exists in the documentation, search files that need to change: `grep -r --exclude-dir node_modules --exclude package.json --exclude package-lock.json '1\.6\.' *`
- 1. Search and replace on OSX: grep -rli --exclude-dir node_modules --exclude package.json --exclude package-lock.json '1\.6\.' * | xargs -I@ sed -i '' 's/1.6.5/1.6.6/g' @
+ 1. Search and replace on OSX: grep -rli --exclude-dir node_modules --exclude package.json --exclude package-lock.json '2\.0\.' * | xargs -I@ sed -i '' 's/2.0.0/2.0.1/g' @
  1. npm version minor (or major or patch)
     * if you make a mistake: 
       1. `git reset --hard HEAD~1` Delete the most recent commit, destroying the work you've done
