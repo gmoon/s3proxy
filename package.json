@@ -1,6 +1,6 @@
 {
   "name": "s3proxy",
-  "version": "1.6.5",
+  "version": "2.0.0",
   "description": "Streaming web proxy for AWS S3",
   "main": "index.js",
   "devDependencies": {
