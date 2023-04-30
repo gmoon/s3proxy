@@ -54,7 +54,7 @@ app.route('/health')
     }).pipe(res);
   });
 
-// route all get requests to s3proxy
+// redirect requests to root
 app.get('/', (req, res) => {
   res.redirect('/index.html');
 });
