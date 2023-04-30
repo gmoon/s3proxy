@@ -8,7 +8,11 @@ https://github.com/1Strategy/fargate-cloudformation-example/blob/master/fargate.
 aws cloudformation validate-template --template-body file://S3ProxyECS.yaml
 cfn-lint -t S3ProxyECS.yaml
 aws cloudformation create-stack --stack-name S3ProxyECS --template-body file://S3ProxyECS.yaml --capabilities CAPABILITY_NAMED_IAM
-aws cloudformation update-stack --stack-name S3ProxyECS --template-body file://S3ProxyECS.yaml --capabilities CAPABILITY_NAMED_IAM
+```
+
+### update the stack (pulls from Docker Registry)
+``` bash
+aws cloudformation update-stack --stack-name S3ProxyECS --template-body file://S3ProxyECS.yaml --capabilities CAPABILITY_NAMED_IAM --parameters ParameterKey=BucketName,ParameterValue=<bucketname>
 ```
 
 ### Deploy new container image to existing service
