@@ -14,7 +14,6 @@ Use AWS S3 as the storage backend for a nodejs web server.
 >    app.route('/*')
 > -    .get((req, res) => {
 > -      proxy.get(req, res)
->          .on('error', (err) => {
 > +    .get(async (req, res) => {
 > +      (await proxy.get(req, res))
 >          .on('error', (err) => {
