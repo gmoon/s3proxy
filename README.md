@@ -11,10 +11,13 @@ Use AWS S3 as the storage backend for a nodejs web server.
 > s3proxy >= version 2.0 uses async methods *only* with no callbacks, just like `head()` in previous releases. This
 > impacts `init()`, `get()`, and `healthCheckStream()`. The [express-basic.js example](examples/express-basic.js) was updated like this:
 > ```diff
-> -  .get((req, res) => {
-> -    proxy.get(req, res).on('error', (err) => {
-> +  .get(async (req, res) => {
-> +    (await proxy.get(req, res)).on('error', (err) => {
+>    app.route('/*')
+> -    .get((req, res) => {
+> -      proxy.get(req, res)
+>          .on('error', (err) => {
+> +    .get(async (req, res) => {
+> +      (await proxy.get(req, res))
+>          .on('error', (err) => {
 > ```
 
 ## Usage
