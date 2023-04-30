@@ -191,8 +191,8 @@ const proxy = new S3Proxy({ bucket: 's3proxy-public' });
 proxy.init();
 
 app.route('/health')
-  .get((req, res) => {
-    proxy.healthCheckStream(res).pipe(res);
+  .get(async (req, res) => {
+    (await proxy.healthCheckStream(res)).pipe(res);
   });
 
 // Make sure to add an error handler (as shown below), otherwise your server will crash if the stream
@@ -203,8 +203,8 @@ app.route('/*')
     await proxy.head(req, res);
     res.end();
   })
-  .get((req, res) => {
-    proxy.get(req,res)
+  .get(async (req, res) => {
+    (await proxy.get(req,res))
       .on('error', () => res.end())
       .pipe(res);
   });
@@ -228,8 +228,8 @@ proxy.init();
 // Make sure to add an error handler (as shown below), otherwise your server will crash if the stream
 // encounters an error (which occurs, for instance, when the requested object doesn't
 // exist).
-const server = http.createServer((req, res) => {
-  proxy.get(req,res)
+const server = http.createServer(async (req, res) => {
+  (await proxy.get(req,res))
     .on('error', () => res.end())
     .pipe(res);
 });
@@ -273,18 +273,6 @@ proxy.on('error', (error) => {
   console.error(error);
 });
 proxy.init();
-```
-
-`init` also accepts a callback function:
-```
-proxy.init((error) => {
-  if (error) {
-    console.error(error);
-  }
-  else {
-    app.listen();
-  }
-});
 ```
 
 ## Development
