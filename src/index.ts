@@ -1,15 +1,32 @@
-const EventEmitter = require('events');
-const { Readable } = require('stream');
-const {
+import EventEmitter from 'events';
+import { Readable } from 'stream';
+import { Request as ExpressRequest, Response as ExpressResponse, request } from 'express';
+import { IncomingMessage as HttpRequest, ServerResponse as HttpResponse } from 'http';
+
+import {
   S3Client, GetObjectCommand, HeadBucketCommand, HeadObjectCommand,
   NoSuchKey, NoSuchBucket, S3ServiceException,
-} = require('@aws-sdk/client-s3');
-const url = require('url');
-const UserException = require('./UserException');
-const s3proxyVersion = require('./package.json').version;
+} from '@aws-sdk/client-s3';
+import url from 'url';
+import UserException from './UserException';
+const s3proxyVersion = require('../package.json').version;
 
-module.exports = class s3proxy extends EventEmitter {
-  constructor(p) {
+interface S3Parameters {
+  bucket: string
+  options?: Object
+}
+
+interface S3Proxy {
+  bucket: string
+  options?: Object
+  s3?: S3Client
+}
+
+module.exports = class s3proxy extends EventEmitter implements S3Proxy  {
+  bucket: string;
+  s3?: S3Client;
+  options?: Object;
+  constructor(p: S3Parameters) {
     super();
     if (!p) {
       throw new UserException('InvalidParameterList', 'constructor parameters are required');
@@ -38,7 +55,7 @@ module.exports = class s3proxy extends EventEmitter {
     This return value is designed to be merged to the S3 params via the
     spread operator (...)
     */
-  static mapHeaderToParam(req, headerKey, paramKey) {
+  static mapHeaderToParam(req: HttpRequest, headerKey: string, paramKey: string) {
     let retval = {};
     if (typeof req.headers !== 'undefined') {
       if (typeof req.headers[headerKey] !== 'undefined') {
@@ -55,7 +72,7 @@ module.exports = class s3proxy extends EventEmitter {
   /*
     Test the Error object to see if it should be treated as non-fatal
   */
-  static isNonFatalError(e) {
+  static isNonFatalError(e: Error) {
     return (e instanceof NoSuchKey)
       || (e instanceof NoSuchBucket)
       || ((e instanceof S3ServiceException) && (e.name === 'AccessDenied'));
@@ -67,7 +84,7 @@ module.exports = class s3proxy extends EventEmitter {
       - Key: (required) name of key to stream
       - Range: (optional) byte range to return
   */
-  getS3Params(req) {
+  getS3Params(req: HttpRequest) {
     const r = s3proxy.parseRequest(req);
     const params = {
       ...{ Bucket: this.bucket, Key: r.key },
@@ -90,8 +107,8 @@ module.exports = class s3proxy extends EventEmitter {
     key also has any leading slash stripped
     query is req.query, or query from url.parse object
   */
-  static parseRequest(req) {
-    const obj = {};
+  static parseRequest(req: ExpressRequest | HttpRequest) {
+    console.log("req = ", req.constructor.name);
     // Express objects have path, HTTP objects do not
     if (typeof req.path === 'undefined') {
       const parsedUrl = url.parse(req.url, true);
@@ -129,7 +146,7 @@ module.exports = class s3proxy extends EventEmitter {
   */
   async send(command) {
     this.isInitialized();
-    let headers; let statusCode; let
+    let headers; let statusCode = 200; let
       s3stream;
     command.middlewareStack.add(
       (next) => async (args) => {
@@ -216,19 +233,19 @@ module.exports = class s3proxy extends EventEmitter {
     await this.s3.send(command);
   }
 
-  async healthCheckStream(res) {
+  async healthCheckStream(res: ExpressResponse | HttpResponse) {
     const { s3stream, statusCode, headers } = await this.headBucket();
     res.writeHead(statusCode, headers);
     return s3stream;
   }
 
-  async head(req, res) {
+  async head(req: ExpressRequest | HttpRequest, res: ExpressResponse | HttpResponse) {
     const { s3stream, statusCode, headers } = await this.headObject(req);
     res.writeHead(statusCode, headers);
     return s3stream;
   }
 
-  async get(req, res) {
+  async get(req: ExpressRequest | HttpRequest, res: ExpressResponse | HttpResponse) {
     const { s3stream, statusCode, headers } = await this.getObject(req);
     res.writeHead(statusCode, headers);
     return s3stream;

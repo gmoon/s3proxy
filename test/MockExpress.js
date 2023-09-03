@@ -5,7 +5,7 @@ const http = require('chai-http');
 const nock = require('nock');
 const express = require('express');
 const Benchmark = require('benchmark');
-const S3Proxy = require('..');
+const S3Proxy = require('../built/');
 
 chai.use(http);
 const { expect } = chai;
