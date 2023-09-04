@@ -4,7 +4,7 @@
   "description": "Streaming web proxy for AWS S3",
   "main": "index.js",
   "devDependencies": {
-    "artillery": "^1.7.9",
+    "artillery": "^2.0.0-36",
     "artillery-plugin-expect": "^2.3.2",
     "benchmark": "^2.1.4",
     "chai": "^4.3.8",
