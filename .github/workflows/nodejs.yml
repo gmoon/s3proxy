@@ -36,7 +36,7 @@ jobs:
           make -j --output-sync=target test
       - name: Upload Unit Test Results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Unit Test Results
           path: test-results/**/*.xml
