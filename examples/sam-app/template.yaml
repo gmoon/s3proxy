@@ -23,7 +23,7 @@ Resources:
     Properties:
       CodeUri: s3proxy/
       Handler: app.lambdaHandler
-      Runtime: nodejs16.x
+      Runtime: nodejs22.x
       Architectures: 
         - arm64
       Events:
