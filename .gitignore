@@ -4,6 +4,7 @@ version.txt
 credentials.json
 
 .DS_Store
+.vscode
 
 # SAM build files
 .aws-sam
