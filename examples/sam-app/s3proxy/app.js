@@ -12,14 +12,11 @@ function handleError(req, res, err) {
   `);
 }
 
-function proxyToS3(req, res) {
-  proxy.get(req, res).on('error', (err) => {
+app.route('/*').get(async (req, res) => {
+  (await proxy.get(req, res)).on('error', (err) => {
     handleError(req, res, err);
-    res.end();
   }).pipe(res);
-}
-
-app.route('/*').get(proxyToS3);
+});
 
 const server = awsServerlessExpress.createServer(app, null, ['image/jpeg']);
 exports.lambdaHandler = (event, context) => {
