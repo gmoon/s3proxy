@@ -8,15 +8,15 @@
   "license": "MIT",
   "dependencies": {
     "aws-serverless-express": "^3.4.0",
-    "axios": "^0.28.0",
-    "express": "^4.19.2",
-    "s3proxy": "^1.6.4"
+    "axios": "^1.7.9",
+    "express": "^4.21.2",
+    "s3proxy": "2.0.1"
   },
   "scripts": {
     "test": "mocha test/unit/"
   },
   "devDependencies": {
-    "chai": "^4.3.6",
-    "mocha": "^10.0.0"
+    "chai": "^5.1.2",
+    "mocha": "^11.0.1"
   }
 }
