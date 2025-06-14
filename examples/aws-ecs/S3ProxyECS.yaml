@@ -129,8 +129,6 @@ Resources:
           #EntryPoint: 
           #  - String
           Environment: 
-            - Name: PM2_INSTANCES
-              Value: "4"
             - Name: AWS_NODEJS_CONNECTION_REUSE_ENABLED
               Value: "1"
             - Name: DEBUG
