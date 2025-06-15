@@ -16,51 +16,106 @@ s3proxy turns any S3 bucket into a high-performance web server. Perfect for serv
 - **Scalable** - Leverage S3's global infrastructure
 - **Range requests** - Support for partial content and resumable downloads
 - **Express integration** - Drop into existing Node.js applications
+- **TypeScript support** - Full type safety and modern tooling
 
 ## Quick Start
 
-Install and run in 3 lines:
-
+### JavaScript/CommonJS
 ```bash
 npm install s3proxy express
-PORT=3000 BUCKET=your-bucket-name node -e "
+```
+
+```javascript
 const express = require('express');
-const S3Proxy = require('s3proxy');
+const { S3Proxy } = require('s3proxy');
+
 const app = express();
-const proxy = new S3Proxy({bucket: process.env.BUCKET});
-proxy.init();
+const proxy = new S3Proxy({ bucket: 'your-bucket-name' });
+
+await proxy.init();
+
 app.get('/*', async (req, res) => {
-  (await proxy.get(req, res)).on('error', err => res.status(err.statusCode || 500).end()).pipe(res);
+  const stream = await proxy.get(req, res);
+  stream.on('error', err => res.status(err.statusCode || 500).end()).pipe(res);
 });
-app.listen(process.env.PORT, () => console.log(\`Server running on port \${process.env.PORT}\`));
-"
+
+app.listen(3000);
+```
+
+### TypeScript/ESM
+```bash
+npm install s3proxy express
+npm install --save-dev @types/express
+```
+
+```typescript
+import express from 'express';
+import { S3Proxy } from 's3proxy';
+import type { ExpressRequest, ExpressResponse } from 's3proxy';
+
+const app = express();
+const proxy = new S3Proxy({ bucket: 'your-bucket-name' });
+
+await proxy.init();
+
+app.get('/*', async (req, res) => {
+  try {
+    const stream = await proxy.get(req as ExpressRequest, res as ExpressResponse);
+    stream.on('error', (err: any) => {
+      res.status(err.statusCode || 500).end();
+    }).pipe(res);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch file' });
+  }
+});
+
+app.listen(3000);
 ```
 
 Now `curl http://localhost:3000/index.html` serves `s3://your-bucket-name/index.html`
 
 ## Usage Examples
 
-### Express Integration
+### Express Integration with Error Handling
 
-```javascript
-const express = require('express');
-const S3Proxy = require('s3proxy');
+```typescript
+import express, { type Request, type Response } from 'express';
+import { S3Proxy } from 's3proxy';
+import type { ExpressRequest, ExpressResponse } from 's3proxy';
 
 const app = express();
-const proxy = new S3Proxy({ bucket: 'my-website-bucket' });
+const proxy = new S3Proxy({ 
+  bucket: 'my-website-bucket',
+  region: 'us-west-2'
+});
 
-// Initialize the proxy
-await proxy.init();
+// Initialize with proper error handling
+try {
+  await proxy.init();
+  console.log('S3Proxy initialized successfully');
+} catch (error) {
+  console.error('Failed to initialize S3Proxy:', error);
+  process.exit(1);
+}
+
+// Error handler
+function handleError(req: Request, res: Response, err: any): void {
+  const statusCode = err.statusCode || 500;
+  const errorXml = `<?xml version="1.0"?>
+<error code="${err.code || 'InternalError'}" statusCode="${statusCode}" url="${req.url}">${err.message}</error>`;
+  
+  res.status(statusCode).type('application/xml').send(errorXml);
+}
 
 // Serve all files from S3
-app.get('/*', async (req, res) => {
+app.get('/*', async (req: Request, res: Response) => {
   try {
-    const stream = await proxy.get(req, res);
+    const stream = await proxy.get(req as ExpressRequest, res as ExpressResponse);
     stream.on('error', (err) => {
-      res.status(err.statusCode || 500).end();
+      handleError(req, res, err);
     }).pipe(res);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch file' });
+    handleError(req, res, err);
   }
 });
 
@@ -80,10 +135,117 @@ curl --range 0-99 http://localhost:3000/large-video.mp4 -o partial.mp4
 
 Built-in health check endpoint for load balancers:
 
-```javascript
-app.get('/health', async (req, res) => {
-  const stream = await proxy.healthCheckStream(res);
-  stream.on('error', () => res.end()).pipe(res);
+```typescript
+app.get('/health', async (req: Request, res: Response) => {
+  try {
+    const stream = await proxy.healthCheckStream(res as ExpressResponse);
+    stream.on('error', () => res.end()).pipe(res);
+  } catch (error) {
+    res.status(500).end();
+  }
+});
+```
+
+## Configuration
+
+### Constructor Options
+
+```typescript
+import { S3Proxy } from 's3proxy';
+import type { S3ProxyConfig } from 's3proxy';
+
+const config: S3ProxyConfig = {
+  bucket: 'my-bucket',        // Required: S3 bucket name
+  region: 'us-west-2',        // Optional: AWS region
+  credentials: {              // Optional: AWS credentials
+    accessKeyId: 'AKIA...',
+    secretAccessKey: '...'
+  },
+  endpoint: 'https://...',    // Optional: Custom S3 endpoint
+  maxAttempts: 3,            // Optional: Retry attempts
+  requestTimeout: 30000      // Optional: Request timeout in ms
+};
+
+const proxy = new S3Proxy(config);
+```
+
+### Environment Variables
+
+- `BUCKET` - S3 bucket name
+- `PORT` - Server port (default: 3000)
+- `AWS_REGION` - AWS region
+- `NODE_ENV` - Environment (enables credential file in dev mode)
+
+## API Reference
+
+### Class: S3Proxy
+
+#### Constructor
+```typescript
+new S3Proxy(config: S3ProxyConfig)
+```
+
+#### Methods
+
+##### `await proxy.init(): Promise<void>`
+Initialize S3 client and verify bucket access. Must be called before using other methods.
+
+##### `await proxy.get(req: ExpressRequest, res: ExpressResponse): Promise<Readable>`
+Stream S3 object to HTTP response. Handles range requests automatically.
+
+##### `await proxy.head(req: ExpressRequest, res: ExpressResponse): Promise<Readable>`
+Get object metadata (HEAD request). Returns empty stream with headers set.
+
+##### `await proxy.healthCheck(): Promise<void>`
+Verify bucket connectivity. Throws error if bucket is inaccessible.
+
+##### `await proxy.healthCheckStream(res: ExpressResponse): Promise<Readable>`
+Health check with streaming response. Sets appropriate status code and headers.
+
+#### Static Methods
+
+##### `S3Proxy.version(): string`
+Returns the current version of s3proxy.
+
+##### `S3Proxy.parseRequest(req: ExpressRequest): ParsedRequest`
+Parse HTTP request to extract S3 key and query parameters.
+
+### Types
+
+```typescript
+interface S3ProxyConfig extends S3ClientConfig {
+  bucket: string;
+}
+
+interface ExpressRequest extends IncomingMessage {
+  path?: string;
+  query?: Record<string, string | string[]>;
+  headers: Record<string, string | string[]>;
+  url: string;
+  method?: string;
+}
+
+interface ExpressResponse extends ServerResponse {
+  writeHead(statusCode: number, headers?: any): this;
+}
+
+interface ParsedRequest {
+  key: string;
+  query: Record<string, string | string[]>;
+}
+```
+
+### Error Handling
+
+s3proxy emits events for monitoring:
+
+```typescript
+proxy.on('error', (err: Error) => {
+  console.error('S3Proxy error:', err);
+});
+
+proxy.on('init', () => {
+  console.log('S3Proxy initialized successfully');
 });
 ```
 
@@ -92,7 +254,7 @@ app.get('/health', async (req, res) => {
 For containerized deployments:
 
 ```bash
-docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:2.0.2
+docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:3.0.0
 ```
 
 For local development with temporary AWS credentials:
@@ -105,52 +267,49 @@ docker run \
   -e PORT=8080 \
   -e NODE_ENV=dev \
   -p 8080:8080 \
-  -t forkzero/s3proxy:2.0.2
+  -t forkzero/s3proxy:3.0.0
 ```
 
-## Configuration
+## Development
 
-### Constructor Options
+### TypeScript Development
 
-```javascript
-const proxy = new S3Proxy({
-  bucket: 'my-bucket',        // Required: S3 bucket name
-  region: 'us-west-2',        // Optional: AWS region
-  accessKeyId: 'AKIA...',     // Optional: AWS credentials
-  secretAccessKey: '...',     // Optional: AWS credentials  
-  endpoint: 'https://...',    // Optional: Custom S3 endpoint
-});
+```bash
+# Install dependencies
+npm install
+
+# Development with hot reload
+npm run dev
+
+# Build TypeScript
+npm run build
+
+# Run tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Type checking
+npm run type-check
 ```
 
-### Environment Variables
+### Project Structure
 
-- `BUCKET` - S3 bucket name
-- `PORT` - Server port (default: 3000)
-- `AWS_REGION` - AWS region
-- `NODE_ENV` - Environment (enables credential file in dev mode)
+```
+src/
+├── index.ts          # Main S3Proxy class
+├── UserException.ts  # Custom error class
+└── types.ts          # Type definitions
 
-## API Reference
+examples/
+├── express-basic.ts  # TypeScript Express example
+└── http.ts          # TypeScript HTTP example
 
-### Methods
-
-- `await proxy.init()` - Initialize S3 client and verify bucket access
-- `await proxy.get(req, res)` - Stream S3 object to HTTP response
-- `await proxy.head(req, res)` - Get object metadata (HEAD request)
-- `await proxy.healthCheck()` - Verify bucket connectivity
-- `await proxy.healthCheckStream(res)` - Health check with streaming response
-
-### Error Handling
-
-s3proxy emits events for monitoring:
-
-```javascript
-proxy.on('error', (err) => {
-  console.error('S3Proxy error:', err);
-});
-
-proxy.on('init', () => {
-  console.log('S3Proxy initialized successfully');
-});
+test/
+├── s3proxy.test.ts      # Main functionality tests
+├── parseRequest.test.ts # Request parsing tests
+└── MockExpress.test.ts  # Express integration tests
 ```
 
 ## Use Cases
@@ -160,6 +319,10 @@ proxy.on('init', () => {
 - **Media serving** - Video/audio streaming with range request support
 - **API backends** - Serve user uploads or generated content
 - **CDN alternative** - Cost-effective content delivery
+
+## Performance
+
+See [PERFORMANCE.md](PERFORMANCE.md) for detailed performance testing and benchmarks.
 
 ## Getting Help
 

@@ -1,0 +1,38 @@
+scenarios:
+  - name: "Spike test - mixed requests"
+    weight: 80
+    flow:
+      - get:
+          url: "/index.html"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/test1m.tmp"
+          expect:
+            - statusCode: 200
+
+  - name: "Spike test - range requests"
+    weight: 15
+    flow:
+      - get:
+          url: "/large.bin"
+          headers:
+            'range': "bytes=0-99"
+          expect:
+            - statusCode: 206
+
+  - name: "Spike test - special characters"
+    weight: 3
+    flow:
+      - get:
+          url: "/specialCharacters!-_.*'()&$@=;:+  ,?\\{^}%`]\">[~<#|."
+          expect:
+            - statusCode: 200
+
+  - name: "Spike test - health checks"
+    weight: 2
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200

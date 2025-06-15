@@ -31,10 +31,12 @@ function handleError(req, res, err) {
 
 // Use morgan for request logging except during test execution
 if (process.env.NODE_ENV !== 'test') {
-  app.use(morgan(
-    'request :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] '
-    + '":referrer" ":user-agent" ":response-time ms" :res[x-request-id] :res[x-amz-request-id]',
-  ));
+  app.use(
+    morgan(
+      'request :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ' +
+        '":referrer" ":user-agent" ":response-time ms" :res[x-request-id] :res[x-amz-request-id]'
+    )
+  );
 }
 
 // initialize the s3proxy
@@ -46,13 +48,14 @@ proxy.on('error', (err) => {
 });
 
 // health check api, suitable for integration with ELB health checking
-app.route('/health')
-  .get(async (req, res) => {
-    (await proxy.healthCheckStream(res)).on('error', () => {
+app.route('/health').get(async (req, res) => {
+  (await proxy.healthCheckStream(res))
+    .on('error', () => {
       // just end the request and let the HTTP status code convey the error
       res.end();
-    }).pipe(res);
-  });
+    })
+    .pipe(res);
+});
 
 // redirect requests to root
 app.get('/', (req, res) => {
@@ -60,16 +63,21 @@ app.get('/', (req, res) => {
 });
 
 // route all get requests to s3proxy
-app.route('/*')
+app
+  .route('/*')
   .head(async (req, res) => {
-    (await proxy.head(req, res)).on('error', (err) => {
-      handleError(req, res, err);
-    }).pipe(res);
+    (await proxy.head(req, res))
+      .on('error', (err) => {
+        handleError(req, res, err);
+      })
+      .pipe(res);
   })
   .get(async (req, res) => {
-    (await proxy.get(req, res)).on('error', (err) => {
-      handleError(req, res, err);
-    }).pipe(res);
+    (await proxy.get(req, res))
+      .on('error', (err) => {
+        handleError(req, res, err);
+      })
+      .pipe(res);
   });
 
 if (port > 0) {

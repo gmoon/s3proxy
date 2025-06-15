@@ -1,0 +1,12 @@
+config:
+  target: 'http://localhost:8080'
+  plugins:
+    expect: {}
+  phases:
+    - duration: 30
+      arrivalRate: 10
+      name: "docker container validation"
+  processor: "../utils/test-runner.js"
+  variables:
+    testEnvironment: "docker-container"
+    testRunId: "{{ $randomString() }}"

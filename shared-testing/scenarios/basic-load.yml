@@ -1,0 +1,90 @@
+scenarios:
+  - name: "Basic HTML file"
+    weight: 40
+    flow:
+      - get:
+          url: "/index.html"
+          expect:
+            - statusCode: 200
+            - contentType: text/html
+            - headerEquals:
+                - "content-length"
+                - "338"
+
+  - name: "Large file streaming"
+    weight: 25
+    flow:
+      - get:
+          url: "/large.bin"
+          expect:
+            - statusCode: 200
+            - contentType: application/octet-stream
+            - headerEquals:
+                - "content-length"
+                - "10485760"
+
+  - name: "Medium file streaming"
+    weight: 15
+    flow:
+      - get:
+          url: "/test1m.tmp"
+          expect:
+            - statusCode: 200
+            - contentType: binary/octet-stream
+            - headerEquals:
+                - "content-length"
+                - "1048576"
+
+  - name: "Range requests"
+    weight: 10
+    flow:
+      - get:
+          url: "/large.bin"
+          headers:
+            'range': "bytes=0-99"
+          expect:
+            - statusCode: 206
+            - contentType: application/octet-stream
+            - headerEquals:
+                - "content-length"
+                - "100"
+
+  - name: "Special characters in filename"
+    weight: 5
+    flow:
+      - get:
+          url: "/specialCharacters!-_.*'()&$@=;:+  ,?\\{^}%`]\">[~<#|."
+          expect:
+            - statusCode: 200
+
+  - name: "Zero byte file"
+    weight: 3
+    flow:
+      - get:
+          url: "/zerobytefile"
+          expect:
+            - statusCode: 200
+            - contentType: binary/octet-stream
+            - headerEquals:
+                - "content-length"
+                - "0"
+
+  - name: "Health check"
+    weight: 1
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+
+  - name: "HEAD requests"
+    weight: 1
+    flow:
+      - head:
+          url: "/large.bin"
+          expect:
+            - statusCode: 200
+            - contentType: application/octet-stream
+            - headerEquals:
+                - "content-length"
+                - "10485760"
