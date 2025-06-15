@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { S3Proxy } from '../src/index.js';
 import type { ExpressRequest, ExpressResponse } from '../src/types.js';
+import { setupS3Mocks, teardownS3Mocks } from './helpers/aws-mock.js';
 
 // Mock response object for testing
 function createMockResponse(): ExpressResponse {
@@ -32,8 +33,16 @@ describe('MockExpress', () => {
   let proxy: S3Proxy;
 
   beforeEach(async () => {
+    // Set up AWS mocks before each test
+    setupS3Mocks();
+    
     proxy = new S3Proxy({ bucket: 's3proxy-public' });
     await proxy.init();
+  });
+
+  afterEach(() => {
+    // Clean up AWS mocks after each test
+    teardownS3Mocks();
   });
 
   it('should handle head requests', async () => {

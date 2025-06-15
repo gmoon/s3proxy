@@ -20,14 +20,32 @@ s3proxy turns any S3 bucket into a high-performance web server. Perfect for serv
 
 ## Quick Start
 
-### JavaScript/CommonJS
+### ⚠️ Breaking Change in v3.0.0
+
+**s3proxy v3.0.0+ is ESM-only and requires Node.js 20.8.1+**
+
+If you're upgrading from v2.x:
+
+```javascript
+// ❌ v2.x (CommonJS) - No longer supported
+const { S3Proxy } = require('s3proxy');
+
+// ✅ v3.x (ESM) - New syntax
+import { S3Proxy } from 's3proxy';
+```
+
+For CommonJS projects, you have two options:
+1. **Recommended**: Migrate to ESM by adding `"type": "module"` to your `package.json`
+2. **Alternative**: Use dynamic import: `const { S3Proxy } = await import('s3proxy');`
+
+### Installation & Usage
 ```bash
 npm install s3proxy express
 ```
 
 ```javascript
-const express = require('express');
-const { S3Proxy } = require('s3proxy');
+import express from 'express';
+import { S3Proxy } from 's3proxy';
 
 const app = express();
 const proxy = new S3Proxy({ bucket: 'your-bucket-name' });

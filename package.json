@@ -5,11 +5,13 @@
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "type": "module",
+  "engines": {
+    "node": ">=20.8.1"
+  },
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js",
-      "require": "./dist/src/index.cjs"
+      "import": "./dist/src/index.js"
     }
   },
   "devDependencies": {
@@ -51,7 +53,7 @@
     "@aws-sdk/client-s3": "^3.731.1"
   },
   "scripts": {
-    "build": "echo \"export const VERSION = '$(npm pkg get version --workspaces=false | tr -d '\"')';\" > src/version.ts && tsc && tsc -p tsconfig.examples.json && cp src/index.cjs dist/src/index.cjs",
+    "build": "echo \"export const VERSION = '$(npm pkg get version --workspaces=false | tr -d '\"')';\" > src/version.ts && tsc && tsc -p tsconfig.examples.json",
     "build:watch": "tsc --watch",
     "dev": "tsx examples/express-basic.ts",
     "start": "node dist/examples/express-basic.js",

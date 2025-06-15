@@ -163,6 +163,26 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
         requestId: 'mock-request-id',
       },
     });
+
+  // Mock range requests for large.bin (for MockExpress test)
+  s3Mock
+    .on(GetObjectCommand, {
+      Bucket: 's3proxy-public',
+      Key: 'large.bin',
+      Range: 'bytes=0-99',
+    })
+    .resolves({
+      Body: Readable.from([Buffer.alloc(100, 'A')]), // 100 bytes of 'A'
+      ContentLength: 100,
+      ContentRange: 'bytes 0-99/1000',
+      ContentType: 'application/octet-stream',
+      ETag: '"mock-large-file-etag"',
+      AcceptRanges: 'bytes',
+      $metadata: {
+        httpStatusCode: 206,
+        requestId: 'mock-request-id',
+      },
+    });
 }
 
 /**
