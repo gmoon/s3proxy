@@ -4,6 +4,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    // Exclude integration tests from unit test runs
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/coverage/**',
+      '**/test/integration/**'
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'json'],

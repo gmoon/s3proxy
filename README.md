@@ -382,7 +382,9 @@ examples/
 test/
 ├── s3proxy.test.ts      # Main functionality tests
 ├── parseRequest.test.ts # Request parsing tests
-└── MockExpress.test.ts  # Express integration tests
+├── MockExpress.test.ts  # Express integration tests
+└── integration/
+    └── validation.test.js # End-to-end validation tests
 ```
 
 ### Configuration Files
@@ -400,11 +402,15 @@ s3proxy uses several configuration files for different aspects of development an
   - Ensures examples stay current with API changes
 
 #### Testing & Quality
-- **`vitest.config.ts`** - Test runner configuration
+- **`vitest.config.ts`** - Unit test configuration
   - Unit test settings with 30s timeout
   - Coverage reporting (text, HTML, LCOV, JSON)
   - 80% coverage thresholds for all metrics
-  - Excludes examples and test files from coverage
+  - Excludes integration tests and examples from unit test runs
+- **`vitest.integration.config.ts`** - Integration test configuration
+  - Runs validation tests that require a live server
+  - Used by `npm run test:validation` and Makefile targets
+  - Separate from unit tests for faster development workflow
 - **`biome.json`** - Code formatting and linting
   - Fast alternative to ESLint + Prettier
   - Consistent code style across the project
