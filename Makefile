@@ -35,13 +35,20 @@ sam-app-s3proxy:
 	cd examples/sam-app/s3proxy && npm run build --if-present
 	cd examples/sam-app/s3proxy && npm test
 
+.PHONY: credentials
+credentials:
+	aws sts get-session-token --duration 900 > credentials.json
+
+.PHONY: package-for-docker
+package-for-docker:
+	npm run build && npm pack && mv s3proxy-*.tgz examples/docker/
+
 .PHONY: dockerize-for-test
-dockerize-for-test:
-	npm run dockerize-for-test
+dockerize-for-test: package-for-docker
+	cd examples/docker && docker buildx build --progress plain --build-arg VERSION=$(PACKAGE_VERSION) --load -t s3proxy:test .
 
 .PHONY: artillery-docker
-artillery-docker: dockerize-for-test
-	npm run credentials
+artillery-docker: dockerize-for-test credentials
 	docker run -v $$(PWD)/credentials.json:/src/credentials.json:ro --rm --name s3proxy-test -d -p 8080:8080 \
 		-e BUCKET=s3proxy-public \
 		-e AWS_REGION=us-east-1 \
@@ -53,8 +60,7 @@ artillery-docker: dockerize-for-test
 	docker kill s3proxy-test
 
 .PHONY: test-validation-docker
-test-validation-docker: dockerize-for-test
-	npm run credentials
+test-validation-docker: dockerize-for-test credentials
 	docker run -v $$(PWD)/credentials.json:/src/credentials.json:ro --rm --name s3proxy-validation -d -p 8082:8080 \
 		-e BUCKET=s3proxy-public \
 		-e AWS_REGION=us-east-1 \
