@@ -312,6 +312,61 @@ npm run test:coverage
 npm run type-check
 ```
 
+### Testing & Quality Assurance
+
+s3proxy maintains comprehensive test coverage across multiple dimensions to ensure reliability and performance:
+
+#### Test Coverage Matrix
+
+| **Test Type** | **Local (Makefile)** | **CI (GitHub Actions)** | **Description** |
+|---------------|----------------------|-------------------------|-----------------|
+| **Code Quality** | | | |
+| Lint | `make lint` | ✅ Node CI | Code style and quality checks |
+| Type Check | `make type-check` | ✅ Node CI | TypeScript type safety validation |
+| Security Audit | `npm audit` | ✅ Node CI | Dependency vulnerability scanning |
+| **Unit Testing** | | | |
+| Unit Tests | `make unit-tests` | ✅ Node CI | Core functionality testing |
+| Coverage | `npm run test:coverage` | ✅ Node CI | Code coverage reporting (96%+) |
+| **Integration Testing** | | | |
+| Build Verification | `make build` | ✅ Node CI | TypeScript compilation |
+| Package Verification | `make pre-release-check` | ✅ Node CI | npm package integrity |
+| **Functional Testing** | | | |
+| Validation Tests | `make test-validation-docker` | ✅ Node CI | 24 comprehensive functionality tests |
+| Binary Integrity | Included in validation | ✅ Node CI | File corruption detection |
+| Range Requests | Included in validation | ✅ Node CI | HTTP range request handling |
+| Error Handling | Included in validation | ✅ Node CI | Proper error status codes |
+| **Performance Testing** | | | |
+| Load Testing | `make artillery-docker` | ✅ Node CI | High-throughput performance |
+| Stress Testing | `make test-performance` | ✅ Node CI | Resource usage under load |
+| **Platform Testing** | | | |
+| Docker Integration | `make test-all-docker` | ✅ Node CI | Containerized deployment |
+| AWS Lambda (SAM) | `make sam-app` | ✅ Node CI | Serverless deployment |
+| Multi-Node | Node 20, 22 | ✅ Node CI | Cross-version compatibility |
+
+#### Test Commands
+
+```bash
+# Run all tests locally
+make all                    # Complete test suite
+make test                   # Core tests (build, lint, unit)
+make functional-tests       # Integration and Docker tests
+
+# Individual test categories  
+make test-validation-docker # 24 comprehensive validation tests
+make artillery-docker       # Performance/load testing
+make sam-app               # AWS Lambda testing
+
+# Quality checks
+make pre-release-check     # Complete pre-release verification
+```
+
+#### Continuous Integration
+
+- **Every Push**: Core tests (lint, type-check, build, unit tests)
+- **Master Branch**: Full test suite including validation and performance
+- **Pull Requests**: Complete verification before merge
+- **Releases**: Comprehensive pre-release checks
+
 ### Project Structure
 
 ```
