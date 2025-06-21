@@ -53,10 +53,10 @@
     "@aws-sdk/client-s3": "^3.832.0"
   },
   "scripts": {
-    "build": "echo \"export const VERSION = '$(npm pkg get version --workspaces=false | tr -d '\"')';\" > src/version.ts && tsc && tsc -p tsconfig.examples.json",
+    "build": "echo \"export const VERSION = '$(npm pkg get version --workspaces=false | tr -d '\"')';\" > src/version.ts && tsc",
     "build:watch": "tsc --watch",
     "dev": "tsx examples/express-basic.ts",
-    "start": "node dist/examples/express-basic.js",
+    "start": "tsx examples/express-basic.ts",
     "test": "npm run test:core",
     "test:core": "npm run test:unit && npm run test:integration",
     "test:all": "npm run test:core && npm run test:performance && npm run test:validation",
