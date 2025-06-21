@@ -3,7 +3,7 @@ config:
   phases:
     - duration: 30
       arrivalRate: 10
-      name: "docker container validation"
+      name: "load test"
   processor: "../utils/test-runner.js"
   variables:
     testEnvironment: "docker-container"

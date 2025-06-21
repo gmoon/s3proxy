@@ -1,0 +1,50 @@
+scenarios:
+  - name: "Basic HTML file"
+    weight: 40
+    flow:
+      - get:
+          url: "/index.html"
+
+  - name: "Large file streaming"
+    weight: 25
+    flow:
+      - get:
+          url: "/large.bin"
+
+  - name: "Medium file streaming"
+    weight: 15
+    flow:
+      - get:
+          url: "/test1m.tmp"
+
+  - name: "Range requests"
+    weight: 10
+    flow:
+      - get:
+          url: "/large.bin"
+          headers:
+            'range': "bytes=0-99"
+
+  - name: "Special characters in filename"
+    weight: 5
+    flow:
+      - get:
+          url: "/specialCharacters!-_.*'()&$@=;:+  ,?\\{^}%`]\">[~<#|."
+
+  - name: "Zero byte file"
+    weight: 3
+    flow:
+      - get:
+          url: "/zerobytefile"
+
+  - name: "Health check"
+    weight: 1
+    flow:
+      - get:
+          url: "/health"
+
+  - name: "HEAD requests"
+    weight: 1
+    flow:
+      - head:
+          url: "/large.bin"

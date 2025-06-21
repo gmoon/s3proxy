@@ -83,7 +83,8 @@ export class S3Proxy extends EventEmitter {
     return (
       e instanceof NoSuchKey ||
       e instanceof NoSuchBucket ||
-      (e instanceof S3ServiceException && e.name === 'AccessDenied')
+      (e instanceof S3ServiceException && e.name === 'AccessDenied') ||
+      (e instanceof S3ServiceException && e.name === 'InvalidRange')
     );
   }
 
@@ -187,6 +188,10 @@ export class S3Proxy extends EventEmitter {
     } catch (e) {
       if (S3Proxy.isNonFatalError(e)) {
         s3stream = S3Proxy.createEmptyReadstream();
+        // Try to get the actual HTTP status code from the exception
+        if (e instanceof S3ServiceException && e.$response?.statusCode) {
+          statusCode = e.$response.statusCode;
+        }
       } else {
         throw e;
       }

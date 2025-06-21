@@ -1,5 +1,4 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
 
 class S3ProxyTestRunner {
   constructor() {
@@ -19,14 +18,12 @@ class S3ProxyTestRunner {
     };
   }
 
-  // Artillery processor hooks
+  // Artillery processor hooks - simplified for load testing only
   beforeRequest(requestParams, context, ee, next) {
-    // Add custom headers and tracking
     requestParams.headers = requestParams.headers || {};
     requestParams.headers['x-test-run-id'] = context.vars.testRunId || 'unknown';
     requestParams.headers['x-test-environment'] = context.vars.testEnvironment || 'unknown';
     
-    // Store target for results
     if (!this.results.target) {
       this.results.target = requestParams.url;
     }
@@ -39,59 +36,22 @@ class S3ProxyTestRunner {
     const statusCode = response.statusCode;
     const url = requestParams.url;
     
-    // Track overall metrics
+    // Track basic metrics for load testing
     this.results.metrics.responseTime.push(responseTime);
     this.results.metrics.statusCodes[statusCode] = (this.results.metrics.statusCodes[statusCode] || 0) + 1;
     
-    // Track specific request types
+    // Track request types
     if (url.includes('/health')) {
-      this.trackHealthCheckMetrics(responseTime, statusCode, url);
+      this.results.metrics.healthChecks.push({ responseTime, statusCode, url, timestamp: Date.now() });
     } else if (requestParams.headers?.range) {
-      this.trackRangeRequestMetrics(responseTime, statusCode, url, requestParams.headers.range);
+      this.results.metrics.rangeRequests.push({ responseTime, statusCode, url, rangeHeader: requestParams.headers.range, timestamp: Date.now() });
     } else if (url.includes('specialCharacters')) {
-      this.trackSpecialCharacterMetrics(responseTime, statusCode, url);
+      this.results.metrics.specialCharacterRequests.push({ responseTime, statusCode, url, timestamp: Date.now() });
     } else if (statusCode >= 400) {
-      this.trackErrorMetrics(responseTime, statusCode, url);
+      this.results.metrics.errorRequests.push({ responseTime, statusCode, url, timestamp: Date.now() });
     }
     
     return next();
-  }
-
-  trackHealthCheckMetrics(responseTime, statusCode, url) {
-    this.results.metrics.healthChecks.push({
-      responseTime,
-      statusCode,
-      url,
-      timestamp: Date.now()
-    });
-  }
-
-  trackRangeRequestMetrics(responseTime, statusCode, url, rangeHeader) {
-    this.results.metrics.rangeRequests.push({
-      responseTime,
-      statusCode,
-      url,
-      rangeHeader,
-      timestamp: Date.now()
-    });
-  }
-
-  trackSpecialCharacterMetrics(responseTime, statusCode, url) {
-    this.results.metrics.specialCharacterRequests.push({
-      responseTime,
-      statusCode,
-      url,
-      timestamp: Date.now()
-    });
-  }
-
-  trackErrorMetrics(responseTime, statusCode, url) {
-    this.results.metrics.errorRequests.push({
-      responseTime,
-      statusCode,
-      url,
-      timestamp: Date.now()
-    });
   }
 
   calculateSummary() {
@@ -119,14 +79,13 @@ class S3ProxyTestRunner {
     };
   }
 
-  // Export results for comparison
   exportResults() {
     this.calculateSummary();
     
-    const resultsFile = `test-results-${this.results.environment}-${Date.now()}.json`;
+    const resultsFile = `load-test-results-${this.results.environment}-${Date.now()}.json`;
     fs.writeFileSync(resultsFile, JSON.stringify(this.results, null, 2));
     
-    console.log(`\n=== S3Proxy Test Results (${this.results.environment}) ===`);
+    console.log(`\n=== S3Proxy Load Test Results (${this.results.environment}) ===`);
     console.log(`Total Requests: ${this.results.summary.totalRequests}`);
     console.log(`Success Rate: ${this.results.summary.successRate.toFixed(2)}%`);
     console.log(`Response Time (p95): ${this.results.summary.responseTime.p95}ms`);
@@ -134,7 +93,7 @@ class S3ProxyTestRunner {
     console.log(`Special Character Requests: ${this.results.summary.specialCharacterRequestCount}`);
     console.log(`Health Checks: ${this.results.summary.healthCheckCount}`);
     console.log(`Error Requests: ${this.results.summary.errorRequestCount}`);
-    console.log(`Results exported to: ${resultsFile}`);
+    console.log(`Load test results exported to: ${resultsFile}`);
     
     return resultsFile;
   }
@@ -143,22 +102,19 @@ class S3ProxyTestRunner {
 // Global test runner instance
 let testRunner;
 
-module.exports = {
-  beforeRequest: (requestParams, context, ee, next) => {
-    if (!testRunner) {
-      testRunner = new S3ProxyTestRunner();
-    }
-    return testRunner.beforeRequest(requestParams, context, ee, next);
-  },
-  
-  afterResponse: (requestParams, response, context, ee, next) => {
-    return testRunner.afterResponse(requestParams, response, context, ee, next);
-  },
-  
-  // Export results at the end of test
-  afterScenario: (context, ee, next) => {
-    return next();
+export const beforeRequest = (requestParams, context, ee, next) => {
+  if (!testRunner) {
+    testRunner = new S3ProxyTestRunner();
   }
+  return testRunner.beforeRequest(requestParams, context, ee, next);
+};
+
+export const afterResponse = (requestParams, response, context, ee, next) => {
+  return testRunner.afterResponse(requestParams, response, context, ee, next);
+};
+
+export const afterScenario = (context, ee, next) => {
+  return next();
 };
 
 // Export results when process exits

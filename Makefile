@@ -41,7 +41,32 @@ dockerize-for-test:
 
 .PHONY: artillery-docker
 artillery-docker: dockerize-for-test
-	npm run artillery-docker
+	npm run credentials
+	docker run -v $$(PWD)/credentials.json:/src/credentials.json:ro --rm --name s3proxy-test -d -p 8080:8080 \
+		-e BUCKET=s3proxy-public \
+		-e AWS_REGION=us-east-1 \
+		-e PORT=8080 \
+		-e NODE_ENV=dev \
+		-t s3proxy:test
+	wait-on http://localhost:8080/index.html
+	TEST_ENVIRONMENT=docker-container artillery run --config shared-testing/configs/load-test.yml shared-testing/scenarios/load-test.yml
+	docker kill s3proxy-test
+
+.PHONY: test-validation-docker
+test-validation-docker: dockerize-for-test
+	npm run credentials
+	docker run -v $$(PWD)/credentials.json:/src/credentials.json:ro --rm --name s3proxy-validation -d -p 8082:8080 \
+		-e BUCKET=s3proxy-public \
+		-e AWS_REGION=us-east-1 \
+		-e PORT=8080 \
+		-e NODE_ENV=dev \
+		-t s3proxy:test
+	wait-on http://localhost:8082/index.html
+	S3PROXY_URL=http://localhost:8082 npm run test:validation
+	docker kill s3proxy-validation
+
+.PHONY: test-all-docker
+test-all-docker: test-validation-docker artillery-docker
 
 # Pre-release verification - runs all quality checks
 .PHONY: pre-release-check
