@@ -385,6 +385,77 @@ test/
 └── MockExpress.test.ts  # Express integration tests
 ```
 
+### Configuration Files
+
+s3proxy uses several configuration files for different aspects of development and deployment:
+
+#### TypeScript Configuration
+- **`tsconfig.json`** - Main TypeScript compiler configuration
+  - Compiles `src/` to `dist/src/` for npm package
+  - ES2022 target with NodeNext module resolution
+  - Strict type checking enabled
+- **`tsconfig.examples.json`** - Type checking for examples
+  - Extends main config with examples-specific settings
+  - Used by `npm run type-check` to validate examples
+  - Ensures examples stay current with API changes
+
+#### Testing & Quality
+- **`vitest.config.ts`** - Test runner configuration
+  - Unit test settings with 30s timeout
+  - Coverage reporting (text, HTML, LCOV, JSON)
+  - 80% coverage thresholds for all metrics
+  - Excludes examples and test files from coverage
+- **`biome.json`** - Code formatting and linting
+  - Fast alternative to ESLint + Prettier
+  - Consistent code style across the project
+  - Import organization and formatting rules
+
+#### Release & CI/CD
+- **`.releaserc.json`** - Semantic release configuration
+  - Conventional commits for automated versioning
+  - Generates CHANGELOG.md automatically
+  - Publishes to npm and creates GitHub releases
+  - Handles version bumping and git tagging
+
+#### GitHub Actions
+- **`.github/workflows/nodejs.yml`** - Main CI pipeline
+  - Core tests (lint, type-check, build, unit tests)
+  - SAM application testing
+  - Validation tests (24 comprehensive functionality tests)
+  - Performance testing with Artillery
+  - Package verification
+- **`.github/workflows/release.yml`** - Automated releases
+- **`.github/workflows/manual-release.yml`** - Manual release workflow
+
+#### Performance Testing
+- **`shared-testing/configs/`** - Artillery load test configurations
+  - `load-test.yml` - Main load testing config (used in Makefile)
+  - `docker-container.yml` - Docker-specific load testing
+  - `npm-package.yml` - NPM package load testing
+  - `performance-comparison.yml` - Performance benchmarking
+- **`shared-testing/scenarios/`** - Artillery test scenarios
+  - `load-test.yml` - Basic load testing scenarios
+  - `basic-load.yml` - Simple load patterns
+  - `sustained-load.yml` - Extended load testing
+  - `spike-load.yml` - Traffic spike simulation
+  - `range-requests.yml` - HTTP range request testing
+
+#### Development Tools
+- **`.vscode/settings.json`** - VS Code workspace settings
+  - Disables automatic Makefile configuration prompts
+- **`.github/dependabot.yml`** - Automated dependency updates
+- **`Makefile`** - Build automation and testing orchestration
+  - Coordinates Docker, Artillery, and SAM testing
+  - Provides consistent commands across environments
+
+#### AWS & Docker
+- **`examples/sam-app/template.yaml`** - AWS SAM template for Lambda deployment
+- **`examples/sam-app/events/event.json`** - Sample Lambda event for testing
+- **`examples/aws-ecs/`** - ECS deployment configurations
+  - CloudFormation templates for production deployment
+
+All configuration files are actively maintained and serve specific purposes in the development, testing, and deployment pipeline.
+
 ## Use Cases
 
 - **Static websites** - Serve React/Vue/Angular builds from S3
