@@ -1,6 +1,6 @@
+import fs from 'node:fs';
 import express from 'express';
 import { S3Proxy } from 's3proxy';
-import fs from 'fs';
 
 const app = express();
 const bucket = process.env.BUCKET || 'your-bucket-name';
@@ -24,10 +24,10 @@ function getCredentials() {
     contents = {
       accessKeyId: credentials.AccessKeyId,
       secretAccessKey: credentials.SecretAccessKey,
-      sessionToken: credentials.SessionToken
+      sessionToken: credentials.SessionToken,
     };
     console.log(`using credentials from ${file}`);
-  } catch (e) {
+  } catch (_e) {
     console.log('using sdk credential chain');
   }
   return contents;
@@ -40,7 +40,7 @@ const proxy = new S3Proxy({ bucket, credentials });
 await proxy.init();
 
 // Simple health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.status(200).send('OK');
 });
 
@@ -48,7 +48,7 @@ app.get('/health', (req, res) => {
 app.get(/.*/, async (req, res) => {
   try {
     const stream = await proxy.get(req, res);
-    stream.on('error', err => res.status(err.statusCode || 500).end()).pipe(res);
+    stream.on('error', (err) => res.status(err.statusCode || 500).end()).pipe(res);
   } catch (err) {
     res.status(err.statusCode || 500).end();
   }

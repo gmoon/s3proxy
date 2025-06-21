@@ -35,7 +35,7 @@ describe('MockExpress', () => {
   beforeEach(async () => {
     // Set up AWS mocks before each test
     setupS3Mocks();
-    
+
     proxy = new S3Proxy({ bucket: 's3proxy-public' });
     await proxy.init();
   });

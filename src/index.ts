@@ -11,7 +11,6 @@ import {
   S3Client,
   S3ServiceException,
 } from '@aws-sdk/client-s3';
-import { UserException } from './UserException.js';
 import type {
   ExpressRequest,
   ExpressResponse,
@@ -21,6 +20,7 @@ import type {
   S3ProxyOptions,
   S3ProxyResponse,
 } from './types.js';
+import { UserException } from './UserException.js';
 
 // Import version from generated file
 import { VERSION } from './version.js';

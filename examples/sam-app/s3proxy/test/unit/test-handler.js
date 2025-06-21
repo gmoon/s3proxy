@@ -41,21 +41,11 @@ const event = {
     'X-Forwarded-Port': '3000',
   },
   multiValueHeaders: {
-    Host: [
-      'localhost:3000',
-    ],
-    'User-Agent': [
-      'curl/7.64.1',
-    ],
-    Accept: [
-      '*/*',
-    ],
-    'X-Forwarded-Proto': [
-      'http',
-    ],
-    'X-Forwarded-Port': [
-      '3000',
-    ],
+    Host: ['localhost:3000'],
+    'User-Agent': ['curl/7.64.1'],
+    Accept: ['*/*'],
+    'X-Forwarded-Proto': ['http'],
+    'X-Forwarded-Port': ['3000'],
   },
   pathParameters: {
     proxy: 'yin-yang.jpeg',

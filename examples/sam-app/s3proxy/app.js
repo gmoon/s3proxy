@@ -13,13 +13,17 @@ function handleError(req, res, err) {
 }
 
 app.route('/*').get(async (req, res) => {
-  (await proxy.get(req, res)).on('error', (err) => {
-    handleError(req, res, err);
-  }).pipe(res);
+  (await proxy.get(req, res))
+    .on('error', (err) => {
+      handleError(req, res, err);
+    })
+    .pipe(res);
 });
 
 const server = awsServerlessExpress.createServer(app, null, ['image/jpeg']);
 exports.lambdaHandler = (event, context) => {
   awsServerlessExpress.proxy(server, event, context);
 };
-exports.close = () => { server.close(); };
+exports.close = () => {
+  server.close();
+};

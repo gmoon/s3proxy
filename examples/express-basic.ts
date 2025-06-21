@@ -8,20 +8,35 @@
   Author: George Moon <george.moon@gmail.com>
 */
 
+import { XmlNode, XmlText } from '@aws-sdk/xml-builder';
 import bodyParser from 'body-parser';
-import debug from 'debug';
 import express, { type Request, type Response } from 'express';
-import addRequestId from 'express-request-id';
-import morgan from 'morgan';
+import { pino } from 'pino';
+import { pinoHttp } from 'pino-http';
 import { S3Proxy } from '../src/index.js';
 import type { ExpressRequest, ExpressResponse } from '../src/types.js';
 
-const debugLog = debug('s3proxy');
+// Create logger instance
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  ...(process.env.NODE_ENV === 'production'
+    ? {}
+    : {
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+            translateTime: 'SYS:standard',
+          },
+        },
+      }),
+});
+
 const port = Number(process.env.PORT) || 0;
 const app = express();
 
 app.set('view engine', 'pug');
-app.use(addRequestId({ headerName: 'x-request-id' }));
+app.use(pinoHttp({ logger }));
 app.use(bodyParser.json());
 
 interface ErrorWithDetails extends Error {
@@ -31,24 +46,24 @@ interface ErrorWithDetails extends Error {
 }
 
 function handleError(req: Request, res: Response, err: ErrorWithDetails): void {
-  // sending xml because the AWS SDK sets content-type: application/xml for non-200 responses
-  const errorXml = `<?xml version="1.0"?>
-<error time="${err.time || new Date().toISOString()}" code="${err.code || 'InternalError'}" statusCode="${err.statusCode || 500}" url="${req.url}" method="${req.method}">${err.message}</error>`;
+  // Log error with context using pino
+  req.log.error({ err, statusCode: err.statusCode || 500 }, 'Request error');
+
+  // Build XML response using AWS SDK XMLNode and XMLText
+  const errorNode = new XmlNode('error')
+    .addAttribute('time', err.time || new Date().toISOString())
+    .addAttribute('code', err.code || 'InternalError')
+    .addAttribute('statusCode', String(err.statusCode || 500))
+    .addAttribute('url', req.url)
+    .addAttribute('method', req.method || 'GET')
+    .addChildNode(new XmlText(err.message));
+
+  const errorXml = `<?xml version="1.0"?>\n${errorNode.toString()}`;
 
   res
     .status(err.statusCode || 500)
     .type('application/xml')
     .send(errorXml);
-}
-
-// Use morgan for request logging except during test execution
-if (process.env.NODE_ENV !== 'test') {
-  app.use(
-    morgan(
-      'request :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ' +
-        '":referrer" ":user-agent" ":response-time ms" :res[x-request-id] :res[x-amz-request-id]'
-    )
-  );
 }
 
 // initialize the s3proxy
@@ -58,14 +73,14 @@ const proxy = new S3Proxy({ bucket: bucketName });
 // Initialize proxy with proper error handling
 try {
   await proxy.init();
-  console.log(`S3Proxy initialized for bucket: ${bucketName}`);
+  logger.info({ bucket: bucketName }, 'S3Proxy initialized');
 } catch (error) {
-  console.error('Failed to initialize S3Proxy:', error);
+  logger.fatal({ err: error, bucket: bucketName }, 'Failed to initialize S3Proxy');
   process.exit(1);
 }
 
 proxy.on('error', (err: Error) => {
-  console.log(`error initializing s3proxy for bucket ${bucketName}: ${err.name} ${err.message}`);
+  logger.error({ err, bucket: bucketName }, 'S3Proxy error');
 });
 
 // health check api, suitable for integration with ELB health checking
@@ -84,7 +99,7 @@ app.route('/health').get(async (req: Request, res: Response) => {
 });
 
 // redirect requests to root
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
   res.redirect('/index.html');
 });
 
@@ -118,7 +133,7 @@ app
 
 if (port > 0) {
   app.listen(port, () => {
-    debugLog(`s3proxy listening on port ${port}`);
+    logger.info({ port }, 'S3Proxy server started');
   });
 }
 
