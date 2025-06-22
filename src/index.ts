@@ -172,9 +172,9 @@ export class S3Proxy extends EventEmitter {
 
     // Add middleware to capture response metadata
     // Using any here is necessary for AWS SDK middleware compatibility
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: AWS SDK middleware requires any types
     (command as any).middlewareStack.add(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: AWS SDK middleware callback signature
       (next: any) => async (args: any) => {
         const result = await next(args);
         headers = result.response.headers || {};
@@ -188,6 +188,7 @@ export class S3Proxy extends EventEmitter {
     );
 
     try {
+      // biome-ignore lint/suspicious/noExplicitAny: AWS SDK command union type compatibility
       const item = await this.s3?.send(command as any);
       s3stream = S3Proxy.getReadstream((item as GetObjectCommandOutput).Body);
     } catch (e) {

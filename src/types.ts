@@ -1,4 +1,4 @@
-import type { IncomingMessage, ServerResponse, OutgoingHttpHeaders } from 'node:http';
+import type { IncomingMessage, OutgoingHttpHeaders, ServerResponse } from 'node:http';
 import type { S3ClientConfig } from '@aws-sdk/client-s3';
 
 export interface S3ProxyConfig extends S3ClientConfig {
