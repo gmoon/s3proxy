@@ -86,7 +86,9 @@ jobs:
           name: validation-test-results
           path: |
             test-results-*.json
+            load-test-results-*.json
             *.log
+          if-no-files-found: ignore
 
   # Performance tests - load testing with Artillery
   performance-tests:
@@ -120,6 +122,7 @@ jobs:
           path: |
             load-test-results-*.json
             *.log
+          if-no-files-found: ignore
 
   # Package verification - ensure package contents are correct
   package-verification:
