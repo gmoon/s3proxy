@@ -182,6 +182,6 @@ jobs:
           cd test-install
           npm init -y
           npm install ../s3proxy-*.tgz
-          node -e "const s3proxy = require('s3proxy'); console.log('✅ Package installs correctly');"
+          node -e "import('s3proxy').then(pkg => { console.log('✅ Package installs correctly:', Object.keys(pkg)); }).catch(err => { console.error('❌ Package import failed:', err); process.exit(1); })"
       - name: Cleanup verification artifacts
         run: rm -f s3proxy-*.tgz
