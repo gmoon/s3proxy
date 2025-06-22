@@ -58,7 +58,7 @@ jobs:
   # SAM application tests
   sam-tests:
     name: "SAM Application Tests"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-arm64
     needs: [test]
     steps:
       - uses: actions/checkout@v4
