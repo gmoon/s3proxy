@@ -124,6 +124,52 @@ jobs:
             *.log
           if-no-files-found: ignore
 
+  # Create version tag and draft release on merge to master
+  create-tag-and-draft-release:
+    name: "Create Tag and Draft Release"
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: [test, validation-tests, performance-tests]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get package version
+        id: package-version
+        run: echo "version=v$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      - name: Check if tag exists
+        id: check-tag
+        run: |
+          if git rev-parse "${{ steps.package-version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Create and push tag
+        if: steps.check-tag.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.package-version.outputs.version }}" -m "Release ${{ steps.package-version.outputs.version }}"
+          git push origin "${{ steps.package-version.outputs.version }}"
+      - name: Get merge commit message
+        id: commit-message
+        run: |
+          # Get the commit message and escape it for JSON
+          COMMIT_MSG=$(git log -1 --pretty=format:"%B" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+      - name: Create draft release
+        if: steps.check-tag.outputs.exists == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.package-version.outputs.version }}" \
+            --title "Release ${{ steps.package-version.outputs.version }}" \
+            --notes "${{ steps.commit-message.outputs.message }}" \
+            --draft \
+            --target "${{ steps.package-version.outputs.version }}"
+
   # Package verification - ensure package contents are correct
   package-verification:
     name: "Package Verification"
