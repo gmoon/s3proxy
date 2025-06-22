@@ -22,7 +22,7 @@ s3proxy turns any S3 bucket into a high-performance web server. Perfect for serv
 
 ### ⚠️ Breaking Change in v3.0.0
 
-**s3proxy v3.0.0+ is ESM-only and requires Node.js 20.8.1+**
+**s3proxy v3.0.0+ is ESM-only and requires Node.js 22.13.0+**
 
 If you're upgrading from v2.x:
 
@@ -37,6 +37,12 @@ import { S3Proxy } from 's3proxy';
 For CommonJS projects, you have two options:
 1. **Recommended**: Migrate to ESM by adding `"type": "module"` to your `package.json`
 2. **Alternative**: Use dynamic import: `const { S3Proxy } = await import('s3proxy');`
+
+### Requirements
+
+- **Node.js**: 22.13.0 or higher
+- **Package Type**: ESM-only (no CommonJS support)
+- **AWS SDK**: v3 (included as dependency)
 
 ### Installation & Usage
 ```bash
@@ -341,7 +347,7 @@ s3proxy maintains comprehensive test coverage across multiple dimensions to ensu
 | **Platform Testing** | | | |
 | Docker Integration | `make test-all-docker` | ✅ Node CI | Containerized deployment |
 | AWS Lambda (SAM) | `make sam-app` | ✅ Node CI | Serverless deployment |
-| Multi-Node | Node 20, 22 | ✅ Node CI | Cross-version compatibility |
+| Multi-Node | Node 22, 23 | ✅ Node CI | Cross-version compatibility |
 
 #### Test Commands
 
