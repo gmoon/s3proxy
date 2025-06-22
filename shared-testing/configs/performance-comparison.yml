@@ -1,0 +1,18 @@
+config:
+  plugins:
+    expect: {}
+  phases:
+    - duration: 60
+      arrivalRate: 10
+      name: "warm up"
+    - duration: 120
+      arrivalRate: 5
+      rampTo: 50
+      name: "ramp up"
+    - duration: 300
+      arrivalRate: 50
+      name: "sustained load"
+  processor: "../utils/test-runner.js"
+  variables:
+    testEnvironment: "performance-comparison"
+    testRunId: "{{ $randomString() }}"

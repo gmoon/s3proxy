@@ -1,0 +1,56 @@
+scenarios:
+  - name: "Mixed workload - sustained"
+    weight: 70
+    flow:
+      - get:
+          url: "/index.html"
+          expect:
+            - statusCode: 200
+            - contentType: text/html
+      - think: 1
+
+  - name: "Large file downloads"
+    weight: 20
+    flow:
+      - get:
+          url: "/test1m.tmp"
+          expect:
+            - statusCode: 200
+            - contentType: binary/octet-stream
+
+  - name: "Range request patterns"
+    weight: 8
+    flow:
+      - get:
+          url: "/large.bin"
+          headers:
+            'range': "bytes=0-1023"
+          expect:
+            - statusCode: 206
+      - think: 0.5
+      - get:
+          url: "/large.bin"
+          headers:
+            'range': "bytes=1024-2047"
+          expect:
+            - statusCode: 206
+
+  - name: "Special character handling"
+    weight: 1
+    flow:
+      - get:
+          url: "/specialCharacters!-_.*'()&$@=;:+  ,?\\{^}%`]\">[~<#|."
+          expect:
+            - statusCode: 200
+
+  - name: "Error scenarios"
+    weight: 1
+    flow:
+      - get:
+          url: "/nonexistent-file.txt"
+          expect:
+            - statusCode: 404
+      - get:
+          url: "/unauthorized.html"
+          expect:
+            - statusCode: 403

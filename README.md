@@ -16,51 +16,130 @@ s3proxy turns any S3 bucket into a high-performance web server. Perfect for serv
 - **Scalable** - Leverage S3's global infrastructure
 - **Range requests** - Support for partial content and resumable downloads
 - **Express integration** - Drop into existing Node.js applications
+- **TypeScript support** - Full type safety and modern tooling
 
 ## Quick Start
 
-Install and run in 3 lines:
+### ⚠️ Breaking Change in v3.0.0
 
+**s3proxy v3.0.0+ is ESM-only and requires Node.js 22.13.0+**
+
+If you're upgrading from v2.x:
+
+```javascript
+// ❌ v2.x (CommonJS) - No longer supported
+const { S3Proxy } = require('s3proxy');
+
+// ✅ v3.x (ESM) - New syntax
+import { S3Proxy } from 's3proxy';
+```
+
+For CommonJS projects, you have two options:
+1. **Recommended**: Migrate to ESM by adding `"type": "module"` to your `package.json`
+2. **Alternative**: Use dynamic import: `const { S3Proxy } = await import('s3proxy');`
+
+### Requirements
+
+- **Node.js**: 22.13.0 or higher
+- **Package Type**: ESM-only (no CommonJS support)
+- **AWS SDK**: v3 (included as dependency)
+
+### Installation & Usage
 ```bash
 npm install s3proxy express
-PORT=3000 BUCKET=your-bucket-name node -e "
-const express = require('express');
-const S3Proxy = require('s3proxy');
+```
+
+```javascript
+import express from 'express';
+import { S3Proxy } from 's3proxy';
+
 const app = express();
-const proxy = new S3Proxy({bucket: process.env.BUCKET});
-proxy.init();
+const proxy = new S3Proxy({ bucket: 'your-bucket-name' });
+
+await proxy.init();
+
 app.get('/*', async (req, res) => {
-  (await proxy.get(req, res)).on('error', err => res.status(err.statusCode || 500).end()).pipe(res);
+  const stream = await proxy.get(req, res);
+  stream.on('error', err => res.status(err.statusCode || 500).end()).pipe(res);
 });
-app.listen(process.env.PORT, () => console.log(\`Server running on port \${process.env.PORT}\`));
-"
+
+app.listen(3000);
+```
+
+### TypeScript/ESM
+```bash
+npm install s3proxy express
+npm install --save-dev @types/express
+```
+
+```typescript
+import express from 'express';
+import { S3Proxy } from 's3proxy';
+import type { HttpRequest, HttpResponse } from 's3proxy';
+
+const app = express();
+const proxy = new S3Proxy({ bucket: 'your-bucket-name' });
+
+await proxy.init();
+
+app.get('/*', async (req, res) => {
+  try {
+    const stream = await proxy.get(req as HttpRequest, res as HttpResponse);
+    stream.on('error', (err: any) => {
+      res.status(err.statusCode || 500).end();
+    }).pipe(res);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch file' });
+  }
+});
+
+app.listen(3000);
 ```
 
 Now `curl http://localhost:3000/index.html` serves `s3://your-bucket-name/index.html`
 
 ## Usage Examples
 
-### Express Integration
+### Express Integration with Error Handling
 
-```javascript
-const express = require('express');
-const S3Proxy = require('s3proxy');
+```typescript
+import express, { type Request, type Response } from 'express';
+import { S3Proxy } from 's3proxy';
+import type { HttpRequest, HttpResponse } from 's3proxy';
 
 const app = express();
-const proxy = new S3Proxy({ bucket: 'my-website-bucket' });
+const proxy = new S3Proxy({ 
+  bucket: 'my-website-bucket',
+  region: 'us-west-2'
+});
 
-// Initialize the proxy
-await proxy.init();
+// Initialize with proper error handling
+try {
+  await proxy.init();
+  console.log('S3Proxy initialized successfully');
+} catch (error) {
+  console.error('Failed to initialize S3Proxy:', error);
+  process.exit(1);
+}
+
+// Error handler
+function handleError(req: Request, res: Response, err: any): void {
+  const statusCode = err.statusCode || 500;
+  const errorXml = `<?xml version="1.0"?>
+<error code="${err.code || 'InternalError'}" statusCode="${statusCode}" url="${req.url}">${err.message}</error>`;
+  
+  res.status(statusCode).type('application/xml').send(errorXml);
+}
 
 // Serve all files from S3
-app.get('/*', async (req, res) => {
+app.get('/*', async (req: Request, res: Response) => {
   try {
-    const stream = await proxy.get(req, res);
+    const stream = await proxy.get(req as HttpRequest, res as HttpResponse);
     stream.on('error', (err) => {
-      res.status(err.statusCode || 500).end();
+      handleError(req, res, err);
     }).pipe(res);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch file' });
+    handleError(req, res, err);
   }
 });
 
@@ -80,10 +159,117 @@ curl --range 0-99 http://localhost:3000/large-video.mp4 -o partial.mp4
 
 Built-in health check endpoint for load balancers:
 
-```javascript
-app.get('/health', async (req, res) => {
-  const stream = await proxy.healthCheckStream(res);
-  stream.on('error', () => res.end()).pipe(res);
+```typescript
+app.get('/health', async (req: Request, res: Response) => {
+  try {
+    const stream = await proxy.healthCheckStream(res as HttpResponse);
+    stream.on('error', () => res.end()).pipe(res);
+  } catch (error) {
+    res.status(500).end();
+  }
+});
+```
+
+## Configuration
+
+### Constructor Options
+
+```typescript
+import { S3Proxy } from 's3proxy';
+import type { S3ProxyConfig } from 's3proxy';
+
+const config: S3ProxyConfig = {
+  bucket: 'my-bucket',        // Required: S3 bucket name
+  region: 'us-west-2',        // Optional: AWS region
+  credentials: {              // Optional: AWS credentials
+    accessKeyId: 'AKIA...',
+    secretAccessKey: '...'
+  },
+  endpoint: 'https://...',    // Optional: Custom S3 endpoint
+  maxAttempts: 3,            // Optional: Retry attempts
+  requestTimeout: 30000      // Optional: Request timeout in ms
+};
+
+const proxy = new S3Proxy(config);
+```
+
+### Environment Variables
+
+- `BUCKET` - S3 bucket name
+- `PORT` - Server port (default: 3000)
+- `AWS_REGION` - AWS region
+- `NODE_ENV` - Environment (enables credential file in dev mode)
+
+## API Reference
+
+### Class: S3Proxy
+
+#### Constructor
+```typescript
+new S3Proxy(config: S3ProxyConfig)
+```
+
+#### Methods
+
+##### `await proxy.init(): Promise<void>`
+Initialize S3 client and verify bucket access. Must be called before using other methods.
+
+##### `await proxy.get(req: HttpRequest, res: HttpResponse): Promise<Readable>`
+Stream S3 object to HTTP response. Handles range requests automatically.
+
+##### `await proxy.head(req: HttpRequest, res: HttpResponse): Promise<Readable>`
+Get object metadata (HEAD request). Returns empty stream with headers set.
+
+##### `await proxy.healthCheck(): Promise<void>`
+Verify bucket connectivity. Throws error if bucket is inaccessible.
+
+##### `await proxy.healthCheckStream(res: HttpResponse): Promise<Readable>`
+Health check with streaming response. Sets appropriate status code and headers.
+
+#### Static Methods
+
+##### `S3Proxy.version(): string`
+Returns the current version of s3proxy.
+
+##### `S3Proxy.parseRequest(req: HttpRequest): ParsedRequest`
+Parse HTTP request to extract S3 key and query parameters.
+
+### Types
+
+```typescript
+interface S3ProxyConfig extends S3ClientConfig {
+  bucket: string;
+}
+
+interface HttpRequest extends IncomingMessage {
+  path?: string;
+  query?: Record<string, string | string[]>;
+  headers: Record<string, string | string[]>;
+  url: string;
+  method?: string;
+}
+
+interface HttpResponse extends ServerResponse {
+  writeHead(statusCode: number, headers?: any): this;
+}
+
+interface ParsedRequest {
+  key: string;
+  query: Record<string, string | string[]>;
+}
+```
+
+### Error Handling
+
+s3proxy emits events for monitoring:
+
+```typescript
+proxy.on('error', (err: Error) => {
+  console.error('S3Proxy error:', err);
+});
+
+proxy.on('init', () => {
+  console.log('S3Proxy initialized successfully');
 });
 ```
 
@@ -92,7 +278,7 @@ app.get('/health', async (req, res) => {
 For containerized deployments:
 
 ```bash
-docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:2.0.2
+docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:3.0.0
 ```
 
 For local development with temporary AWS credentials:
@@ -105,53 +291,177 @@ docker run \
   -e PORT=8080 \
   -e NODE_ENV=dev \
   -p 8080:8080 \
-  -t forkzero/s3proxy:2.0.2
+  -t forkzero/s3proxy:3.0.0
 ```
 
-## Configuration
+## Development
 
-### Constructor Options
+### TypeScript Development
 
-```javascript
-const proxy = new S3Proxy({
-  bucket: 'my-bucket',        // Required: S3 bucket name
-  region: 'us-west-2',        // Optional: AWS region
-  accessKeyId: 'AKIA...',     // Optional: AWS credentials
-  secretAccessKey: '...',     // Optional: AWS credentials  
-  endpoint: 'https://...',    // Optional: Custom S3 endpoint
-});
+```bash
+# Install dependencies
+npm install
+
+# Development with hot reload
+npm run dev
+
+# Build TypeScript
+npm run build
+
+# Run tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Type checking
+npm run type-check
 ```
 
-### Environment Variables
+### Testing & Quality Assurance
 
-- `BUCKET` - S3 bucket name
-- `PORT` - Server port (default: 3000)
-- `AWS_REGION` - AWS region
-- `NODE_ENV` - Environment (enables credential file in dev mode)
+s3proxy maintains comprehensive test coverage across multiple dimensions to ensure reliability and performance:
 
-## API Reference
+#### Test Coverage Matrix
 
-### Methods
+| **Test Type** | **Local (Makefile)** | **CI (GitHub Actions)** | **Description** |
+|---------------|----------------------|-------------------------|-----------------|
+| **Code Quality** | | | |
+| Lint | `make lint` | ✅ Node CI | Code style and quality checks |
+| Type Check | `make type-check` | ✅ Node CI | TypeScript type safety validation |
+| Security Audit | `npm audit` | ✅ Node CI | Dependency vulnerability scanning |
+| **Unit Testing** | | | |
+| Unit Tests | `make unit-tests` | ✅ Node CI | Core functionality testing |
+| Coverage | `npm run test:coverage` | ✅ Node CI | Code coverage reporting (96%+) |
+| **Integration Testing** | | | |
+| Build Verification | `make build` | ✅ Node CI | TypeScript compilation |
+| Package Verification | `make pre-release-check` | ✅ Node CI | npm package integrity |
+| **Functional Testing** | | | |
+| Validation Tests | `make test-validation-docker` | ✅ Node CI | 24 comprehensive functionality tests |
+| Binary Integrity | Included in validation | ✅ Node CI | File corruption detection |
+| Range Requests | Included in validation | ✅ Node CI | HTTP range request handling |
+| Error Handling | Included in validation | ✅ Node CI | Proper error status codes |
+| **Performance Testing** | | | |
+| Load Testing | `make artillery-docker` | ✅ Node CI | High-throughput performance |
+| Stress Testing | `make test-performance` | ✅ Node CI | Resource usage under load |
+| **Platform Testing** | | | |
+| Docker Integration | `make test-all-docker` | ✅ Node CI | Containerized deployment |
+| Multi-Node | Node 22, 23 | ✅ Node CI | Cross-version compatibility |
 
-- `await proxy.init()` - Initialize S3 client and verify bucket access
-- `await proxy.get(req, res)` - Stream S3 object to HTTP response
-- `await proxy.head(req, res)` - Get object metadata (HEAD request)
-- `await proxy.healthCheck()` - Verify bucket connectivity
-- `await proxy.healthCheckStream(res)` - Health check with streaming response
+#### Test Commands
 
-### Error Handling
+```bash
+# Run all tests locally
+make all                    # Complete test suite
+make test                   # Core tests (build, lint, unit)
+make functional-tests       # Integration and Docker tests
 
-s3proxy emits events for monitoring:
+# Individual test categories  
+make test-validation-docker # 24 comprehensive validation tests
+make artillery-docker       # Performance/load testing
 
-```javascript
-proxy.on('error', (err) => {
-  console.error('S3Proxy error:', err);
-});
-
-proxy.on('init', () => {
-  console.log('S3Proxy initialized successfully');
-});
+# Quality checks
+make pre-release-check     # Complete pre-release verification
 ```
+
+#### Continuous Integration
+
+- **Every Push**: Core tests (lint, type-check, build, unit tests)
+- **Master Branch**: Full test suite including validation and performance
+- **Pull Requests**: Complete verification before merge
+- **Releases**: Comprehensive pre-release checks
+
+### Project Structure
+
+```
+src/
+├── index.ts          # Main S3Proxy class
+├── UserException.ts  # Custom error class
+└── types.ts          # Type definitions
+
+examples/
+├── express-basic.ts  # TypeScript Express example
+└── http.ts          # TypeScript HTTP example
+
+test/
+├── s3proxy.test.ts      # Main functionality tests
+├── parseRequest.test.ts # Request parsing tests
+├── MockExpress.test.ts  # Express integration tests
+└── integration/
+    └── validation.test.js # End-to-end validation tests
+```
+
+### Configuration Files
+
+s3proxy uses several configuration files for different aspects of development and deployment:
+
+#### TypeScript Configuration
+- **`tsconfig.json`** - Main TypeScript compiler configuration
+  - Compiles `src/` to `dist/src/` for npm package
+  - ES2022 target with NodeNext module resolution
+  - Strict type checking enabled
+- **`tsconfig.examples.json`** - Type checking for examples
+  - Extends main config with examples-specific settings
+  - Used by `npm run type-check` to validate examples
+  - Ensures examples stay current with API changes
+
+#### Testing & Quality
+- **`vitest.config.ts`** - Unit test configuration
+  - Unit test settings with 30s timeout
+  - Coverage reporting (text, HTML, LCOV, JSON)
+  - 80% coverage thresholds for all metrics
+  - Excludes integration tests and examples from unit test runs
+- **`vitest.integration.config.ts`** - Integration test configuration
+  - Runs validation tests that require a live server
+  - Used by `npm run test:validation` and Makefile targets
+  - Separate from unit tests for faster development workflow
+- **`biome.json`** - Code formatting and linting
+  - Fast alternative to ESLint + Prettier
+  - Consistent code style across the project
+  - Import organization and formatting rules
+
+#### Release & CI/CD
+- **`.releaserc.json`** - Semantic release configuration
+  - Conventional commits for automated versioning
+  - Generates CHANGELOG.md automatically
+  - Publishes to npm and creates GitHub releases
+  - Handles version bumping and git tagging
+
+#### GitHub Actions
+- **`.github/workflows/nodejs.yml`** - Main CI pipeline
+  - Core tests (lint, type-check, build, unit tests)
+  - Validation tests (24 comprehensive functionality tests)
+  - Performance testing with Artillery
+  - Package verification
+- **`.github/workflows/release.yml`** - Automated releases
+- **`.github/workflows/manual-release.yml`** - Manual release workflow
+
+#### Performance Testing
+- **`shared-testing/configs/`** - Artillery load test configurations
+  - `load-test.yml` - Main load testing config (used in Makefile)
+  - `docker-container.yml` - Docker-specific load testing
+  - `npm-package.yml` - NPM package load testing
+  - `performance-comparison.yml` - Performance benchmarking
+- **`shared-testing/scenarios/`** - Artillery test scenarios
+  - `load-test.yml` - Basic load testing scenarios
+  - `basic-load.yml` - Simple load patterns
+  - `sustained-load.yml` - Extended load testing
+  - `spike-load.yml` - Traffic spike simulation
+  - `range-requests.yml` - HTTP range request testing
+
+#### Development Tools
+- **`.vscode/settings.json`** - VS Code workspace settings
+  - Disables automatic Makefile configuration prompts
+- **`.github/dependabot.yml`** - Automated dependency updates
+- **`Makefile`** - Build automation and testing orchestration
+  - Coordinates Docker and Artillery testing
+  - Provides consistent commands across environments
+
+#### AWS & Docker
+- **`examples/aws-ecs/`** - ECS deployment configurations
+  - CloudFormation templates for production deployment
+
+All configuration files are actively maintained and serve specific purposes in the development, testing, and deployment pipeline.
 
 ## Use Cases
 
@@ -160,6 +470,10 @@ proxy.on('init', () => {
 - **Media serving** - Video/audio streaming with range request support
 - **API backends** - Serve user uploads or generated content
 - **CDN alternative** - Cost-effective content delivery
+
+## Performance
+
+See [PERFORMANCE.md](PERFORMANCE.md) for detailed performance testing and benchmarks.
 
 ## Getting Help
 

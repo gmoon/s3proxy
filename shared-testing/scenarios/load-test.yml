@@ -1,0 +1,32 @@
+scenarios:
+  - name: "Basic HTML file"
+    weight: 40
+    flow:
+      - get:
+          url: "/index.html"
+
+  - name: "Large file streaming"
+    weight: 30
+    flow:
+      - get:
+          url: "/large.bin"
+
+  - name: "Medium file streaming"
+    weight: 15
+    flow:
+      - get:
+          url: "/test1m.tmp"
+
+  - name: "Health check"
+    weight: 10
+    flow:
+      - get:
+          url: "/health"
+
+  - name: "Range requests"
+    weight: 5
+    flow:
+      - get:
+          url: "/large.bin"
+          headers:
+            'range': "bytes=0-99"

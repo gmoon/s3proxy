@@ -1,0 +1,127 @@
+{
+  "timestamp": "2025-06-22T05:02:58.144Z",
+  "environment": "docker-container",
+  "target": "http://localhost:8080/large.bin",
+  "metrics": {
+    "responseTime": [
+      1750568579230,
+      1750568579254,
+      1750568580253,
+      1750568581684,
+      1750568582199,
+      1750568583636,
+      1750568584195,
+      1750568585476,
+      1750568586147,
+      1750568587970,
+      1750568588226,
+      1750568589236,
+      1750568590145,
+      1750568591264,
+      1750568592145,
+      1750568593229,
+      1750568594206,
+      1750568596356,
+      1750568596729,
+      1750568597469,
+      1750568598526,
+      1750568599153,
+      1750568600219,
+      1750568602547,
+      1750568603144,
+      1750568604186,
+      1750568604535,
+      1750568605345,
+      1750568606987,
+      1750568607236
+    ],
+    "statusCodes": {
+      "200": 26,
+      "206": 4
+    },
+    "healthChecks": [
+      {
+        "responseTime": 1750568586147,
+        "statusCode": 200,
+        "url": "http://localhost:8080/health",
+        "timestamp": 1750568586147
+      },
+      {
+        "responseTime": 1750568590145,
+        "statusCode": 200,
+        "url": "http://localhost:8080/health",
+        "timestamp": 1750568590145
+      },
+      {
+        "responseTime": 1750568592145,
+        "statusCode": 200,
+        "url": "http://localhost:8080/health",
+        "timestamp": 1750568592145
+      },
+      {
+        "responseTime": 1750568599153,
+        "statusCode": 200,
+        "url": "http://localhost:8080/health",
+        "timestamp": 1750568599153
+      },
+      {
+        "responseTime": 1750568603144,
+        "statusCode": 200,
+        "url": "http://localhost:8080/health",
+        "timestamp": 1750568603144
+      }
+    ],
+    "rangeRequests": [
+      {
+        "responseTime": 1750568588226,
+        "statusCode": 206,
+        "url": "http://localhost:8080/large.bin",
+        "rangeHeader": "bytes=0-99",
+        "timestamp": 1750568588227
+      },
+      {
+        "responseTime": 1750568593229,
+        "statusCode": 206,
+        "url": "http://localhost:8080/large.bin",
+        "rangeHeader": "bytes=0-99",
+        "timestamp": 1750568593229
+      },
+      {
+        "responseTime": 1750568600219,
+        "statusCode": 206,
+        "url": "http://localhost:8080/large.bin",
+        "rangeHeader": "bytes=0-99",
+        "timestamp": 1750568600219
+      },
+      {
+        "responseTime": 1750568607236,
+        "statusCode": 206,
+        "url": "http://localhost:8080/large.bin",
+        "rangeHeader": "bytes=0-99",
+        "timestamp": 1750568607236
+      }
+    ],
+    "specialCharacterRequests": [],
+    "errorRequests": []
+  },
+  "summary": {
+    "totalRequests": 30,
+    "responseTime": {
+      "min": 1750568579230,
+      "max": 1750568607236,
+      "mean": 1750568593030.9,
+      "p50": 1750568593229,
+      "p95": 1750568606987,
+      "p99": 1750568607236
+    },
+    "statusCodeDistribution": {
+      "200": 26,
+      "206": 4
+    },
+    "healthCheckCount": 5,
+    "rangeRequestCount": 4,
+    "specialCharacterRequestCount": 0,
+    "errorRequestCount": 0,
+    "successRate": 100
+  }
+}

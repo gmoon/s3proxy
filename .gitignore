@@ -3,6 +3,9 @@ s3proxy*.tgz
 version.txt
 credentials.json
 
+# Build output
+dist/
+
 .DS_Store
 .vscode
 

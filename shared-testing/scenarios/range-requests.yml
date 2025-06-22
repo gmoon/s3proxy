@@ -1,0 +1,71 @@
+scenarios:
+  - name: "Small range requests"
+    weight: 40
+    flow:
+      - get:
+          url: "/large.bin"
+          headers:
+            'range': "bytes=0-99"
+          expect:
+            - statusCode: 206
+            - headerEquals:
+                - "content-length"
+                - "100"
+
+  - name: "Medium range requests"
+    weight: 30
+    flow:
+      - get:
+          url: "/large.bin"
+          headers:
+            'range': "bytes=0-1023"
+          expect:
+            - statusCode: 206
+            - headerEquals:
+                - "content-length"
+                - "1024"
+
+  - name: "Large range requests"
+    weight: 20
+    flow:
+      - get:
+          url: "/large.bin"
+          headers:
+            'range': "bytes=0-102399"
+          expect:
+            - statusCode: 206
+            - headerEquals:
+                - "content-length"
+                - "102400"
+
+  - name: "Sequential range requests"
+    weight: 8
+    flow:
+      - get:
+          url: "/test1m.tmp"
+          headers:
+            'range': "bytes=0-1023"
+          expect:
+            - statusCode: 206
+      - get:
+          url: "/test1m.tmp"
+          headers:
+            'range': "bytes=1024-2047"
+          expect:
+            - statusCode: 206
+      - get:
+          url: "/test1m.tmp"
+          headers:
+            'range': "bytes=2048-3071"
+          expect:
+            - statusCode: 206
+
+  - name: "Range requests on special character files"
+    weight: 2
+    flow:
+      - get:
+          url: "/specialCharacters!-_.*'()&$@=;:+  ,?\\{^}%`]\">[~<#|."
+          headers:
+            'range': "bytes=0-49"
+          expect:
+            - statusCode: 206
