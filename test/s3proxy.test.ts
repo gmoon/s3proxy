@@ -1,7 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { GetObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
 import { S3Proxy, UserException } from '../src/index.js';
 import type { ExpressRequest, S3ProxyConfig } from '../src/types.js';
-import { setupS3Mocks, teardownS3Mocks } from './helpers/aws-mock.js';
+import { setupS3Mocks, teardownS3Mocks, s3Mock } from './helpers/aws-mock.js';
 
 describe('S3Proxy', () => {
   // Set up AWS mocks for all tests
@@ -247,6 +248,57 @@ describe('S3Proxy', () => {
 
     it('should have public healthCheckStream method', () => {
       expect(typeof proxy.healthCheckStream).toBe('function');
+    });
+  });
+
+  describe('Error Handling', () => {
+    let proxy: S3Proxy;
+    const config: S3ProxyConfig = { bucket: 'test-bucket' };
+
+    beforeEach(() => {
+      proxy = new S3Proxy(config);
+    });
+
+    it('should re-throw non-AWS errors', async () => {
+      const mockError = new Error('Network error');
+      s3Mock.on(GetObjectCommand).rejectsOnce(mockError);
+      
+      await proxy.init();
+      
+      const mockRequest = { url: '/test.txt', headers: {}, method: 'GET' } as ExpressRequest;
+      const mockResponse = { writeHead: vi.fn(), end: vi.fn() } as any;
+      
+      await expect(proxy.get(mockRequest, mockResponse))
+        .rejects.toThrow('Network error');
+    });
+
+    it('should emit error and throw on init failure', async () => {
+      const mockError = new Error('Init failed');
+      s3Mock.on(HeadBucketCommand).rejectsOnce(mockError);
+      
+      const errorSpy = vi.fn();
+      proxy.on('error', errorSpy);
+      
+      await expect(proxy.init()).rejects.toThrow('Init failed');
+      expect(errorSpy).toHaveBeenCalledWith(mockError);
+    });
+
+    it('should throw error for unrecognized body type', async () => {
+      await proxy.init();
+      
+      // Mock S3 response with invalid body type
+      const invalidBody = { invalid: 'body' } as any;
+      s3Mock.on(GetObjectCommand).resolvesOnce({
+        Body: invalidBody,
+        ContentLength: 100,
+        ContentType: 'text/plain'
+      });
+      
+      const mockRequest = { url: '/test.txt', headers: {}, method: 'GET' } as ExpressRequest;
+      const mockResponse = { writeHead: vi.fn(), end: vi.fn() } as any;
+      
+      await expect(proxy.get(mockRequest, mockResponse))
+        .rejects.toThrow('unrecognized type');
     });
   });
 });

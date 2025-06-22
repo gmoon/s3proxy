@@ -31,12 +31,14 @@ export default defineConfig({
       ],
       thresholds: {
         global: {
-          branches: 80,
-          functions: 80,
-          lines: 80,
-          statements: 80
+          branches: 85,     // Increased from 75% to 85% (current: 86.88%)
+          functions: 95,    // Increased from 80% to 95% (current: 95.83%)
+          lines: 90,        // Increased from 80% to 90% (current: 93.12%)
+          statements: 90    // Increased from 80% to 90% (current: 93.12%)
         }
-      }
+      },
+      // Ensure thresholds are enforced
+      reportOnFailure: false
     },
     testTimeout: 30000,
     hookTimeout: 30000
