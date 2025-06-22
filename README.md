@@ -69,7 +69,7 @@ npm install --save-dev @types/express
 ```typescript
 import express from 'express';
 import { S3Proxy } from 's3proxy';
-import type { ExpressRequest, ExpressResponse } from 's3proxy';
+import type { HttpRequest, HttpResponse } from 's3proxy';
 
 const app = express();
 const proxy = new S3Proxy({ bucket: 'your-bucket-name' });
@@ -78,7 +78,7 @@ await proxy.init();
 
 app.get('/*', async (req, res) => {
   try {
-    const stream = await proxy.get(req as ExpressRequest, res as ExpressResponse);
+    const stream = await proxy.get(req as HttpRequest, res as HttpResponse);
     stream.on('error', (err: any) => {
       res.status(err.statusCode || 500).end();
     }).pipe(res);
@@ -99,7 +99,7 @@ Now `curl http://localhost:3000/index.html` serves `s3://your-bucket-name/index.
 ```typescript
 import express, { type Request, type Response } from 'express';
 import { S3Proxy } from 's3proxy';
-import type { ExpressRequest, ExpressResponse } from 's3proxy';
+import type { HttpRequest, HttpResponse } from 's3proxy';
 
 const app = express();
 const proxy = new S3Proxy({ 
@@ -128,7 +128,7 @@ function handleError(req: Request, res: Response, err: any): void {
 // Serve all files from S3
 app.get('/*', async (req: Request, res: Response) => {
   try {
-    const stream = await proxy.get(req as ExpressRequest, res as ExpressResponse);
+    const stream = await proxy.get(req as HttpRequest, res as HttpResponse);
     stream.on('error', (err) => {
       handleError(req, res, err);
     }).pipe(res);
@@ -156,7 +156,7 @@ Built-in health check endpoint for load balancers:
 ```typescript
 app.get('/health', async (req: Request, res: Response) => {
   try {
-    const stream = await proxy.healthCheckStream(res as ExpressResponse);
+    const stream = await proxy.healthCheckStream(res as HttpResponse);
     stream.on('error', () => res.end()).pipe(res);
   } catch (error) {
     res.status(500).end();
@@ -208,16 +208,16 @@ new S3Proxy(config: S3ProxyConfig)
 ##### `await proxy.init(): Promise<void>`
 Initialize S3 client and verify bucket access. Must be called before using other methods.
 
-##### `await proxy.get(req: ExpressRequest, res: ExpressResponse): Promise<Readable>`
+##### `await proxy.get(req: HttpRequest, res: HttpResponse): Promise<Readable>`
 Stream S3 object to HTTP response. Handles range requests automatically.
 
-##### `await proxy.head(req: ExpressRequest, res: ExpressResponse): Promise<Readable>`
+##### `await proxy.head(req: HttpRequest, res: HttpResponse): Promise<Readable>`
 Get object metadata (HEAD request). Returns empty stream with headers set.
 
 ##### `await proxy.healthCheck(): Promise<void>`
 Verify bucket connectivity. Throws error if bucket is inaccessible.
 
-##### `await proxy.healthCheckStream(res: ExpressResponse): Promise<Readable>`
+##### `await proxy.healthCheckStream(res: HttpResponse): Promise<Readable>`
 Health check with streaming response. Sets appropriate status code and headers.
 
 #### Static Methods
@@ -225,7 +225,7 @@ Health check with streaming response. Sets appropriate status code and headers.
 ##### `S3Proxy.version(): string`
 Returns the current version of s3proxy.
 
-##### `S3Proxy.parseRequest(req: ExpressRequest): ParsedRequest`
+##### `S3Proxy.parseRequest(req: HttpRequest): ParsedRequest`
 Parse HTTP request to extract S3 key and query parameters.
 
 ### Types
@@ -235,7 +235,7 @@ interface S3ProxyConfig extends S3ClientConfig {
   bucket: string;
 }
 
-interface ExpressRequest extends IncomingMessage {
+interface HttpRequest extends IncomingMessage {
   path?: string;
   query?: Record<string, string | string[]>;
   headers: Record<string, string | string[]>;
@@ -243,7 +243,7 @@ interface ExpressRequest extends IncomingMessage {
   method?: string;
 }
 
-interface ExpressResponse extends ServerResponse {
+interface HttpResponse extends ServerResponse {
   writeHead(statusCode: number, headers?: any): this;
 }
 

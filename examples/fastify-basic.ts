@@ -7,7 +7,7 @@
 import { XmlNode, XmlText } from '@aws-sdk/xml-builder';
 import Fastify from 'fastify';
 import { S3Proxy } from '../src/index.js';
-import type { ExpressRequest, ExpressResponse } from '../src/types.js';
+import type { HttpRequest, HttpResponse } from '../src/types.js';
 
 const fastify = Fastify({ 
   logger: process.env.NODE_ENV !== 'production' 
@@ -55,7 +55,7 @@ fastify.get('/', async (request, reply) => {
 });
 
 fastify.head('/*', async (request, reply) => {
-  const stream = await proxy.head(request.raw as ExpressRequest, reply.raw as ExpressResponse);
+  const stream = await proxy.head(request.raw as HttpRequest, reply.raw as HttpResponse);
   stream.on('error', (err) => {
     const errorXml = createErrorXml(err, request.url);
     reply.status(err.statusCode || 500).type('application/xml').send(errorXml);
@@ -64,7 +64,7 @@ fastify.head('/*', async (request, reply) => {
 });
 
 fastify.get('/*', async (request, reply) => {
-  const stream = await proxy.get(request.raw as ExpressRequest, reply.raw as ExpressResponse);
+  const stream = await proxy.get(request.raw as HttpRequest, reply.raw as HttpResponse);
   stream.on('error', (err) => {
     const errorXml = createErrorXml(err, request.url);
     reply.status(err.statusCode || 500).type('application/xml').send(errorXml);

@@ -12,8 +12,8 @@ import {
   S3ServiceException,
 } from '@aws-sdk/client-s3';
 import type {
-  ExpressRequest,
-  ExpressResponse,
+  HttpRequest,
+  HttpResponse,
   ParsedRequest,
   S3Params,
   S3ProxyConfig,
@@ -58,7 +58,7 @@ export class S3Proxy extends EventEmitter {
    * spread operator (...)
    */
   public static mapHeaderToParam(
-    req: ExpressRequest,
+    req: HttpRequest,
     headerKey: string,
     paramKey: string
   ): Record<string, string> | Record<string, never> {
@@ -94,7 +94,7 @@ export class S3Proxy extends EventEmitter {
    *   - Key: (required) name of key to stream
    *   - Range: (optional) byte range to return
    */
-  private getS3Params(req: ExpressRequest): S3Params {
+  private getS3Params(req: HttpRequest): S3Params {
     const r = S3Proxy.parseRequest(req);
     const params: S3Params = {
       Bucket: this.bucket,
@@ -115,19 +115,19 @@ export class S3Proxy extends EventEmitter {
   }
 
   /**
-   * Return key and query from request object, since Express and HTTP
-   * modules have different req objects.
+   * Return key and query from request object, since different HTTP frameworks
+   * (Express, Fastify, etc.) and the HTTP module have different req objects.
    * key is req.path if defined, or pathname from url.parse object
    * key also has any leading slash stripped
    * query is req.query, or query from url.parse object
    */
-  public static parseRequest(req: ExpressRequest): ParsedRequest {
+  public static parseRequest(req: HttpRequest): ParsedRequest {
     const obj: ParsedRequest = {
       key: '',
       query: {},
     };
 
-    // Express objects have path, HTTP objects do not
+    // HTTP framework objects (Express, Fastify) have path, raw HTTP objects do not
     if (typeof req.path === 'undefined') {
       const parsedUrl = parseUrl(req.url, true);
       // Filter out undefined values from query
@@ -217,13 +217,13 @@ export class S3Proxy extends EventEmitter {
     throw new Error('unrecognized type');
   }
 
-  private async getObject(req: ExpressRequest): Promise<S3ProxyResponse> {
+  private async getObject(req: HttpRequest): Promise<S3ProxyResponse> {
     const params = this.getS3Params(req);
     const command = new GetObjectCommand(params);
     return this.send(command);
   }
 
-  private async headObject(req: ExpressRequest): Promise<S3ProxyResponse> {
+  private async headObject(req: HttpRequest): Promise<S3ProxyResponse> {
     const params = this.getS3Params(req);
     const command = new HeadObjectCommand(params);
     return this.send(command);
@@ -258,19 +258,19 @@ export class S3Proxy extends EventEmitter {
     await this.s3?.send(command);
   }
 
-  public async healthCheckStream(res: ExpressResponse): Promise<Readable> {
+  public async healthCheckStream(res: HttpResponse): Promise<Readable> {
     const { s3stream, statusCode, headers } = await this.headBucket();
     (res as any).writeHead(statusCode, headers);
     return s3stream as Readable;
   }
 
-  public async head(req: ExpressRequest, res: ExpressResponse): Promise<Readable> {
+  public async head(req: HttpRequest, res: HttpResponse): Promise<Readable> {
     const { s3stream, statusCode, headers } = await this.headObject(req);
     (res as any).writeHead(statusCode, headers);
     return s3stream as Readable;
   }
 
-  public async get(req: ExpressRequest, res: ExpressResponse): Promise<Readable> {
+  public async get(req: HttpRequest, res: HttpResponse): Promise<Readable> {
     const { s3stream, statusCode, headers } = await this.getObject(req);
     (res as any).writeHead(statusCode, headers);
     return s3stream as Readable;

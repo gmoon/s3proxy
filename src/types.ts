@@ -16,7 +16,7 @@ export interface S3ProxyResponse {
   headers: Record<string, string>;
 }
 
-export interface ExpressRequest extends IncomingMessage {
+export interface HttpRequest extends IncomingMessage {
   path?: string;
   query?: Record<string, string | string[]>;
   headers: Record<string, string | string[]>;
@@ -24,7 +24,7 @@ export interface ExpressRequest extends IncomingMessage {
   method?: string;
 }
 
-export interface ExpressResponse extends ServerResponse {
+export interface HttpResponse extends ServerResponse {
   // Use any to avoid complex type conflicts
   writeHead(statusCode: number, headers?: any): this;
 }

@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { S3Proxy } from '../src/index.js';
-import type { ExpressRequest, ExpressResponse } from '../src/types.js';
+import type { HttpRequest, HttpResponse } from '../src/types.js';
 
 const port = Number(process.env.PORT) || 0;
 const bucketName = process.env.BUCKET || 's3proxy-public';
@@ -17,7 +17,7 @@ try {
 
 const server = createServer(async (req, res) => {
   try {
-    const stream = await proxy.get(req as ExpressRequest, res as ExpressResponse);
+    const stream = await proxy.get(req as HttpRequest, res as HttpResponse);
     stream
       .on('error', () => {
         // just end the request and let the HTTP status code convey the error

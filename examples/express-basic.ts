@@ -14,7 +14,7 @@ import express, { type Request, type Response } from 'express';
 import { pino } from 'pino';
 import { pinoHttp } from 'pino-http';
 import { S3Proxy } from '../src/index.js';
-import type { ExpressRequest, ExpressResponse } from '../src/types.js';
+import type { HttpRequest, HttpResponse } from '../src/types.js';
 
 // Create logger instance
 const logger = pino({
@@ -86,7 +86,7 @@ proxy.on('error', (err: Error) => {
 // health check api, suitable for integration with ELB health checking
 app.route('/health').get(async (req: Request, res: Response) => {
   try {
-    const stream = await proxy.healthCheckStream(res as ExpressResponse);
+    const stream = await proxy.healthCheckStream(res as HttpResponse);
     stream
       .on('error', () => {
         // just end the request and let the HTTP status code convey the error
@@ -108,7 +108,7 @@ app
   .route('/*')
   .head(async (req: Request, res: Response) => {
     try {
-      const stream = await proxy.head(req as ExpressRequest, res as ExpressResponse);
+      const stream = await proxy.head(req as HttpRequest, res as HttpResponse);
       stream
         .on('error', (err: ErrorWithDetails) => {
           handleError(req, res, err);
@@ -120,7 +120,7 @@ app
   })
   .get(async (req: Request, res: Response) => {
     try {
-      const stream = await proxy.get(req as ExpressRequest, res as ExpressResponse);
+      const stream = await proxy.get(req as HttpRequest, res as HttpResponse);
       stream
         .on('error', (err: ErrorWithDetails) => {
           handleError(req, res, err);
