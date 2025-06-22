@@ -40,7 +40,7 @@ dockerize-for-test: package-for-docker
 artillery-docker: dockerize-for-test credentials
 	@echo "Starting artillery-docker test with cleanup on exit..."
 	@docker kill s3proxy-test 2>/dev/null || true
-	@docker run -v $$(PWD)/credentials.json:/src/credentials.json:ro --rm --name s3proxy-test -d -p 8080:8080 \
+	@docker run -v $(shell pwd)/credentials.json:/src/credentials.json:ro --rm --name s3proxy-test -d -p 8080:8080 \
 		-e BUCKET=s3proxy-public \
 		-e AWS_REGION=us-east-1 \
 		-e PORT=8080 \
@@ -54,7 +54,7 @@ artillery-docker: dockerize-for-test credentials
 test-validation-docker: dockerize-for-test credentials
 	@echo "Starting validation-docker test with cleanup on exit..."
 	@docker kill s3proxy-validation 2>/dev/null || true
-	@docker run -v $$(PWD)/credentials.json:/src/credentials.json:ro --rm --name s3proxy-validation -d -p 8082:8080 \
+	@docker run -v $(shell pwd)/credentials.json:/src/credentials.json:ro --rm --name s3proxy-validation -d -p 8082:8080 \
 		-e BUCKET=s3proxy-public \
 		-e AWS_REGION=us-east-1 \
 		-e PORT=8080 \
