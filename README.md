@@ -146,6 +146,74 @@ app.get('/*', async (req: Request, res: Response) => {
 app.listen(3000);
 ```
 
+### Fastify Integration
+
+```typescript
+import Fastify from 'fastify';
+import { S3Proxy } from 's3proxy';
+import type { HttpRequest, HttpResponse } from 's3proxy';
+
+const fastify = Fastify({ logger: true });
+const proxy = new S3Proxy({
+  bucket: 'my-website-bucket',
+  region: 'us-west-2'
+});
+
+// Initialize S3Proxy
+await proxy.init();
+
+// Serve all files from S3
+fastify.get('/*', async (request, reply) => {
+  try {
+    const stream = await proxy.get(
+      request.raw as HttpRequest, 
+      reply.raw as HttpResponse
+    );
+    
+    stream.on('error', (err: any) => {
+      const statusCode = err.statusCode || 500;
+      reply.code(statusCode).type('application/xml').send(`<?xml version="1.0"?>
+<error code="${err.code || 'InternalError'}" statusCode="${statusCode}">${err.message}</error>`);
+    });
+    
+    // Let s3proxy handle the response
+    return reply.hijack();
+  } catch (error: any) {
+    const statusCode = error.statusCode || 500;
+    reply.code(statusCode).type('application/xml').send(`<?xml version="1.0"?>
+<error code="${error.code || 'InternalError'}" statusCode="${statusCode}">${error.message}</error>`);
+  }
+});
+
+// Start server
+try {
+  await fastify.listen({ port: 3000 });
+  console.log('Server listening on http://localhost:3000');
+} catch (err) {
+  fastify.log.error(err);
+  process.exit(1);
+}
+```
+
+### Framework Compatibility
+
+s3proxy is **framework-agnostic** and works with any Node.js HTTP framework that provides access to the underlying request and response objects:
+
+- **[Express](https://expressjs.com/)** - Fast, unopinionated web framework ✅
+- **[Fastify](https://fastify.dev/)** - Fast and low overhead web framework ✅  
+- **[Koa](https://koajs.com/)** - Expressive middleware framework ✅
+- **[Hapi](https://hapi.dev/)** - Rich framework for building applications ✅
+- **[NestJS](https://nestjs.com/)** - Progressive Node.js framework ✅
+- **[Next.js API Routes](https://nextjs.org/)** - Full-stack React framework ✅
+- **[Nuxt.js Server API](https://nuxt.com/)** - Vue.js framework ✅
+- **[SvelteKit](https://kit.svelte.dev/)** - Web development framework ✅
+- **[Remix](https://remix.run/)** - Full stack web framework ✅
+- **[AWS Lambda](https://aws.amazon.com/lambda/)** - Serverless functions ✅
+- **[Vercel Functions](https://vercel.com/docs/functions)** - Edge and serverless functions ✅
+- **[Netlify Functions](https://www.netlify.com/products/functions/)** - Serverless functions ✅
+
+**Key requirement**: The framework must provide access to Node.js `IncomingMessage` and `ServerResponse` objects (usually available as `req.raw`/`res.raw` or similar).
+
 ### Range Requests (Partial Content)
 
 s3proxy automatically handles HTTP Range requests for efficient streaming of large files:
