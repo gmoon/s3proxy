@@ -162,14 +162,19 @@ export class S3Proxy extends EventEmitter {
    *   2c. req.statusCode as statusCode
    * 3. return { s3stream, statusCode, headers }
    */
-  private async send(command: any): Promise<S3ProxyResponse> {
+  private async send(
+    command: GetObjectCommand | HeadObjectCommand | HeadBucketCommand
+  ): Promise<S3ProxyResponse> {
     this.isInitialized();
     let headers: Record<string, string> = {};
     let statusCode = 200;
     let s3stream: Readable;
 
     // Add middleware to capture response metadata
-    command.middlewareStack.add(
+    // Using any here is necessary for AWS SDK middleware compatibility
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (command as any).middlewareStack.add(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (next: any) => async (args: any) => {
         const result = await next(args);
         headers = result.response.headers || {};
@@ -183,7 +188,7 @@ export class S3Proxy extends EventEmitter {
     );
 
     try {
-      const item = await this.s3?.send(command);
+      const item = await this.s3?.send(command as any);
       s3stream = S3Proxy.getReadstream((item as GetObjectCommandOutput).Body);
     } catch (e) {
       if (S3Proxy.isNonFatalError(e)) {
@@ -207,7 +212,7 @@ export class S3Proxy extends EventEmitter {
    * We don't need to consider the ReadableStream or Blob type as those don't exist
    * on node, only browser.
    */
-  public static getReadstream(body: any): Readable {
+  public static getReadstream(body: unknown): Readable {
     if (body === undefined) {
       return S3Proxy.createEmptyReadstream();
     }
@@ -260,23 +265,23 @@ export class S3Proxy extends EventEmitter {
 
   public async healthCheckStream(res: HttpResponse): Promise<Readable> {
     const { s3stream, statusCode, headers } = await this.headBucket();
-    (res as any).writeHead(statusCode, headers);
+    res.writeHead(statusCode, headers);
     return s3stream as Readable;
   }
 
   public async head(req: HttpRequest, res: HttpResponse): Promise<Readable> {
     const { s3stream, statusCode, headers } = await this.headObject(req);
-    (res as any).writeHead(statusCode, headers);
+    res.writeHead(statusCode, headers);
     return s3stream as Readable;
   }
 
   public async get(req: HttpRequest, res: HttpResponse): Promise<Readable> {
     const { s3stream, statusCode, headers } = await this.getObject(req);
-    (res as any).writeHead(statusCode, headers);
+    res.writeHead(statusCode, headers);
     return s3stream as Readable;
   }
 }
 
 export { UserException };
-export type { HttpRequest, HttpResponse, ParsedRequest, S3ProxyConfig } from './types.js';
+export type { HttpRequest, HttpResponse, ParsedRequest, S3Error, S3ProxyConfig } from './types.js';
 export default S3Proxy;

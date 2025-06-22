@@ -1,4 +1,4 @@
-import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { IncomingMessage, ServerResponse, OutgoingHttpHeaders } from 'node:http';
 import type { S3ClientConfig } from '@aws-sdk/client-s3';
 
 export interface S3ProxyConfig extends S3ClientConfig {
@@ -25,8 +25,15 @@ export interface HttpRequest extends IncomingMessage {
 }
 
 export interface HttpResponse extends ServerResponse {
-  // Use any to avoid complex type conflicts
-  writeHead(statusCode: number, headers?: any): this;
+  // We need to be compatible with Node.js ServerResponse writeHead overloads
+  writeHead(statusCode: number, headers?: OutgoingHttpHeaders): this;
+  writeHead(statusCode: number, statusMessage?: string, headers?: OutgoingHttpHeaders): this;
+}
+
+// Error interface for S3 operations
+export interface S3Error extends Error {
+  statusCode?: number;
+  code?: string;
 }
 
 export interface S3ProxyEvents {
