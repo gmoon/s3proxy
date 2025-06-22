@@ -130,3 +130,7 @@ process.on('SIGINT', () => {
   }
   process.exit(0);
 });
+
+// Add the missing functions that the artillery-plugin-metrics-by-endpoint plugin expects
+export const metricsByEndpoint_beforeRequest = beforeRequest;
+export const metricsByEndpoint_afterResponse = afterResponse;
