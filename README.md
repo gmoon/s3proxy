@@ -445,18 +445,28 @@ make pre-release-check     # Complete pre-release verification
 src/
 ├── index.ts          # Main S3Proxy class
 ├── UserException.ts  # Custom error class
-└── types.ts          # Type definitions
+├── types.ts          # Type definitions
+└── version.ts        # Version information
 
 examples/
 ├── express-basic.ts  # TypeScript Express example
+├── fastify-basic.ts  # TypeScript Fastify example
+├── fastify-docker.ts # Dockerized Fastify example
 └── http.ts          # TypeScript HTTP example
 
 test/
-├── s3proxy.test.ts      # Main functionality tests
-├── parseRequest.test.ts # Request parsing tests
-├── MockExpress.test.ts  # Express integration tests
+├── s3proxy.test.ts         # Main functionality tests
+├── parse-request.test.ts   # Request parsing tests
+├── mock-express.test.ts    # Express integration tests
+├── types.test.ts           # Type definition tests
+├── version.test.ts         # Version tests
+├── imports-esm.test.ts     # ESM import tests
+├── package-exports.test.ts # Package export tests
+├── integration-tests.js    # Legacy integration tests
+├── helpers/
+│   └── aws-mock.ts         # AWS SDK mocking utilities
 └── integration/
-    └── validation.test.js # End-to-end validation tests
+    └── validation.test.js  # End-to-end validation tests
 ```
 
 ### Configuration Files
