@@ -1,9 +1,7 @@
 /* eslint-env mocha, node, es6 */
 /* eslint-disable import/no-extraneous-dependencies */
-const chai = require('chai');
-const app = require('../../app.js');
-
-const { expect } = chai;
+import { expect } from 'chai';
+import { lambdaHandler, close } from '../../app.js';
 const event = {
   httpMethod: 'GET',
   body: null,
@@ -57,16 +55,28 @@ const event = {
 
 describe('Tests index', () => {
   after((done) => {
-    app.close();
+    close();
     done();
   });
-  it('verifies successful response', (done) => {
-    const succeed = (result) => {
-      expect(result).to.be.an('object');
-      expect(result.statusCode).to.equal(200);
-      expect(result.body).to.be.an('string');
-      done();
-    };
-    app.lambdaHandler(event, { succeed });
+  it('verifies successful response', async () => {
+    return new Promise((resolve, reject) => {
+      const succeed = (result) => {
+        try {
+          expect(result).to.be.an('object');
+          expect(result.statusCode).to.equal(200);
+          expect(result.body).to.be.an('string');
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      const fail = (error) => {
+        reject(error);
+      };
+      
+      // Call the async Lambda handler
+      lambdaHandler(event, { succeed, fail }).catch(reject);
+    });
   });
 });
