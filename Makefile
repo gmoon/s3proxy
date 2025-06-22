@@ -24,17 +24,6 @@ build:
 artillery-ci:
 	npm run artillery-ci
 
-.PHONY: sam-app
-sam-app:
-	cd examples/sam-app && sam build
-	cd examples/sam-app && sam local invoke -e events/event.json
-
-.PHONY: sam-app-s3proxy
-sam-app-s3proxy:
-	cd examples/sam-app/s3proxy && npm install
-	cd examples/sam-app/s3proxy && npm run build --if-present
-	cd examples/sam-app/s3proxy && npm test
-
 .PHONY: credentials
 credentials:
 	aws sts get-session-token --duration 900 > credentials.json
@@ -119,7 +108,7 @@ pre-release-check:
 ###################################################################
 
 .PHONY: test
-test : build type-check lint unit-tests sam-app sam-app-s3proxy
+test : build type-check lint unit-tests
 
 .PHONY: test-performance
 test-performance: artillery-ci artillery-docker

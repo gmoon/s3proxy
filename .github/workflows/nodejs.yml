@@ -55,37 +55,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
 
-  # SAM application tests
-  sam-tests:
-    name: "SAM Application Tests"
-    runs-on: ubuntu-latest-arm64
-    needs: [test]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      - name: Use Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-      - name: Setup SAM CLI
-        uses: aws-actions/setup-sam@v2
-        with:
-          use-installer: true
-      - name: Install dependencies
-        run: npm ci
-      - name: Build main package
-        run: npm run build
-      - name: Test SAM app
-        run: make sam-app-s3proxy
-      - name: Build SAM app
-        run: make sam-app
-
   # Validation tests - comprehensive functionality testing
   validation-tests:
     name: "Validation Tests"

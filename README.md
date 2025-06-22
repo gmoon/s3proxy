@@ -346,7 +346,6 @@ s3proxy maintains comprehensive test coverage across multiple dimensions to ensu
 | Stress Testing | `make test-performance` | ✅ Node CI | Resource usage under load |
 | **Platform Testing** | | | |
 | Docker Integration | `make test-all-docker` | ✅ Node CI | Containerized deployment |
-| AWS Lambda (SAM) | `make sam-app` | ✅ Node CI | Serverless deployment |
 | Multi-Node | Node 22, 23 | ✅ Node CI | Cross-version compatibility |
 
 #### Test Commands
@@ -360,7 +359,6 @@ make functional-tests       # Integration and Docker tests
 # Individual test categories  
 make test-validation-docker # 24 comprehensive validation tests
 make artillery-docker       # Performance/load testing
-make sam-app               # AWS Lambda testing
 
 # Quality checks
 make pre-release-check     # Complete pre-release verification
@@ -432,7 +430,6 @@ s3proxy uses several configuration files for different aspects of development an
 #### GitHub Actions
 - **`.github/workflows/nodejs.yml`** - Main CI pipeline
   - Core tests (lint, type-check, build, unit tests)
-  - SAM application testing
   - Validation tests (24 comprehensive functionality tests)
   - Performance testing with Artillery
   - Package verification
@@ -457,12 +454,10 @@ s3proxy uses several configuration files for different aspects of development an
   - Disables automatic Makefile configuration prompts
 - **`.github/dependabot.yml`** - Automated dependency updates
 - **`Makefile`** - Build automation and testing orchestration
-  - Coordinates Docker, Artillery, and SAM testing
+  - Coordinates Docker and Artillery testing
   - Provides consistent commands across environments
 
 #### AWS & Docker
-- **`examples/sam-app/template.yaml`** - AWS SAM template for Lambda deployment
-- **`examples/sam-app/events/event.json`** - Sample Lambda event for testing
 - **`examples/aws-ecs/`** - ECS deployment configurations
   - CloudFormation templates for production deployment
 
