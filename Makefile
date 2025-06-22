@@ -47,8 +47,8 @@ artillery-docker: dockerize-for-test credentials
 		-e NODE_ENV=dev \
 		-t s3proxy:test
 	@trap 'docker kill s3proxy-test 2>/dev/null || true' EXIT; \
-	wait-on http://localhost:8080/index.html && \
-	TEST_ENVIRONMENT=docker-container artillery run --config shared-testing/configs/load-test.yml shared-testing/scenarios/load-test.yml
+	npx wait-on http://localhost:8080/index.html && \
+	TEST_ENVIRONMENT=docker-container npx artillery run --config shared-testing/configs/load-test.yml shared-testing/scenarios/load-test.yml
 
 .PHONY: test-validation-docker
 test-validation-docker: dockerize-for-test credentials
@@ -61,7 +61,7 @@ test-validation-docker: dockerize-for-test credentials
 		-e NODE_ENV=dev \
 		-t s3proxy:test
 	@trap 'docker kill s3proxy-validation 2>/dev/null || true' EXIT; \
-	wait-on http://localhost:8082/index.html && \
+	npx wait-on http://localhost:8082/index.html && \
 	S3PROXY_URL=http://localhost:8082 npm run test:validation
 
 .PHONY: test-all-docker
