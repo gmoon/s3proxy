@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GetObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { S3Proxy, UserException } from '../src/index.js';
 import type { ExpressRequest, S3ProxyConfig } from '../src/types.js';
-import { setupS3Mocks, teardownS3Mocks, s3Mock } from './helpers/aws-mock.js';
+import { s3Mock, setupS3Mocks, teardownS3Mocks } from './helpers/aws-mock.js';
 
 describe('S3Proxy', () => {
   // Set up AWS mocks for all tests
@@ -16,7 +16,7 @@ describe('S3Proxy', () => {
 
   describe('constructor', () => {
     it('should create an instance with valid config', () => {
-      const config: S3ProxyConfig = { bucket: 's3proxy-public' };
+      const config: S3ProxyConfig = { bucket: '.test-bucket' };
       const proxy = new S3Proxy(config);
       expect(proxy).toBeInstanceOf(S3Proxy);
     });
@@ -36,7 +36,7 @@ describe('S3Proxy', () => {
 
   describe('initialization', () => {
     let proxy: S3Proxy;
-    const config: S3ProxyConfig = { bucket: 's3proxy-public' };
+    const config: S3ProxyConfig = { bucket: '.test-bucket' };
 
     beforeEach(() => {
       proxy = new S3Proxy(config);
@@ -54,7 +54,7 @@ describe('S3Proxy', () => {
 
     it('should handle bucket configuration', async () => {
       const customProxy = new S3Proxy({
-        bucket: 's3proxy-public',
+        bucket: '.test-bucket',
         region: 'us-east-1',
       });
       await expect(customProxy.init()).resolves.not.toThrow();
@@ -65,7 +65,7 @@ describe('S3Proxy', () => {
     let proxy: S3Proxy;
 
     beforeEach(async () => {
-      proxy = new S3Proxy({ bucket: 's3proxy-public' });
+      proxy = new S3Proxy({ bucket: '.test-bucket' });
       await proxy.init();
     });
 
@@ -100,7 +100,7 @@ describe('S3Proxy', () => {
   });
 
   describe('getObject', () => {
-    const proxy = new S3Proxy({ bucket: 's3proxy-public' });
+    const proxy = new S3Proxy({ bucket: '.test-bucket' });
     let page: any;
     let content: string;
 
@@ -150,7 +150,7 @@ describe('S3Proxy', () => {
   });
 
   describe('range requests', () => {
-    const proxy = new S3Proxy({ bucket: 's3proxy-public' });
+    const proxy = new S3Proxy({ bucket: '.test-bucket' });
 
     beforeEach(async () => {
       await proxy.init();
@@ -181,7 +181,7 @@ describe('S3Proxy', () => {
   });
 
   describe('headObject', () => {
-    const proxy = new S3Proxy({ bucket: 's3proxy-public' });
+    const proxy = new S3Proxy({ bucket: '.test-bucket' });
 
     beforeEach(async () => {
       await proxy.init();
@@ -217,7 +217,7 @@ describe('S3Proxy', () => {
   });
 
   describe('health check', () => {
-    const proxy = new S3Proxy({ bucket: 's3proxy-public' });
+    const proxy = new S3Proxy({ bucket: '.test-bucket' });
 
     beforeEach(async () => {
       await proxy.init();
@@ -232,7 +232,7 @@ describe('S3Proxy', () => {
   });
 
   describe('Express integration methods', () => {
-    const proxy = new S3Proxy({ bucket: 's3proxy-public' });
+    const proxy = new S3Proxy({ bucket: '.test-bucket' });
 
     beforeEach(async () => {
       await proxy.init();
@@ -249,6 +249,17 @@ describe('S3Proxy', () => {
     it('should have public healthCheckStream method', () => {
       expect(typeof proxy.healthCheckStream).toBe('function');
     });
+
+    it('should return stream from healthCheckStream method', async () => {
+      const mockRes = {
+        writeHead: vi.fn(),
+      } as any as HttpResponse;
+
+      const stream = await proxy.healthCheckStream(mockRes);
+
+      expect(stream).toBeDefined();
+      expect(mockRes.writeHead).toHaveBeenCalledWith(200, expect.any(Object));
+    });
   });
 
   describe('Error Handling', () => {
@@ -262,43 +273,41 @@ describe('S3Proxy', () => {
     it('should re-throw non-AWS errors', async () => {
       const mockError = new Error('Network error');
       s3Mock.on(GetObjectCommand).rejectsOnce(mockError);
-      
+
       await proxy.init();
-      
+
       const mockRequest = { url: '/test.txt', headers: {}, method: 'GET' } as ExpressRequest;
       const mockResponse = { writeHead: vi.fn(), end: vi.fn() } as any;
-      
-      await expect(proxy.get(mockRequest, mockResponse))
-        .rejects.toThrow('Network error');
+
+      await expect(proxy.get(mockRequest, mockResponse)).rejects.toThrow('Network error');
     });
 
     it('should emit error and throw on init failure', async () => {
       const mockError = new Error('Init failed');
       s3Mock.on(HeadBucketCommand).rejectsOnce(mockError);
-      
+
       const errorSpy = vi.fn();
       proxy.on('error', errorSpy);
-      
+
       await expect(proxy.init()).rejects.toThrow('Init failed');
       expect(errorSpy).toHaveBeenCalledWith(mockError);
     });
 
     it('should throw error for unrecognized body type', async () => {
       await proxy.init();
-      
+
       // Mock S3 response with invalid body type
       const invalidBody = { invalid: 'body' } as any;
       s3Mock.on(GetObjectCommand).resolvesOnce({
         Body: invalidBody,
         ContentLength: 100,
-        ContentType: 'text/plain'
+        ContentType: 'text/plain',
       });
-      
+
       const mockRequest = { url: '/test.txt', headers: {}, method: 'GET' } as ExpressRequest;
       const mockResponse = { writeHead: vi.fn(), end: vi.fn() } as any;
-      
-      await expect(proxy.get(mockRequest, mockResponse))
-        .rejects.toThrow('unrecognized type');
+
+      await expect(proxy.get(mockRequest, mockResponse)).rejects.toThrow('unrecognized type');
     });
   });
 });

@@ -48,7 +48,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
   // Mock successful file head for index.html
   s3Mock
     .on(HeadObjectCommand, {
-      Bucket: 's3proxy-public',
+      Bucket: '.test-bucket',
       Key: 'index.html',
     })
     .resolves({
@@ -66,7 +66,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
   // Mock successful file get for index.html
   s3Mock
     .on(GetObjectCommand, {
-      Bucket: 's3proxy-public',
+      Bucket: '.test-bucket',
       Key: 'index.html',
     })
     .resolves({
@@ -85,7 +85,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
   // Mock 404 for nonexistent files
   s3Mock
     .on(HeadObjectCommand, {
-      Bucket: 's3proxy-public',
+      Bucket: '.test-bucket',
       Key: 'nonexistent-file.txt',
     })
     .rejects({
@@ -100,7 +100,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
 
   s3Mock
     .on(GetObjectCommand, {
-      Bucket: 's3proxy-public',
+      Bucket: '.test-bucket',
       Key: 'nonexistent-file.txt',
     })
     .rejects({
@@ -116,7 +116,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
   // Mock for empty key (malformed requests)
   s3Mock
     .on(HeadObjectCommand, {
-      Bucket: 's3proxy-public',
+      Bucket: '.test-bucket',
       Key: '',
     })
     .rejects({
@@ -131,7 +131,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
 
   s3Mock
     .on(GetObjectCommand, {
-      Bucket: 's3proxy-public',
+      Bucket: '.test-bucket',
       Key: '',
     })
     .rejects({
@@ -147,7 +147,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
   // Mock range requests
   s3Mock
     .on(GetObjectCommand, {
-      Bucket: 's3proxy-public',
+      Bucket: '.test-bucket',
       Key: 'index.html',
       Range: 'bytes=0-100',
     })
@@ -167,7 +167,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
   // Mock range requests for large.bin (for MockExpress test)
   s3Mock
     .on(GetObjectCommand, {
-      Bucket: 's3proxy-public',
+      Bucket: '.test-bucket',
       Key: 'large.bin',
       Range: 'bytes=0-99',
     })

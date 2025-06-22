@@ -11,33 +11,24 @@
 import { XmlNode, XmlText } from '@aws-sdk/xml-builder';
 import bodyParser from 'body-parser';
 import express, { type Request, type Response } from 'express';
-import { pino } from 'pino';
-import { pinoHttp } from 'pino-http';
 import { S3Proxy } from '../src/index.js';
 import type { HttpRequest, HttpResponse } from '../src/types.js';
-
-// Create logger instance
-const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  ...(process.env.NODE_ENV === 'production'
-    ? {}
-    : {
-        transport: {
-          target: 'pino-pretty',
-          options: {
-            colorize: true,
-            translateTime: 'SYS:standard',
-          },
-        },
-      }),
-});
 
 const port = Number(process.env.PORT) || 0;
 const app = express();
 
 app.set('view engine', 'pug');
-app.use(pinoHttp({ logger }));
 app.use(bodyParser.json());
+
+// Simple request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`${req.method} ${req.url} ${res.statusCode} - ${duration}ms`);
+  });
+  next();
+});
 
 interface ErrorWithDetails extends Error {
   time?: string;
@@ -46,8 +37,12 @@ interface ErrorWithDetails extends Error {
 }
 
 function handleError(req: Request, res: Response, err: ErrorWithDetails): void {
-  // Log error with context using pino
-  req.log.error({ err, statusCode: err.statusCode || 500 }, 'Request error');
+  // Log error with context
+  console.error(`Request error: ${req.method} ${req.url}`, {
+    error: err.message,
+    statusCode: err.statusCode || 500,
+    code: err.code,
+  });
 
   // Build XML response using AWS SDK XMLNode and XMLText
   const errorNode = new XmlNode('error')
@@ -73,14 +68,14 @@ const proxy = new S3Proxy({ bucket: bucketName });
 // Initialize proxy with proper error handling
 try {
   await proxy.init();
-  logger.info({ bucket: bucketName }, 'S3Proxy initialized');
+  console.log(`S3Proxy initialized for bucket: ${bucketName}`);
 } catch (error) {
-  logger.fatal({ err: error, bucket: bucketName }, 'Failed to initialize S3Proxy');
+  console.error(`Failed to initialize S3Proxy for bucket: ${bucketName}`, error);
   process.exit(1);
 }
 
 proxy.on('error', (err: Error) => {
-  logger.error({ err, bucket: bucketName }, 'S3Proxy error');
+  console.error(`S3Proxy error for bucket: ${bucketName}`, err);
 });
 
 // health check api, suitable for integration with ELB health checking
@@ -133,7 +128,7 @@ app
 
 if (port > 0) {
   app.listen(port, () => {
-    logger.info({ port }, 'S3Proxy server started');
+    console.log(`S3Proxy server started on port: ${port}`);
   });
 }
 

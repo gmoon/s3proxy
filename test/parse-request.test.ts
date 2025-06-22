@@ -59,19 +59,19 @@ describe('S3Proxy.parseRequest', () => {
 
 describe('S3Proxy.getS3Params', () => {
   it('should set Bucket and Key', () => {
-    const s3proxy = new S3Proxy({ bucket: 's3proxy-public' });
+    const s3proxy = new S3Proxy({ bucket: '.test-bucket' });
     const result = (s3proxy as any).getS3Params({ path: '/index.html' } as ExpressRequest);
-    expect(result).toEqual({ Bucket: 's3proxy-public', Key: 'index.html' });
+    expect(result).toEqual({ Bucket: '.test-bucket', Key: 'index.html' });
   });
 
   it('should set Range parameter', () => {
-    const s3proxy = new S3Proxy({ bucket: 's3proxy-public' });
+    const s3proxy = new S3Proxy({ bucket: '.test-bucket' });
     const result = (s3proxy as any).getS3Params({
       path: '/index.html',
       headers: { range: 'bytes=0-100' },
     } as ExpressRequest);
     expect(result).toEqual({
-      Bucket: 's3proxy-public',
+      Bucket: '.test-bucket',
       Key: 'index.html',
       Range: 'bytes=0-100',
     });

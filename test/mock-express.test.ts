@@ -1,86 +1,71 @@
+import express, { type Application, type Request, type Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { S3Proxy } from '../src/index.js';
-import type { ExpressRequest, ExpressResponse } from '../src/types.js';
+import type { HttpRequest, HttpResponse } from '../src/types.js';
 import { setupS3Mocks, teardownS3Mocks } from './helpers/aws-mock.js';
 
-// Mock response object for testing
-function createMockResponse(): ExpressResponse {
-  const headers: Record<string, string> = {};
-  let statusCode = 200;
-
-  return {
-    writeHead: vi.fn((code: number, hdrs?: Record<string, string>) => {
-      statusCode = code;
-      if (hdrs) Object.assign(headers, hdrs);
-    }),
-    end: vi.fn(),
-    pipe: vi.fn(),
-    statusCode,
-    headers,
-  } as unknown as ExpressResponse;
-}
-
-function createMockRequest(path: string, headers: Record<string, string> = {}): ExpressRequest {
-  return {
-    path,
-    url: path,
-    headers,
-    method: 'GET',
-  } as ExpressRequest;
-}
-
-describe('MockExpress', () => {
+describe('Express Integration', () => {
+  let _app: Application;
   let proxy: S3Proxy;
 
   beforeEach(async () => {
-    // Set up AWS mocks before each test
     setupS3Mocks();
-
-    proxy = new S3Proxy({ bucket: 's3proxy-public' });
+    _app = express();
+    proxy = new S3Proxy({ bucket: '.test-bucket' });
     await proxy.init();
   });
 
   afterEach(() => {
-    // Clean up AWS mocks after each test
     teardownS3Mocks();
   });
 
-  it('should handle head requests', async () => {
-    const req = createMockRequest('/index.html');
-    const res = createMockResponse();
+  it('should work with Express request/response objects', async () => {
+    const mockReq = {
+      url: '/index.html',
+      headers: {},
+      method: 'GET',
+    } as Request;
 
-    const stream = await proxy.head(req, res);
+    const mockRes = {
+      writeHead: vi.fn(),
+      end: vi.fn(),
+      pipe: vi.fn(),
+    } as any as Response;
 
-    expect(res.writeHead).toHaveBeenCalled();
+    const stream = await proxy.get(mockReq as HttpRequest, mockRes as HttpResponse);
+
     expect(stream).toBeDefined();
+    expect(mockRes.writeHead).toHaveBeenCalled();
   });
 
-  it('should handle get requests', async () => {
-    const req = createMockRequest('/index.html');
-    const res = createMockResponse();
+  it('should handle HEAD requests', async () => {
+    const mockReq = {
+      url: '/index.html',
+      headers: {},
+      method: 'HEAD',
+    } as Request;
 
-    const stream = await proxy.get(req, res);
+    const mockRes = {
+      writeHead: vi.fn(),
+      end: vi.fn(),
+      pipe: vi.fn(),
+    } as any as Response;
 
-    expect(res.writeHead).toHaveBeenCalled();
+    const stream = await proxy.head(mockReq as HttpRequest, mockRes as HttpResponse);
+
     expect(stream).toBeDefined();
+    expect(mockRes.writeHead).toHaveBeenCalled();
   });
 
-  it('should handle range requests', async () => {
-    const req = createMockRequest('/large.bin', { range: 'bytes=0-99' });
-    const res = createMockResponse();
+  it('should handle type casting from Express to HttpRequest/HttpResponse', () => {
+    const expressRequest = { url: '/test', headers: {}, method: 'GET' } as Request;
+    const expressResponse = { writeHead: vi.fn(), end: vi.fn(), pipe: vi.fn() } as any as Response;
 
-    const stream = await proxy.get(req, res);
+    // These should compile without type errors
+    const httpRequest = expressRequest as HttpRequest;
+    const httpResponse = expressResponse as HttpResponse;
 
-    expect(res.writeHead).toHaveBeenCalled();
-    expect(stream).toBeDefined();
-  });
-
-  it('should handle health check', async () => {
-    const res = createMockResponse();
-
-    const stream = await proxy.healthCheckStream(res);
-
-    expect(res.writeHead).toHaveBeenCalled();
-    expect(stream).toBeDefined();
+    expect(httpRequest).toBeDefined();
+    expect(httpResponse).toBeDefined();
   });
 });
