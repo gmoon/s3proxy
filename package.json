@@ -6,7 +6,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "engines": {
-    "node": ">=20.8.1"
+    "node": ">=22.13.0"
   },
   "exports": {
     ".": {
