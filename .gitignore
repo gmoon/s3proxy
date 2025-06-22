@@ -6,6 +6,11 @@ credentials.json
 # Build output
 dist/
 
+# Load test results
+load-test-results-*.json
+artillery-report-*.json
+performance-test-*.json
+
 .DS_Store
 .vscode
 

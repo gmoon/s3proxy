@@ -114,7 +114,35 @@ test : build type-check lint unit-tests
 test-performance: artillery-ci artillery-docker
 
 .PHONY: functional-tests
-functional-tests: dockerize-for-test artillery-docker
+functional-tests: artillery-docker
 
 .PHONY: all
 all: test functional-tests
+
+###################################################################
+##
+## Cleanup targets
+##
+###################################################################
+
+.PHONY: clean
+clean:
+	@echo "🧹 Cleaning up generated files..."
+	@rm -f load-test-results-*.json
+	@rm -f artillery-report-*.json
+	@rm -f performance-test-*.json
+	@rm -f s3proxy*.tgz
+	@rm -f version.txt
+	@rm -f credentials.json
+	@rm -rf dist/
+	@rm -rf coverage/
+	@rm -rf node_modules/.cache/
+	@echo "✅ Cleanup complete"
+
+.PHONY: clean-test-results
+clean-test-results:
+	@echo "🧹 Cleaning up test result files..."
+	@rm -f load-test-results-*.json
+	@rm -f artillery-report-*.json
+	@rm -f performance-test-*.json
+	@echo "✅ Test results cleaned"
