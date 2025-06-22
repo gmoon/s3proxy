@@ -45,7 +45,7 @@ fastify.setErrorHandler(async (error, request, reply) => {
 
 // Routes - No try/catch needed! Fastify handles async errors automatically
 fastify.get('/health', async (request, reply) => {
-  const stream = await proxy.healthCheckStream(reply.raw as ExpressResponse);
+  const stream = await proxy.healthCheckStream(reply.raw as HttpResponse);
   stream.on('error', () => reply.raw.end());
   return reply.send(stream);
 });
@@ -56,7 +56,7 @@ fastify.get('/', async (request, reply) => {
 
 fastify.head('/*', async (request, reply) => {
   const stream = await proxy.head(request.raw as HttpRequest, reply.raw as HttpResponse);
-  stream.on('error', (err) => {
+  stream.on('error', (err: any) => {
     const errorXml = createErrorXml(err, request.url);
     reply.status(err.statusCode || 500).type('application/xml').send(errorXml);
   });
@@ -65,7 +65,7 @@ fastify.head('/*', async (request, reply) => {
 
 fastify.get('/*', async (request, reply) => {
   const stream = await proxy.get(request.raw as HttpRequest, reply.raw as HttpResponse);
-  stream.on('error', (err) => {
+  stream.on('error', (err: any) => {
     const errorXml = createErrorXml(err, request.url);
     reply.status(err.statusCode || 500).type('application/xml').send(errorXml);
   });

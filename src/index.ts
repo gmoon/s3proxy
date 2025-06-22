@@ -278,4 +278,5 @@ export class S3Proxy extends EventEmitter {
 }
 
 export { UserException };
+export type { HttpRequest, HttpResponse, ParsedRequest, S3ProxyConfig } from './types.js';
 export default S3Proxy;

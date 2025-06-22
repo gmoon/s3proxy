@@ -46,7 +46,7 @@ function getCredentials() {
 
 // Initialize S3Proxy with credentials
 const credentials = getCredentials();
-const proxy = new S3Proxy({ bucket, credentials });
+const proxy = new S3Proxy(credentials ? { bucket, credentials } : { bucket });
 await proxy.init();
 
 // Error handler
@@ -84,7 +84,7 @@ fastify.get('/', async (request, reply) => {
 
 fastify.head('/*', async (request, reply) => {
   const stream = await proxy.head(request.raw as HttpRequest, reply.raw as HttpResponse);
-  stream.on('error', (err) => {
+  stream.on('error', (err: any) => {
     const errorXml = createErrorXml(err, request.url);
     reply.status(err.statusCode || 500).type('application/xml').send(errorXml);
   });
@@ -93,7 +93,7 @@ fastify.head('/*', async (request, reply) => {
 
 fastify.get('/*', async (request, reply) => {
   const stream = await proxy.get(request.raw as HttpRequest, reply.raw as HttpResponse);
-  stream.on('error', (err) => {
+  stream.on('error', (err: any) => {
     const errorXml = createErrorXml(err, request.url);
     reply.status(err.statusCode || 500).type('application/xml').send(errorXml);
   });
