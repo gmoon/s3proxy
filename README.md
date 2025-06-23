@@ -17,6 +17,7 @@ s3proxy turns any S3 bucket into a high-performance web server. Perfect for serv
 - **Range requests** - Support for partial content and resumable downloads
 - **Express integration** - Drop into existing Node.js applications
 - **TypeScript support** - Full type safety and modern tooling
+- **Large file friendly** - Perfect for AI models, datasets, and media assets
 
 ## Quick Start
 
@@ -221,6 +222,23 @@ s3proxy automatically handles HTTP Range requests for efficient streaming of lar
 ```bash
 # Download only bytes 0-99 of a large file
 curl --range 0-99 http://localhost:3000/large-video.mp4 -o partial.mp4
+```
+
+### Large File Streaming
+
+Perfect for streaming large assets without server storage:
+
+```typescript
+// Stream AI models, datasets, or media files
+app.get('/models/:version/*', async (req: Request, res: Response) => {
+  const stream = await proxy.get(req as HttpRequest, res as HttpResponse);
+  stream.on('error', (err: any) => {
+    res.status(err.statusCode || 500).end();
+  }).pipe(res);
+});
+
+// Now serve multi-GB files efficiently:
+// GET /models/v1/llama-7b.bin -> streams from S3 without local storage
 ```
 
 ### Health Checks
@@ -547,6 +565,7 @@ All configuration files are actively maintained and serve specific purposes in t
 - **File downloads** - Stream large files without server storage
 - **Media serving** - Video/audio streaming with range request support
 - **API backends** - Serve user uploads or generated content
+- **AI & ML workflows** - Stream models, datasets, and training data efficiently
 - **CDN alternative** - Cost-effective content delivery
 
 ## Performance
