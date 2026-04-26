@@ -18,8 +18,12 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
-      - name: Security audit
-        run: npm audit --audit-level critical
+      - name: Security audit (runtime deps only)
+        # The published package only ships @aws-sdk/client-s3 as a
+        # runtime dep — dev-tree vulns (artillery's transitive uuid,
+        # vitest's vite, etc.) don't reach consumers. Gate on runtime
+        # exposure only; track dev-tree vulns separately via Dependabot.
+        run: npm audit --audit-level critical --omit=dev
 
   # Core tests - build, lint, type-check, unit tests
   test:
