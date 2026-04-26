@@ -72,7 +72,19 @@ run_example() {
     return 1
   fi
 
-  echo "[smoke] OK: $example (health=200, $KEY_PATH=200)"
+  # Verify a missing key returns 404 (not 200, not 500). v4 turns the
+  # underlying S3NotFound throw into a 4xx via the example's error
+  # handler — a regression here would silently swallow the throw.
+  local missing
+  missing=$(curl -o /dev/null -s -w "%{http_code}" "http://localhost:$port/__smoke-missing-$$.bin")
+  if [ "$missing" != "404" ]; then
+    echo "[smoke] FAIL: $example missing-key returned $missing (expected 404)"
+    cat "$log"
+    cleanup
+    return 1
+  fi
+
+  echo "[smoke] OK: $example (health=200, $KEY_PATH=200, missing=404)"
   cleanup
   return 0
 }

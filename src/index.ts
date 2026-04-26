@@ -13,6 +13,7 @@ import {
   S3Client,
   S3ServiceException,
 } from '@aws-sdk/client-s3';
+import { S3Forbidden, S3InvalidRange, S3NotFound, type S3ProxyError } from './errors.js';
 import type {
   HttpRequest,
   HttpResponse,
@@ -23,8 +24,6 @@ import type {
   S3ProxyResponse,
 } from './types.js';
 import { UserException } from './UserException.js';
-
-// Import version from generated file
 import { VERSION } from './version.js';
 
 export class S3Proxy extends EventEmitter {
@@ -76,18 +75,6 @@ export class S3Proxy extends EventEmitter {
 
   public static version(): string {
     return VERSION;
-  }
-
-  /**
-   * Test the Error object to see if it should be treated as non-fatal
-   */
-  public static isNonFatalError(e: unknown): boolean {
-    return (
-      e instanceof NoSuchKey ||
-      e instanceof NoSuchBucket ||
-      (e instanceof S3ServiceException && e.name === 'AccessDenied') ||
-      (e instanceof S3ServiceException && e.name === 'InvalidRange')
-    );
   }
 
   /**
@@ -187,13 +174,20 @@ export class S3Proxy extends EventEmitter {
     return h;
   }
 
-  private handleNonFatal(e: unknown): S3ProxyResponse {
-    if (!S3Proxy.isNonFatalError(e)) throw e;
-    let statusCode = 200;
-    if (e instanceof S3ServiceException && e.$response?.statusCode) {
-      statusCode = e.$response.statusCode;
+  /**
+   * Map an AWS SDK error to a typed S3ProxyError. The original SDK error
+   * is attached as `cause` for diagnostics. Anything we can't classify
+   * is rethrown unchanged.
+   */
+  private mapError(e: unknown, target: string): S3ProxyError | never {
+    if (e instanceof NoSuchKey || e instanceof NoSuchBucket) {
+      return new S3NotFound(target, { cause: e });
     }
-    return { s3stream: S3Proxy.createEmptyReadstream(), statusCode, headers: {} };
+    if (e instanceof S3ServiceException) {
+      if (e.name === 'AccessDenied') return new S3Forbidden(target, { cause: e });
+      if (e.name === 'InvalidRange') return new S3InvalidRange(target, { cause: e });
+    }
+    throw e;
   }
 
   /**
@@ -215,7 +209,8 @@ export class S3Proxy extends EventEmitter {
   }
 
   private async getObject(req: HttpRequest): Promise<S3ProxyResponse> {
-    const command = new GetObjectCommand(this.getS3Params(req));
+    const params = this.getS3Params(req);
+    const command = new GetObjectCommand(params);
     try {
       const output = await this.client.send(command);
       return {
@@ -224,12 +219,13 @@ export class S3Proxy extends EventEmitter {
         headers: S3Proxy.outputToHeaders(output),
       };
     } catch (e) {
-      return this.handleNonFatal(e);
+      throw this.mapError(e, params.Key);
     }
   }
 
   private async headObject(req: HttpRequest): Promise<S3ProxyResponse> {
-    const command = new HeadObjectCommand(this.getS3Params(req));
+    const params = this.getS3Params(req);
+    const command = new HeadObjectCommand(params);
     try {
       const output = await this.client.send(command);
       return {
@@ -238,7 +234,7 @@ export class S3Proxy extends EventEmitter {
         headers: S3Proxy.outputToHeaders(output),
       };
     } catch (e) {
-      return this.handleNonFatal(e);
+      throw this.mapError(e, params.Key);
     }
   }
 
@@ -252,7 +248,7 @@ export class S3Proxy extends EventEmitter {
         headers: S3Proxy.outputToHeaders(output),
       };
     } catch (e) {
-      return this.handleNonFatal(e);
+      throw this.mapError(e, this.bucket);
     }
   }
 
@@ -300,5 +296,6 @@ export class S3Proxy extends EventEmitter {
 }
 
 export { UserException };
+export { S3Forbidden, S3InvalidRange, S3NotFound, S3ProxyError } from './errors.js';
 export type { HttpRequest, HttpResponse, ParsedRequest, S3Error, S3ProxyConfig } from './types.js';
 export default S3Proxy;
