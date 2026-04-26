@@ -1,10 +1,11 @@
-import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { S3Proxy } from '../src/index.js';
-import type { HttpRequest, HttpResponse } from '../src/types.js';
+import type { HttpRequest } from '../src/types.js';
 import { setupS3Mocks, teardownS3Mocks } from './helpers/aws-mock.js';
+import { readAll } from './helpers/http-mocks.js';
 
-describe('Fastify Integration', () => {
+describe('Fastify request shape compatibility', () => {
   let fastify: FastifyInstance;
   let proxy: S3Proxy;
 
@@ -20,71 +21,30 @@ describe('Fastify Integration', () => {
     try {
       await fastify.close();
     } catch (_error) {
-      // Ignore close errors in tests
+      // Ignore close errors in tests.
     }
     teardownS3Mocks();
   });
 
-  it('should work with Fastify request/response objects', async () => {
-    const mockRequest = {
-      raw: {
-        url: '/index.html',
-        headers: {},
-        method: 'GET',
-      },
+  it('fetch() accepts request.raw shaped like Fastify exposes it (GET)', async () => {
+    const request = {
+      raw: { url: '/index.html', headers: {}, method: 'GET' },
     } as FastifyRequest;
-
-    const mockReply = {
-      raw: {
-        writeHead: vi.fn(),
-        end: vi.fn(),
-        pipe: vi.fn(),
-      },
-    } as FastifyReply;
-
-    const stream = await proxy.get(mockRequest.raw as HttpRequest, mockReply.raw as HttpResponse);
-
-    expect(stream).toBeDefined();
-    expect(mockReply.raw.writeHead).toHaveBeenCalled();
+    const { stream, status, headers } = await proxy.fetch(request.raw as unknown as HttpRequest);
+    expect(status).toBe(200);
+    expect(headers['content-type']).toBe('text/html');
+    const body = await readAll(stream);
+    expect(body.length).toBe(338);
   });
 
-  it('should handle HEAD requests', async () => {
-    const mockRequest = {
-      raw: {
-        url: '/index.html',
-        headers: {},
-        method: 'HEAD',
-      },
+  it('fetch() accepts request.raw shaped like Fastify exposes it (HEAD)', async () => {
+    const request = {
+      raw: { url: '/index.html', headers: {}, method: 'HEAD' },
     } as FastifyRequest;
-
-    const mockReply = {
-      raw: {
-        writeHead: vi.fn(),
-        end: vi.fn(),
-        pipe: vi.fn(),
-      },
-    } as FastifyReply;
-
-    const stream = await proxy.head(mockRequest.raw as HttpRequest, mockReply.raw as HttpResponse);
-
-    expect(stream).toBeDefined();
-    expect(mockReply.raw.writeHead).toHaveBeenCalled();
-  });
-
-  it('should handle type casting from Fastify to HttpRequest/HttpResponse', () => {
-    const fastifyRequest = {
-      raw: { url: '/test', headers: {}, method: 'GET' },
-    } as FastifyRequest;
-
-    const fastifyReply = {
-      raw: { writeHead: vi.fn(), end: vi.fn(), pipe: vi.fn() },
-    } as FastifyReply;
-
-    // These should compile without type errors
-    const httpRequest = fastifyRequest.raw as HttpRequest;
-    const httpResponse = fastifyReply.raw as HttpResponse;
-
-    expect(httpRequest).toBeDefined();
-    expect(httpResponse).toBeDefined();
+    const { stream, status, headers } = await proxy.fetch(request.raw as unknown as HttpRequest);
+    expect(status).toBe(200);
+    expect(headers['content-length']).toBe('338');
+    const body = await readAll(stream);
+    expect(body.length).toBe(0);
   });
 });

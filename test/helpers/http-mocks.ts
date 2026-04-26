@@ -1,15 +1,7 @@
-import { vi } from 'vitest';
-import type { HttpRequest, HttpResponse } from '../../src/types.js';
+import type { HttpRequest } from '../../src/types.js';
 
 export function makeReq(path: string, headers: Record<string, string> = {}): HttpRequest {
-  return { url: path, headers, method: 'GET', path } as unknown as HttpRequest;
-}
-
-export type FakeRes = HttpResponse & { writeHead: ReturnType<typeof vi.fn> };
-
-export function makeRes(): FakeRes {
-  const res = { writeHead: vi.fn() };
-  return res as unknown as FakeRes;
+  return { url: path, headers, method: 'GET', path };
 }
 
 export async function readAll(stream: NodeJS.ReadableStream): Promise<string> {

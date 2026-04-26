@@ -1,4 +1,3 @@
-import type { IncomingMessage, OutgoingHttpHeaders, ServerResponse } from 'node:http';
 import type { S3ClientConfig } from '@aws-sdk/client-s3';
 
 export interface S3ProxyConfig extends S3ClientConfig {
@@ -34,18 +33,19 @@ export interface S3FetchResponse {
   headers: Record<string, string>;
 }
 
-export interface HttpRequest extends IncomingMessage {
-  path?: string;
-  query?: Record<string, string | string[]>;
-  headers: Record<string, string | string[]>;
+/**
+ * Structural subset of an HTTP request that proxy.fetch() reads.
+ * Express's Request, Fastify's request.raw, and Node's IncomingMessage
+ * all satisfy it (with light casts where method is broader-typed). Kept
+ * minimal so request objects from any framework can be passed without
+ * subclassing IncomingMessage or implementing its full surface.
+ */
+export interface HttpRequest {
   url: string;
   method?: string;
-}
-
-export interface HttpResponse extends ServerResponse {
-  // We need to be compatible with Node.js ServerResponse writeHead overloads
-  writeHead(statusCode: number, headers?: OutgoingHttpHeaders): this;
-  writeHead(statusCode: number, statusMessage?: string, headers?: OutgoingHttpHeaders): this;
+  headers: Record<string, string | string[]>;
+  path?: string;
+  query?: Record<string, string | string[]>;
 }
 
 // Error interface for S3 operations

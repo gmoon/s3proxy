@@ -1,13 +1,14 @@
 /**
  * S3Proxy Fastify Docker Example
  *
- * Docker-compatible version that imports from the installed s3proxy package
+ * Docker-compatible version that imports from the installed s3proxy package.
+ * Uses the v4 proxy.fetch() API.
  */
 
 import fs from 'node:fs';
 import { XmlNode, XmlText } from '@aws-sdk/xml-builder';
 import Fastify from 'fastify';
-import type { HttpRequest, HttpResponse } from 's3proxy';
+import type { HttpRequest } from 's3proxy';
 import { S3Proxy } from 's3proxy';
 
 const fastify = Fastify({
@@ -17,12 +18,7 @@ const fastify = Fastify({
 const port = Number(process.env.PORT) || 3000;
 const bucket = process.env.BUCKET || 's3proxy-public';
 
-// In non-production environments, if a credentials file exists, return the credentials
-// To create a temporary credentials file:
-//     aws sts get-session-token --duration 900 > credentials.json
-//
 function getCredentials() {
-  // Try Docker path first, then local path
   const dockerFile = '/src/credentials.json';
   const localFile = './credentials.json';
   const file = fs.existsSync(dockerFile) ? dockerFile : localFile;
@@ -44,18 +40,16 @@ function getCredentials() {
   return contents;
 }
 
-// Initialize S3Proxy with credentials
 const credentials = getCredentials();
 const proxy = new S3Proxy(credentials ? { bucket, credentials } : { bucket });
 await proxy.init();
 
-// Error handler
 function createErrorXml(
-  err: { statusCode?: number; code?: string; message: string },
+  err: { statusCode?: number; code?: string; name?: string; message: string },
   url: string
 ): string {
   const errorXml = new XmlNode('error')
-    .addAttribute('code', err.code || 'InternalError')
+    .addAttribute('code', err.code || err.name || 'InternalError')
     .addAttribute('statusCode', String(err.statusCode || 500))
     .addAttribute('url', url)
     .addChildNode(new XmlText(err.message))
@@ -64,49 +58,43 @@ function createErrorXml(
   return `<?xml version="1.0"?>\n${errorXml}`;
 }
 
-// Custom error handler
 fastify.setErrorHandler(async (error, request, reply) => {
   const statusCode = error.statusCode || 500;
   const errorXml = createErrorXml(error, request.url);
-
   reply.status(statusCode).type('application/xml').send(errorXml);
 });
 
-// Routes - No try/catch needed! Fastify handles async errors automatically
 fastify.get('/health', async (_request, reply) => {
-  // Simple health check that returns "OK" - matches test expectations
   return reply.status(200).send('OK');
 });
 
-fastify.get('/', async (_request, reply) => {
-  return reply.redirect('/index.html');
-});
-
 fastify.head('/*', async (request, reply) => {
-  const stream = await proxy.head(request.raw as HttpRequest, reply.raw as HttpResponse);
-  stream.on('error', (err: { statusCode?: number; code?: string; message: string }) => {
-    const errorXml = createErrorXml(err, request.url);
-    reply
-      .status(err.statusCode || 500)
-      .type('application/xml')
-      .send(errorXml);
+  const { status, headers } = await proxy.fetch({
+    ...(request.raw as unknown as HttpRequest),
+    method: 'HEAD',
   });
-  return reply.send(stream);
+  reply.raw.writeHead(status, headers).end();
+  return reply.hijack();
 });
 
 fastify.get('/*', async (request, reply) => {
-  const stream = await proxy.get(request.raw as HttpRequest, reply.raw as HttpResponse);
+  const { stream, status, headers } = await proxy.fetch(request.raw as unknown as HttpRequest);
+  reply.raw.writeHead(status, headers);
   stream.on('error', (err: { statusCode?: number; code?: string; message: string }) => {
-    const errorXml = createErrorXml(err, request.url);
-    reply
-      .status(err.statusCode || 500)
-      .type('application/xml')
-      .send(errorXml);
+    if (!reply.raw.headersSent) {
+      const errorXml = createErrorXml(err, request.url);
+      reply
+        .status(err.statusCode || 500)
+        .type('application/xml')
+        .send(errorXml);
+    } else {
+      reply.raw.end();
+    }
   });
-  return reply.send(stream);
+  stream.pipe(reply.raw);
+  return reply.hijack();
 });
 
-// Start server
 if (port > 0) {
   try {
     await fastify.listen({ port, host: '0.0.0.0' });

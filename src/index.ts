@@ -1,11 +1,9 @@
 import { EventEmitter } from 'node:events';
-import type { Readable } from 'node:stream';
 import { GetObjectCommand, HeadBucketCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { mapHeaderToParam, parseRequest } from './request-parser.js';
 import { S3Gateway } from './s3-gateway.js';
 import type {
   HttpRequest,
-  HttpResponse,
   S3FetchResponse,
   S3Params,
   S3ProxyConfig,
@@ -59,7 +57,7 @@ export class S3Proxy extends EventEmitter {
   }
 
   public async healthCheck(): Promise<void> {
-    await this.headBucket();
+    await this.gateway.send(new HeadBucketCommand({ Bucket: this.bucket }), this.bucket);
   }
 
   /**
@@ -72,29 +70,6 @@ export class S3Proxy extends EventEmitter {
     const command =
       req.method === 'HEAD' ? new HeadObjectCommand(params) : new GetObjectCommand(params);
     return this.gateway.send(command, params.Key);
-  }
-
-  public async healthCheckStream(res: HttpResponse): Promise<Readable> {
-    const r = await this.headBucket();
-    res.writeHead(r.status, r.headers);
-    return r.stream as Readable;
-  }
-
-  private headBucket(): Promise<S3FetchResponse> {
-    return this.gateway.send(new HeadBucketCommand({ Bucket: this.bucket }), this.bucket);
-  }
-
-  public async head(req: HttpRequest, res: HttpResponse): Promise<Readable> {
-    const headReq = { ...req, method: 'HEAD' as const } as HttpRequest;
-    const r = await this.fetch(headReq);
-    res.writeHead(r.status, r.headers);
-    return r.stream as Readable;
-  }
-
-  public async get(req: HttpRequest, res: HttpResponse): Promise<Readable> {
-    const r = await this.fetch(req);
-    res.writeHead(r.status, r.headers);
-    return r.stream as Readable;
   }
 
   private buildParams(req: HttpRequest): S3Params {
@@ -118,7 +93,6 @@ export {
 export { mapHeaderToParam, parseRequest, stripLeadingSlash } from './request-parser.js';
 export type {
   HttpRequest,
-  HttpResponse,
   ParsedRequest,
   S3Error,
   S3FetchResponse,

@@ -1,9 +1,9 @@
 import { Readable, Writable } from 'node:stream';
 import { GetObjectCommand, HeadBucketCommand, S3Client } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { S3Proxy } from '../src/index.js';
-import type { HttpRequest, HttpResponse } from '../src/types.js';
+import { makeReq } from './helpers/http-mocks.js';
 
 describe('streaming memory bound', () => {
   const s3Mock = mockClient(S3Client);
@@ -45,20 +45,12 @@ describe('streaming memory bound', () => {
     const proxy = new S3Proxy({ bucket: 'streaming-test' });
     await proxy.init();
 
-    const req = {
-      url: '/big.bin',
-      headers: {},
-      method: 'GET',
-      path: '/big.bin',
-    } as unknown as HttpRequest;
-    const res = { writeHead: vi.fn() } as unknown as HttpResponse;
-
     if (typeof global.gc === 'function') global.gc();
     const baseRss = process.memoryUsage().rss;
     let peakDelta = 0;
     let consumed = 0;
 
-    const stream = await proxy.get(req, res);
+    const { stream } = await proxy.fetch(makeReq('/big.bin'));
 
     await new Promise<void>((resolve, reject) => {
       const sink = new Writable({
