@@ -1,15 +1,10 @@
 import { defineConfig } from 'vitest/config';
+import { sharedEsbuildConfig, sharedTestConfig } from './vitest.shared.js';
 
 export default defineConfig({
   test: {
-    globals: true,
-    environment: 'node',
-    // Only include integration tests
+    ...sharedTestConfig,
     include: ['test/integration/**/*.{test,spec}.{js,ts}'],
-    testTimeout: 30000,
-    hookTimeout: 30000,
   },
-  esbuild: {
-    target: 'node18',
-  },
+  esbuild: sharedEsbuildConfig,
 });

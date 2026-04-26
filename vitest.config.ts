@@ -1,9 +1,9 @@
 import { defineConfig } from 'vitest/config';
+import { sharedEsbuildConfig, sharedTestConfig } from './vitest.shared.js';
 
 export default defineConfig({
   test: {
-    globals: true,
-    environment: 'node',
+    ...sharedTestConfig,
     exclude: ['**/node_modules/**', '**/dist/**', '**/coverage/**', '**/test/integration/**'],
     coverage: {
       provider: 'v8',
@@ -17,8 +17,6 @@ export default defineConfig({
         statements: 90,
       },
     },
-    testTimeout: 30000,
-    hookTimeout: 30000,
     pool: 'forks',
     poolOptions: {
       forks: {
@@ -26,7 +24,5 @@ export default defineConfig({
       },
     },
   },
-  esbuild: {
-    target: 'node18',
-  },
+  esbuild: sharedEsbuildConfig,
 });

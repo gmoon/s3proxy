@@ -45,7 +45,7 @@
     "@aws-sdk/client-s3": "^3.832.0"
   },
   "scripts": {
-    "build": "echo \"export const VERSION = '$(npm pkg get version --workspaces=false | tr -d '\"')';\" > src/version.ts && tsc",
+    "build": "tsc",
     "build:watch": "tsc --watch",
     "dev": "tsx examples/fastify-basic.ts",
     "start": "tsx examples/fastify-basic.ts",
@@ -60,7 +60,7 @@
     "lint:fix": "biome check --write",
     "format": "biome format --write",
     "type-check": "tsc --noEmit && tsc --noEmit -p tsconfig.examples.json",
-    "clean": "rm -rf dist coverage && rm -f load-test-results-*.json artillery-report-*.json performance-test-*.json s3proxy*.tgz version.txt credentials.json",
+    "clean": "rm -rf dist coverage && rm -f load-test-results-*.json artillery-report-*.json performance-test-*.json s3proxy*.tgz credentials.json",
     "clean:test-results": "rm -f load-test-results-*.json artillery-report-*.json performance-test-*.json",
     "prepublishOnly": "npm run clean && npm run build && npm run test:unit",
     "package:verify": "npm pack --dry-run",
