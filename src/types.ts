@@ -24,6 +24,16 @@ export interface S3ProxyResponse {
   headers: Record<string, string>;
 }
 
+/**
+ * Public response shape returned by `proxy.fetch()`. Pure — caller is
+ * responsible for writing headers and piping the stream.
+ */
+export interface S3FetchResponse {
+  stream: NodeJS.ReadableStream;
+  status: number;
+  headers: Record<string, string>;
+}
+
 export interface HttpRequest extends IncomingMessage {
   path?: string;
   query?: Record<string, string | string[]>;

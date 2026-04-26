@@ -18,6 +18,7 @@ import type {
   HttpRequest,
   HttpResponse,
   ParsedRequest,
+  S3FetchResponse,
   S3Params,
   S3ProxyConfig,
   S3ProxyOptions,
@@ -280,6 +281,20 @@ export class S3Proxy extends EventEmitter {
     await this.client.send(command);
   }
 
+  /**
+   * Pure fetch: returns the stream + status + headers without writing
+   * to a response. Dispatches GET or HEAD based on `req.method`
+   * (defaults to GET). Throws typed S3ProxyError on classified failures.
+   */
+  public async fetch(req: HttpRequest): Promise<S3FetchResponse> {
+    const inner = req.method === 'HEAD' ? await this.headObject(req) : await this.getObject(req);
+    return {
+      stream: inner.s3stream,
+      status: inner.statusCode,
+      headers: inner.headers,
+    };
+  }
+
   public async healthCheckStream(res: HttpResponse): Promise<Readable> {
     const { s3stream, statusCode, headers } = await this.headBucket();
     res.writeHead(statusCode, headers);
@@ -287,19 +302,28 @@ export class S3Proxy extends EventEmitter {
   }
 
   public async head(req: HttpRequest, res: HttpResponse): Promise<Readable> {
-    const { s3stream, statusCode, headers } = await this.headObject(req);
-    res.writeHead(statusCode, headers);
-    return s3stream as Readable;
+    // Always issue a HEAD regardless of the framework's req.method.
+    const headReq = { ...req, method: 'HEAD' as const } as HttpRequest;
+    const { stream, status, headers } = await this.fetch(headReq);
+    res.writeHead(status, headers);
+    return stream as Readable;
   }
 
   public async get(req: HttpRequest, res: HttpResponse): Promise<Readable> {
-    const { s3stream, statusCode, headers } = await this.getObject(req);
-    res.writeHead(statusCode, headers);
-    return s3stream as Readable;
+    const { stream, status, headers } = await this.fetch(req);
+    res.writeHead(status, headers);
+    return stream as Readable;
   }
 }
 
 export { UserException };
 export { S3Forbidden, S3InvalidRange, S3NotFound, S3ProxyError } from './errors.js';
-export type { HttpRequest, HttpResponse, ParsedRequest, S3Error, S3ProxyConfig } from './types.js';
+export type {
+  HttpRequest,
+  HttpResponse,
+  ParsedRequest,
+  S3Error,
+  S3FetchResponse,
+  S3ProxyConfig,
+} from './types.js';
 export default S3Proxy;
