@@ -367,12 +367,16 @@ For containerized deployments:
 docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:3.0.0
 ```
 
-For local development with temporary AWS credentials:
+For local development with temporary AWS credentials, write a session
+token to `~/.s3proxy/credentials.json` and bind-mount it into the
+container. Keeping credentials in your home directory (not the repo
+root) avoids any chance of committing them:
 
 ```bash
-aws sts get-session-token --duration 900 > credentials.json
+mkdir -p ~/.s3proxy
+aws sts get-session-token --duration 900 > ~/.s3proxy/credentials.json
 docker run \
-  -v $PWD/credentials.json:/src/credentials.json:ro \
+  -v ~/.s3proxy/credentials.json:/src/credentials.json:ro \
   -e BUCKET=mybucket \
   -e PORT=8080 \
   -e NODE_ENV=dev \
@@ -570,17 +574,17 @@ All configuration files are actively maintained and serve specific purposes in t
 
 ## Performance
 
-See [PERFORMANCE.md](PERFORMANCE.md) for detailed performance testing and benchmarks.
+See [docs/performance.md](docs/performance.md) for detailed performance testing and benchmarks.
 
 ## Getting Help
 
-- 📖 [Maintenance Guide](MAINTENANCE.md) - For contributors and advanced usage
+- 📖 [Maintenance Guide](docs/maintenance.md) - For contributors and advanced usage
 - 🐛 [Report Issues](https://github.com/gmoon/s3proxy/issues)
 - 💬 [Discussions](https://github.com/gmoon/s3proxy/discussions)
 
 ## Contributing
 
-We welcome contributions! See our [Maintenance Guide](MAINTENANCE.md) for development setup and contribution guidelines.
+We welcome contributions! See our [Maintenance Guide](docs/maintenance.md) for development setup and contribution guidelines.
 
 ## License
 
