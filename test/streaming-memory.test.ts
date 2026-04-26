@@ -19,8 +19,8 @@ describe('streaming memory bound', () => {
     s3Mock.restore();
   });
 
-  it('streams a 50MB body with peak RSS delta < 80MB', async () => {
-    const SIZE = 50 * 1024 * 1024;
+  it('streams a 100MB body with peak RSS delta < 50MB', async () => {
+    const SIZE = 100 * 1024 * 1024;
     const CHUNK = 64 * 1024;
     let remaining = SIZE;
     const body = new Readable({
@@ -68,6 +68,6 @@ describe('streaming memory bound', () => {
     });
 
     expect(consumed).toBe(SIZE);
-    expect(peakDelta).toBeLessThan(80 * 1024 * 1024);
+    expect(peakDelta).toBeLessThan(50 * 1024 * 1024);
   });
 });

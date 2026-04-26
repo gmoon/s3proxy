@@ -475,26 +475,31 @@ make pre-release-check     # Complete pre-release verification
 
 ```
 src/
-├── index.ts          # Main S3Proxy class
-├── UserException.ts  # Custom error class
-├── types.ts          # Type definitions
-└── version.ts        # Version information
+├── index.ts           # S3Proxy orchestrator
+├── request-parser.ts  # parseRequest, mapHeaderToParam, etc.
+├── s3-gateway.ts      # AWS SDK boundary; turns SDK output into S3FetchResponse
+├── errors.ts          # S3ProxyError + S3NotFound / S3Forbidden / S3InvalidRange / InvalidRequest
+├── UserException.ts   # Caller-misuse errors (uninitialized, missing bucket)
+├── types.ts           # Public type definitions
+└── version.ts         # Version (read from package.json at module load)
 
 examples/
 ├── express-basic.ts  # TypeScript Express example
 ├── fastify-basic.ts  # TypeScript Fastify example
 ├── fastify-docker.ts # Dockerized Fastify example
-└── http.ts          # TypeScript HTTP example
+└── http.ts           # TypeScript node:http example
 
 test/
-├── s3proxy.test.ts         # Main functionality tests
-├── parse-request.test.ts   # Request parsing tests
-├── mock-express.test.ts    # Express integration tests
-├── types.test.ts           # Type definition tests
+├── s3proxy.test.ts         # Constructor / init / healthCheck / verifyOnInit
+├── fetch.test.ts           # proxy.fetch() behavioral coverage
+├── parse-request.test.ts   # parseRequest unit tests (incl. malformed encoding)
+├── mock-express.test.ts    # Express request-shape compatibility
+├── mock-fastify.test.ts    # Fastify request-shape compatibility
+├── streaming-memory.test.ts # 100MB synthetic body, peak RSS bound
+├── concurrent.test.ts      # 10 parallel fetch() calls
 ├── version.test.ts         # Version tests
 ├── imports-esm.test.ts     # ESM import tests
 ├── package-exports.test.ts # Package export tests
-├── integration-tests.js    # Legacy integration tests
 ├── helpers/
 │   └── aws-mock.ts         # AWS SDK mocking utilities
 └── integration/
