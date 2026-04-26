@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import { sharedEsbuildConfig, sharedTestConfig } from './vitest.shared.js';
+import { sharedTestConfig } from './vitest.shared.js';
 
 export default defineConfig({
   test: {
@@ -18,11 +18,8 @@ export default defineConfig({
       },
     },
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        execArgv: ['--expose-gc'],
-      },
+    forks: {
+      execArgv: ['--expose-gc'],
     },
   },
-  esbuild: sharedEsbuildConfig,
 });
