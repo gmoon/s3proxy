@@ -9,11 +9,11 @@
     "ignoreUnknown": false,
     "includes": [
       "**",
-      "!**/dist/",
-      "!**/coverage/",
-      "!**/node_modules/",
-      "!**/shared-testing/",
-      "!**/examples/sam-app/",
+      "!**/dist/**",
+      "!**/coverage/**",
+      "!**/node_modules/**",
+      "!**/shared-testing/**",
+      "!**/examples/sam-app/**",
       "!**/*.tgz",
       "!**/credentials.json"
     ]

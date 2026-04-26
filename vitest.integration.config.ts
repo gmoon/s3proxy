@@ -5,13 +5,11 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     // Only include integration tests
-    include: [
-      'test/integration/**/*.{test,spec}.{js,ts}'
-    ],
+    include: ['test/integration/**/*.{test,spec}.{js,ts}'],
     testTimeout: 30000,
-    hookTimeout: 30000
+    hookTimeout: 30000,
   },
   esbuild: {
-    target: 'node18'
-  }
+    target: 'node18',
+  },
 });

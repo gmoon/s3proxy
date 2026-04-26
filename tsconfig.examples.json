@@ -8,11 +8,5 @@
     "rootDir": "."
   },
   "include": ["examples/**/*", "src/**/*"],
-  "exclude": [
-    "node_modules", 
-    "dist", 
-    "coverage", 
-    "test",
-    "examples/fastify-docker.ts"
-  ]
+  "exclude": ["node_modules", "dist", "coverage", "test", "examples/fastify-docker.ts"]
 }

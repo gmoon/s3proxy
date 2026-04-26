@@ -100,7 +100,7 @@ app.get('/', (_req: Request, res: Response) => {
 
 // route all get requests to s3proxy
 app
-  .route('/*')
+  .route('/*splat')
   .head(async (req: Request, res: Response) => {
     try {
       const stream = await proxy.head(req as HttpRequest, res as HttpResponse);
