@@ -6,7 +6,3 @@ export const sharedTestConfig: UserConfig['test'] = {
   testTimeout: 30000,
   hookTimeout: 30000,
 };
-
-export const sharedEsbuildConfig: UserConfig['esbuild'] = {
-  target: 'node18',
-};

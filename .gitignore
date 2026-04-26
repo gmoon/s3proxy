@@ -83,3 +83,6 @@ typings/
 .env
 
 /coverage
+
+# Claude Code per-user tooling/prompts
+.claude/
