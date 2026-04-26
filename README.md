@@ -80,6 +80,11 @@ app.get('/*splat', async (req, res) => {
 app.listen(3000);
 ```
 
+> **Express 5 path syntax.** The `/*splat` wildcard is Express 5's
+> `path-to-regexp` requirement; on Express 4 use `'/*'`. Mixing the
+> two forms crashes at route-registration time (this is exactly what
+> the v4 examples-smoke gate caught when ported from Express 4).
+
 ### TypeScript/ESM
 ```bash
 npm install s3proxy express

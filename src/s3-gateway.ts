@@ -1,10 +1,10 @@
 import { Readable } from 'node:stream';
 import {
-  GetObjectCommand,
+  type GetObjectCommand,
   type GetObjectCommandOutput,
   type HeadBucketCommand,
   type HeadBucketCommandOutput,
-  HeadObjectCommand,
+  type HeadObjectCommand,
   type HeadObjectCommandOutput,
   NoSuchBucket,
   NoSuchKey,
@@ -106,12 +106,11 @@ export class S3Gateway {
     }
   }
 
-  // S3Client.send is overloaded per command type; a union argument
-  // doesn't match any single overload. Discriminate on the command
-  // class to recover the precise signature without an `any` cast.
+  // S3Client.send is overloaded per command type; the union argument
+  // doesn't match any single overload, so cast to one concrete command
+  // (which the runtime will route correctly via the same overloads).
+  // A monomorphic call here keeps the typed error mapping above honest.
   private async dispatch(command: SupportedCommand): Promise<SupportedOutput> {
-    if (command instanceof GetObjectCommand) return this.client.send(command);
-    if (command instanceof HeadObjectCommand) return this.client.send(command);
-    return this.client.send(command);
+    return this.client.send(command as GetObjectCommand);
   }
 }

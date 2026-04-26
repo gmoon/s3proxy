@@ -17,12 +17,6 @@ export interface ParsedRequest {
   query: Record<string, string | string[]>;
 }
 
-export interface S3ProxyResponse {
-  s3stream: NodeJS.ReadableStream;
-  statusCode: number;
-  headers: Record<string, string>;
-}
-
 /**
  * Public response shape returned by `proxy.fetch()`. Pure — caller is
  * responsible for writing headers and piping the stream.

@@ -34,9 +34,17 @@ try {
 }
 ```
 
-All typed errors expose `statusCode` and `code` (e.g. `'S3NotFound'`),
-plus `cause` (the underlying SDK error). They all extend `S3ProxyError`,
-which extends `Error`.
+All typed errors expose `statusCode`, plus `cause` (the underlying
+SDK error). Discriminate by `instanceof` (preferred) or by `err.name`
+(`'S3NotFound'`, `'S3Forbidden'`, `'S3InvalidRange'`, `'InvalidRequest'`).
+They all extend `S3ProxyError`, which extends `Error`.
+
+**Important shift in *where* the error fires.** In v3, 404/403/416 came
+back as a successful empty stream — your `stream.on('error', ...)`
+handler never saw them. In v4, those throw from `proxy.fetch()` itself,
+*before* `res.writeHead` runs. So a v3 stream-error handler that was
+catching these will now see nothing — wrap the `await proxy.fetch()`
+call in a try/catch instead.
 
 ### 2. `proxy.get(req, res)` / `proxy.head(req, res)` / `proxy.healthCheckStream(res)` are gone
 
@@ -59,6 +67,11 @@ stream.on('error', () => res.end()).pipe(res);
 
 For HEAD: set `req.method = 'HEAD'` (or pass `{ ...req, method: 'HEAD' }`).
 `fetch()` dispatches GET vs HEAD by `req.method`, defaults to GET.
+
+The response shape is also renamed: where v3's internal
+`S3ProxyResponse` had `s3stream` and `statusCode`, the v4 public
+`S3FetchResponse` has `stream` and `status`. (Headers stayed
+`headers`.)
 
 For health endpoints: call `proxy.healthCheck()` instead of
 `proxy.healthCheckStream(res)`. It throws on failure; render the response

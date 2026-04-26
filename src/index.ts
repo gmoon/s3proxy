@@ -2,13 +2,7 @@ import { EventEmitter } from 'node:events';
 import { GetObjectCommand, HeadBucketCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { mapHeaderToParam, parseRequest } from './request-parser.js';
 import { S3Gateway } from './s3-gateway.js';
-import type {
-  HttpRequest,
-  S3FetchResponse,
-  S3Params,
-  S3ProxyConfig,
-  S3ProxyOptions,
-} from './types.js';
+import type { HttpRequest, S3FetchResponse, S3Params, S3ProxyConfig } from './types.js';
 import { UserException } from './UserException.js';
 import { VERSION } from './version.js';
 
@@ -27,11 +21,9 @@ export class S3Proxy extends EventEmitter {
       throw new UserException('InvalidParameterList', 'bucket parameter is required');
     }
 
-    this.bucket = config.bucket;
-    this.verifyOnInit = config.verifyOnInit ?? true;
-    const options = Object.fromEntries(
-      Object.entries(config).filter(([key]) => key !== 'bucket' && key !== 'verifyOnInit')
-    ) as S3ProxyOptions;
+    const { bucket, verifyOnInit, ...options } = config;
+    this.bucket = bucket;
+    this.verifyOnInit = verifyOnInit ?? true;
     this.gateway = new S3Gateway(options);
   }
 
