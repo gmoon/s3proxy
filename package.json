@@ -34,7 +34,7 @@
     "body-parser": "^2.2.0",
     "express": "^5.1.0",
     "fastify": "^5.4.0",
-    "npm-check-updates": "^18.0.1",
+    "npm-check-updates": "^20.0.2",
     "semantic-release": "^24.2.5",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
