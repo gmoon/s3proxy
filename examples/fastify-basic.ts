@@ -32,8 +32,9 @@ function createErrorXml(err: S3Error, url: string): string {
 }
 
 fastify.setErrorHandler(async (error, request, reply) => {
-  const statusCode = error.statusCode || 500;
-  const errorXml = createErrorXml(error, request.url);
+  const err = error as S3Error;
+  const statusCode = err.statusCode || 500;
+  const errorXml = createErrorXml(err, request.url);
   reply.status(statusCode).type('application/xml').send(errorXml);
 });
 

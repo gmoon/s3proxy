@@ -74,7 +74,6 @@ export class S3Proxy extends EventEmitter {
   }
 }
 
-export { UserException };
 export {
   InvalidRequest,
   S3Forbidden,
@@ -90,4 +89,5 @@ export type {
   S3FetchResponse,
   S3ProxyConfig,
 } from './types.js';
+export { UserException };
 export default S3Proxy;

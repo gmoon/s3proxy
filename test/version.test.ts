@@ -29,9 +29,9 @@ describe('Version', () => {
 
     // Parse version parts
     const [, major, minor, patch] = VERSION.match(/^(\d+)\.(\d+)\.(\d+)/) || [];
-    expect(Number.parseInt(major)).toBeGreaterThanOrEqual(0);
-    expect(Number.parseInt(minor)).toBeGreaterThanOrEqual(0);
-    expect(Number.parseInt(patch)).toBeGreaterThanOrEqual(0);
+    expect(Number.parseInt(major, 10)).toBeGreaterThanOrEqual(0);
+    expect(Number.parseInt(minor, 10)).toBeGreaterThanOrEqual(0);
+    expect(Number.parseInt(patch, 10)).toBeGreaterThanOrEqual(0);
   });
 
   it('should be consistent across multiple calls', () => {
