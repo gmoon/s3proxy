@@ -29,6 +29,7 @@ import { VERSION } from './version.js';
 export class S3Proxy extends EventEmitter {
   private readonly bucket: string;
   private readonly options: S3ProxyOptions;
+  private readonly verifyOnInit: boolean;
   private s3?: S3Client;
 
   constructor(config: S3ProxyConfig) {
@@ -42,8 +43,9 @@ export class S3Proxy extends EventEmitter {
     }
 
     this.bucket = config.bucket;
+    this.verifyOnInit = config.verifyOnInit ?? true;
     this.options = Object.fromEntries(
-      Object.entries(config).filter(([key]) => key !== 'bucket')
+      Object.entries(config).filter(([key]) => key !== 'bucket' && key !== 'verifyOnInit')
     ) as S3ProxyOptions;
   }
 
@@ -263,7 +265,9 @@ export class S3Proxy extends EventEmitter {
   public async init(): Promise<void> {
     try {
       this.s3 = new S3Client(this.options);
-      await this.healthCheck();
+      if (this.verifyOnInit) {
+        await this.healthCheck();
+      }
       this.emit('init');
     } catch (e) {
       this.emit('error', e);

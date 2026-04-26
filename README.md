@@ -325,6 +325,16 @@ Parse HTTP request to extract S3 key and query parameters.
 ```typescript
 interface S3ProxyConfig extends S3ClientConfig {
   bucket: string;
+  /**
+   * If true (default), `init()` calls `healthCheck()` and rejects when
+   * the bucket is unreachable — fail-fast on misconfiguration.
+   * Set to false in orchestrator deployments (Kubernetes, ECS) where
+   * the platform's readiness probe should determine health, so a
+   * transient S3 hiccup or missing-bucket misconfig doesn't crashloop
+   * the pod before logs/dashboards are wired up. Pair with calling
+   * `proxy.healthCheck()` from your readiness handler.
+   */
+  verifyOnInit?: boolean;
 }
 
 interface HttpRequest extends IncomingMessage {

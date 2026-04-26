@@ -236,6 +236,31 @@ describe('S3Proxy', () => {
     });
   });
 
+  describe('verifyOnInit', () => {
+    it('defaults to true: rejects when the bucket is unreachable', async () => {
+      const proxy = new S3Proxy({ bucket: '.test-bucket' });
+      s3Mock.on(HeadBucketCommand).rejectsOnce(new Error('unreachable'));
+      await expect(proxy.init()).rejects.toThrow('unreachable');
+    });
+
+    it('false: init() resolves without sending a HeadBucket', async () => {
+      const proxy = new S3Proxy({ bucket: '.test-bucket', verifyOnInit: false });
+      // Reset the mock so the default HeadBucket success is gone — if init
+      // tries to send one, the mock would reject with "no matching mock".
+      s3Mock.reset();
+      await expect(proxy.init()).resolves.not.toThrow();
+      expect(s3Mock.commandCalls(HeadBucketCommand)).toHaveLength(0);
+    });
+
+    it('healthCheck() remains callable independently after init({verifyOnInit:false})', async () => {
+      const proxy = new S3Proxy({ bucket: '.test-bucket', verifyOnInit: false });
+      await proxy.init();
+      // The default mock setup makes HeadBucket succeed.
+      await expect(proxy.healthCheck()).resolves.not.toThrow();
+      expect(s3Mock.commandCalls(HeadBucketCommand)).toHaveLength(1);
+    });
+  });
+
   describe('Express integration methods', () => {
     let proxy: S3Proxy;
 

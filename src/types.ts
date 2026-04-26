@@ -3,6 +3,14 @@ import type { S3ClientConfig } from '@aws-sdk/client-s3';
 
 export interface S3ProxyConfig extends S3ClientConfig {
   bucket: string;
+  /**
+   * If true (default), `init()` calls `healthCheck()` against the bucket
+   * and rejects if it fails — fail-fast on misconfiguration.
+   * Set to false in orchestrator deployments (Kubernetes, ECS) where the
+   * platform's own readiness probe should determine health, so a missing
+   * bucket doesn't crashloop the pod before logs/dashboards are wired up.
+   */
+  verifyOnInit?: boolean;
 }
 
 export interface ParsedRequest {
@@ -42,7 +50,7 @@ export interface S3ProxyEvents {
 }
 
 // Utility types for better type safety
-export type S3ProxyOptions = Omit<S3ProxyConfig, 'bucket'>;
+export type S3ProxyOptions = Omit<S3ProxyConfig, 'bucket' | 'verifyOnInit'>;
 export type HeaderMap = Record<string, string | string[]>;
 export type S3Params = {
   Bucket: string;
