@@ -18,7 +18,7 @@ describe('Version', () => {
   it('should be accessible via S3Proxy.version() static method', () => {
     const version = S3Proxy.version();
     expect(version).toBe(VERSION);
-    expect(version).toBe('3.0.0');
+    expect(version).toBe('4.0.0');
   });
 
   it('should be a valid semantic version', () => {
@@ -29,9 +29,9 @@ describe('Version', () => {
 
     // Parse version parts
     const [, major, minor, patch] = VERSION.match(/^(\d+)\.(\d+)\.(\d+)/) || [];
-    expect(Number.parseInt(major)).toBeGreaterThanOrEqual(0);
-    expect(Number.parseInt(minor)).toBeGreaterThanOrEqual(0);
-    expect(Number.parseInt(patch)).toBeGreaterThanOrEqual(0);
+    expect(Number.parseInt(major, 10)).toBeGreaterThanOrEqual(0);
+    expect(Number.parseInt(minor, 10)).toBeGreaterThanOrEqual(0);
+    expect(Number.parseInt(patch, 10)).toBeGreaterThanOrEqual(0);
   });
 
   it('should be consistent across multiple calls', () => {

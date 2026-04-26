@@ -1,13 +1,14 @@
 /**
  * S3Proxy Fastify Basic Example
  *
- * Modern Express alternative with native async/await support
+ * Modern Express alternative with native async/await support. Uses the
+ * v4 proxy.fetch() API: pure data fetch, frameworks own the response.
  */
 
 import { XmlNode, XmlText } from '@aws-sdk/xml-builder';
 import Fastify from 'fastify';
 import { S3Proxy } from '../src/index.js';
-import type { HttpRequest, HttpResponse, S3Error } from '../src/types.js';
+import type { HttpRequest, S3Error } from '../src/types.js';
 
 const fastify = Fastify({
   logger: process.env.NODE_ENV !== 'production',
@@ -16,14 +17,12 @@ const fastify = Fastify({
 const port = Number(process.env.PORT) || 3000;
 const bucket = process.env.BUCKET || 's3proxy-public';
 
-// Initialize S3Proxy
 const proxy = new S3Proxy({ bucket });
 await proxy.init();
 
-// Error handler
 function createErrorXml(err: S3Error, url: string): string {
   const errorXml = new XmlNode('error')
-    .addAttribute('code', err.code || 'InternalError')
+    .addAttribute('code', err.code || err.name || 'InternalError')
     .addAttribute('statusCode', String(err.statusCode || 500))
     .addAttribute('url', url)
     .addChildNode(new XmlText(err.message))
@@ -32,19 +31,16 @@ function createErrorXml(err: S3Error, url: string): string {
   return `<?xml version="1.0"?>\n${errorXml}`;
 }
 
-// Custom error handler
 fastify.setErrorHandler(async (error, request, reply) => {
-  const statusCode = error.statusCode || 500;
-  const errorXml = createErrorXml(error, request.url);
-
+  const err = error as S3Error;
+  const statusCode = err.statusCode || 500;
+  const errorXml = createErrorXml(err, request.url);
   reply.status(statusCode).type('application/xml').send(errorXml);
 });
 
-// Routes - No try/catch needed! Fastify handles async errors automatically
 fastify.get('/health', async (_request, reply) => {
-  const stream = await proxy.healthCheckStream(reply.raw as HttpResponse);
-  stream.on('error', () => reply.raw.end());
-  return reply.send(stream);
+  await proxy.healthCheck();
+  return reply.status(200).type('text/plain').send('OK');
 });
 
 fastify.get('/', async (_request, reply) => {
@@ -52,30 +48,33 @@ fastify.get('/', async (_request, reply) => {
 });
 
 fastify.head('/*', async (request, reply) => {
-  const stream = await proxy.head(request.raw as HttpRequest, reply.raw as HttpResponse);
-  stream.on('error', (err: S3Error) => {
-    const errorXml = createErrorXml(err, request.url);
-    reply
-      .status(err.statusCode || 500)
-      .type('application/xml')
-      .send(errorXml);
+  const { status, headers } = await proxy.fetch({
+    ...(request.raw as unknown as HttpRequest),
+    method: 'HEAD',
   });
-  return reply.send(stream);
+  reply.raw.writeHead(status, headers).end();
+  // Tell Fastify we've handled the response ourselves.
+  return reply.hijack();
 });
 
 fastify.get('/*', async (request, reply) => {
-  const stream = await proxy.get(request.raw as HttpRequest, reply.raw as HttpResponse);
+  const { stream, status, headers } = await proxy.fetch(request.raw as unknown as HttpRequest);
+  reply.raw.writeHead(status, headers);
   stream.on('error', (err: S3Error) => {
     const errorXml = createErrorXml(err, request.url);
-    reply
-      .status(err.statusCode || 500)
-      .type('application/xml')
-      .send(errorXml);
+    if (!reply.raw.headersSent) {
+      reply
+        .status(err.statusCode || 500)
+        .type('application/xml')
+        .send(errorXml);
+    } else {
+      reply.raw.end();
+    }
   });
-  return reply.send(stream);
+  stream.pipe(reply.raw);
+  return reply.hijack();
 });
 
-// Start server
 if (port > 0) {
   try {
     await fastify.listen({ port, host: '0.0.0.0' });

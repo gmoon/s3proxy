@@ -191,17 +191,3 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
 export function teardownS3Mocks() {
   s3Mock.restore();
 }
-
-/**
- * Helper to set up specific mock scenarios for individual tests
- */
-export function mockS3Error(command: any, error: any) {
-  s3Mock.on(command).rejects(error);
-}
-
-/**
- * Helper to verify mock calls were made
- */
-export function getS3MockCalls() {
-  return s3Mock.calls();
-}

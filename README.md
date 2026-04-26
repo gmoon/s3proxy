@@ -21,23 +21,31 @@ s3proxy turns any S3 bucket into a high-performance web server. Perfect for serv
 
 ## Quick Start
 
-### ⚠️ Breaking Change in v3.0.0
+### ⚠️ Breaking changes in v4.0
 
-**s3proxy v3.0.0+ is ESM-only and requires Node.js 22.13.0+**
+v4 fixes the v3 error contract and replaces the response-mutating
+`proxy.get(req, res)` / `proxy.head(req, res)` / `proxy.healthCheckStream(res)`
+wrappers with a single pure entry point: **`proxy.fetch(req)`**.
 
-If you're upgrading from v2.x:
+```typescript
+// v3.x — wrapper writes res headers as a side effect, swallows 404 as empty 200
+const stream = await proxy.get(req, res);
+stream.pipe(res);
 
-```javascript
-// ❌ v2.x (CommonJS) - No longer supported
-const { S3Proxy } = require('s3proxy');
-
-// ✅ v3.x (ESM) - New syntax
-import { S3Proxy } from 's3proxy';
+// v4 — pure fetch + you write the response
+const { stream, status, headers } = await proxy.fetch(req);
+res.writeHead(status, headers);
+stream.pipe(res);
 ```
 
-For CommonJS projects, you have two options:
-1. **Recommended**: Migrate to ESM by adding `"type": "module"` to your `package.json`
-2. **Alternative**: Use dynamic import: `const { S3Proxy } = await import('s3proxy');`
+Missing keys, AccessDenied, and InvalidRange now throw typed
+`S3NotFound` / `S3Forbidden` / `S3InvalidRange` errors instead of
+silently returning empty 200 streams. See [MIGRATION.md](MIGRATION.md)
+for the full v3 → v4 sed-able cheat sheet.
+
+ESM-only since v3 — no CommonJS support. For CommonJS projects, add
+`"type": "module"` to your `package.json` or use dynamic import:
+`const { S3Proxy } = await import('s3proxy');`
 
 ### Requirements
 
@@ -59,13 +67,23 @@ const proxy = new S3Proxy({ bucket: 'your-bucket-name' });
 
 await proxy.init();
 
-app.get('/*', async (req, res) => {
-  const stream = await proxy.get(req, res);
-  stream.on('error', err => res.status(err.statusCode || 500).end()).pipe(res);
+app.get('/*splat', async (req, res) => {
+  try {
+    const { stream, status, headers } = await proxy.fetch(req);
+    res.writeHead(status, headers);
+    stream.on('error', () => res.end()).pipe(res);
+  } catch (err) {
+    res.status(err.statusCode || 500).end();
+  }
 });
 
 app.listen(3000);
 ```
+
+> **Express 5 path syntax.** The `/*splat` wildcard is Express 5's
+> `path-to-regexp` requirement; on Express 4 use `'/*'`. Mixing the
+> two forms crashes at route-registration time (this is exactly what
+> the v4 examples-smoke gate caught when ported from Express 4).
 
 ### TypeScript/ESM
 ```bash
@@ -74,23 +92,23 @@ npm install --save-dev @types/express
 ```
 
 ```typescript
-import express from 'express';
-import { S3Proxy } from 's3proxy';
-import type { HttpRequest, HttpResponse } from 's3proxy';
+import express, { type Request, type Response } from 'express';
+import { S3Proxy, S3ProxyError } from 's3proxy';
+import type { HttpRequest } from 's3proxy';
 
 const app = express();
 const proxy = new S3Proxy({ bucket: 'your-bucket-name' });
 
 await proxy.init();
 
-app.get('/*', async (req, res) => {
+app.get('/*splat', async (req: Request, res: Response) => {
   try {
-    const stream = await proxy.get(req as HttpRequest, res as HttpResponse);
-    stream.on('error', (err: any) => {
-      res.status(err.statusCode || 500).end();
-    }).pipe(res);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch file' });
+    const { stream, status, headers } = await proxy.fetch(req as unknown as HttpRequest);
+    res.writeHead(status, headers);
+    stream.on('error', () => res.end()).pipe(res);
+  } catch (err) {
+    const status = err instanceof S3ProxyError ? err.statusCode : 500;
+    res.status(status).end();
   }
 });
 
@@ -105,16 +123,15 @@ Now `curl http://localhost:3000/index.html` serves `s3://your-bucket-name/index.
 
 ```typescript
 import express, { type Request, type Response } from 'express';
-import { S3Proxy } from 's3proxy';
-import type { HttpRequest, HttpResponse } from 's3proxy';
+import { S3Proxy, S3ProxyError } from 's3proxy';
+import type { HttpRequest } from 's3proxy';
 
 const app = express();
-const proxy = new S3Proxy({ 
+const proxy = new S3Proxy({
   bucket: 'my-website-bucket',
-  region: 'us-west-2'
+  region: 'us-west-2',
 });
 
-// Initialize with proper error handling
 try {
   await proxy.init();
   console.log('S3Proxy initialized successfully');
@@ -123,22 +140,25 @@ try {
   process.exit(1);
 }
 
-// Error handler
-function handleError(req: Request, res: Response, err: any): void {
-  const statusCode = err.statusCode || 500;
+function handleError(req: Request, res: Response, err: unknown): void {
+  const statusCode = err instanceof S3ProxyError ? err.statusCode : 500;
+  const code = err instanceof Error ? err.name : 'InternalError';
+  const message = err instanceof Error ? err.message : String(err);
   const errorXml = `<?xml version="1.0"?>
-<error code="${err.code || 'InternalError'}" statusCode="${statusCode}" url="${req.url}">${err.message}</error>`;
-  
+<error code="${code}" statusCode="${statusCode}" url="${req.url}">${message}</error>`;
+
+  if (res.headersSent) {
+    res.end();
+    return;
+  }
   res.status(statusCode).type('application/xml').send(errorXml);
 }
 
-// Serve all files from S3
-app.get('/*', async (req: Request, res: Response) => {
+app.get('/*splat', async (req: Request, res: Response) => {
   try {
-    const stream = await proxy.get(req as HttpRequest, res as HttpResponse);
-    stream.on('error', (err) => {
-      handleError(req, res, err);
-    }).pipe(res);
+    const { stream, status, headers } = await proxy.fetch(req as unknown as HttpRequest);
+    res.writeHead(status, headers);
+    stream.on('error', (err) => handleError(req, res, err)).pipe(res);
   } catch (err) {
     handleError(req, res, err);
   }
@@ -151,42 +171,36 @@ app.listen(3000);
 
 ```typescript
 import Fastify from 'fastify';
-import { S3Proxy } from 's3proxy';
-import type { HttpRequest, HttpResponse } from 's3proxy';
+import { S3Proxy, S3ProxyError } from 's3proxy';
+import type { HttpRequest } from 's3proxy';
 
 const fastify = Fastify({ logger: true });
 const proxy = new S3Proxy({
   bucket: 'my-website-bucket',
-  region: 'us-west-2'
+  region: 'us-west-2',
 });
 
-// Initialize S3Proxy
 await proxy.init();
 
-// Serve all files from S3
 fastify.get('/*', async (request, reply) => {
-  try {
-    const stream = await proxy.get(
-      request.raw as HttpRequest, 
-      reply.raw as HttpResponse
-    );
-    
-    stream.on('error', (err: any) => {
-      const statusCode = err.statusCode || 500;
-      reply.code(statusCode).type('application/xml').send(`<?xml version="1.0"?>
-<error code="${err.code || 'InternalError'}" statusCode="${statusCode}">${err.message}</error>`);
-    });
-    
-    // Let s3proxy handle the response
-    return reply.hijack();
-  } catch (error: any) {
-    const statusCode = error.statusCode || 500;
-    reply.code(statusCode).type('application/xml').send(`<?xml version="1.0"?>
-<error code="${error.code || 'InternalError'}" statusCode="${statusCode}">${error.message}</error>`);
-  }
+  const { stream, status, headers } = await proxy.fetch(
+    request.raw as unknown as HttpRequest
+  );
+  reply.raw.writeHead(status, headers);
+  stream.on('error', () => reply.raw.end());
+  stream.pipe(reply.raw);
+  // Tell Fastify we've handled the response ourselves.
+  return reply.hijack();
 });
 
-// Start server
+// Fastify's setErrorHandler turns S3ProxyError instances into XML
+// responses with the right status code (it honors err.statusCode).
+fastify.setErrorHandler(async (error, request, reply) => {
+  const statusCode = error instanceof S3ProxyError ? error.statusCode : 500;
+  reply.status(statusCode).type('application/xml').send(`<?xml version="1.0"?>
+<error code="${error.name}" statusCode="${statusCode}">${error.message}</error>`);
+});
+
 try {
   await fastify.listen({ port: 3000 });
   console.log('Server listening on http://localhost:3000');
@@ -213,7 +227,12 @@ s3proxy is **framework-agnostic** and works with any Node.js HTTP framework that
 - **[Vercel Functions](https://vercel.com/docs/functions)** - Edge and serverless functions ✅
 - **[Netlify Functions](https://www.netlify.com/products/functions/)** - Serverless functions ✅
 
-**Key requirement**: The framework must provide access to Node.js `IncomingMessage` and `ServerResponse` objects (usually available as `req.raw`/`res.raw` or similar).
+**Key requirement**: the framework must give you a request with `url`,
+`method`, and `headers` (or `path`/`query`). All major frameworks
+expose this — usually as `req.raw` / `request.raw` / `request.req`.
+Since `proxy.fetch()` returns `{ stream, status, headers }` and never
+touches a response, you wire the response however the framework
+prefers (`res.writeHead`, a `Web Response`, `reply.send`, etc.).
 
 ### Range Requests (Partial Content)
 
@@ -230,11 +249,14 @@ Perfect for streaming large assets without server storage:
 
 ```typescript
 // Stream AI models, datasets, or media files
-app.get('/models/:version/*', async (req: Request, res: Response) => {
-  const stream = await proxy.get(req as HttpRequest, res as HttpResponse);
-  stream.on('error', (err: any) => {
-    res.status(err.statusCode || 500).end();
-  }).pipe(res);
+app.get('/models/:version/*splat', async (req: Request, res: Response) => {
+  try {
+    const { stream, status, headers } = await proxy.fetch(req as unknown as HttpRequest);
+    res.writeHead(status, headers);
+    stream.on('error', () => res.end()).pipe(res);
+  } catch (err) {
+    res.status((err as { statusCode?: number }).statusCode || 500).end();
+  }
 });
 
 // Now serve multi-GB files efficiently:
@@ -246,12 +268,13 @@ app.get('/models/:version/*', async (req: Request, res: Response) => {
 Built-in health check endpoint for load balancers:
 
 ```typescript
-app.get('/health', async (req: Request, res: Response) => {
+app.get('/health', async (_req: Request, res: Response) => {
   try {
-    const stream = await proxy.healthCheckStream(res as HttpResponse);
-    stream.on('error', () => res.end()).pipe(res);
-  } catch (error) {
-    res.status(500).end();
+    await proxy.healthCheck();   // throws S3ProxyError on failure
+    res.status(200).type('text/plain').send('OK');
+  } catch (err) {
+    const status = err instanceof S3ProxyError ? err.statusCode : 503;
+    res.status(status).type('text/plain').send('unhealthy');
   }
 });
 ```
@@ -298,45 +321,68 @@ new S3Proxy(config: S3ProxyConfig)
 #### Methods
 
 ##### `await proxy.init(): Promise<void>`
-Initialize S3 client and verify bucket access. Must be called before using other methods.
+Initialize the underlying S3 client. By default also runs
+`healthCheck()` against the bucket and rejects on failure (set
+`verifyOnInit: false` in the config to skip the probe — see
+[verifyOnInit](#verifyoninit-for-orchestrators)).
 
-##### `await proxy.get(req: HttpRequest, res: HttpResponse): Promise<Readable>`
-Stream S3 object to HTTP response. Handles range requests automatically.
-
-##### `await proxy.head(req: HttpRequest, res: HttpResponse): Promise<Readable>`
-Get object metadata (HEAD request). Returns empty stream with headers set.
+##### `await proxy.fetch(req: HttpRequest): Promise<S3FetchResponse>`
+Pure fetch. Returns `{ stream, status, headers }` without touching a
+response. Dispatches GET vs HEAD based on `req.method` (defaults to
+GET). Throws a typed `S3ProxyError` on classified failures (404, 403,
+416, malformed request); rethrows anything else.
 
 ##### `await proxy.healthCheck(): Promise<void>`
-Verify bucket connectivity. Throws error if bucket is inaccessible.
+Verify bucket connectivity. Resolves on success, throws a typed
+`S3ProxyError` on failure. Use this from a `/health` or `/ready`
+handler — render the response yourself.
 
-##### `await proxy.healthCheckStream(res: HttpResponse): Promise<Readable>`
-Health check with streaming response. Sets appropriate status code and headers.
+##### `proxy.isInitialized(): void`
+Throws `UserException` if `init()` hasn't been called yet.
 
 #### Static Methods
 
 ##### `S3Proxy.version(): string`
-Returns the current version of s3proxy.
+The library version.
 
-##### `S3Proxy.parseRequest(req: HttpRequest): ParsedRequest`
-Parse HTTP request to extract S3 key and query parameters.
+#### Free functions exported from `'s3proxy'`
+
+`parseRequest(req)`, `mapHeaderToParam(req, headerKey, paramKey)`, and
+`stripLeadingSlash(s)` are exported as free functions. They previously
+lived as `S3Proxy.parseRequest` etc.; the move makes them tree-shakeable
+for callers that just want the parser.
 
 ### Types
 
 ```typescript
 interface S3ProxyConfig extends S3ClientConfig {
   bucket: string;
+  /**
+   * If true (default), init() calls healthCheck() and rejects when
+   * the bucket is unreachable — fail-fast on misconfiguration.
+   * Set to false in orchestrator deployments (Kubernetes, ECS).
+   */
+  verifyOnInit?: boolean;
 }
 
-interface HttpRequest extends IncomingMessage {
-  path?: string;
-  query?: Record<string, string | string[]>;
-  headers: Record<string, string | string[]>;
+/** What proxy.fetch() returns. */
+interface S3FetchResponse {
+  stream: NodeJS.ReadableStream;
+  status: number;
+  headers: Record<string, string>;
+}
+
+/**
+ * Structural subset of an HTTP request that proxy.fetch() reads.
+ * Express's Request, Fastify's request.raw, and Node's IncomingMessage
+ * all satisfy it (with light casts).
+ */
+interface HttpRequest {
   url: string;
   method?: string;
-}
-
-interface HttpResponse extends ServerResponse {
-  writeHead(statusCode: number, headers?: any): this;
+  headers: Record<string, string | string[]>;
+  path?: string;
+  query?: Record<string, string | string[]>;
 }
 
 interface ParsedRequest {
@@ -347,15 +393,54 @@ interface ParsedRequest {
 
 ### Error Handling
 
-s3proxy emits events for monitoring:
+```typescript
+import {
+  S3ProxyError,    // base class (statusCode, code, cause)
+  S3NotFound,      // 404 — NoSuchKey or NoSuchBucket
+  S3Forbidden,     // 403 — AccessDenied
+  S3InvalidRange,  // 416 — InvalidRange
+  // (InvalidRequest — 400 — thrown by parseRequest for malformed input)
+} from 's3proxy';
+
+try {
+  const { stream, status, headers } = await proxy.fetch(req);
+  res.writeHead(status, headers);
+  stream.pipe(res);
+} catch (err) {
+  if (err instanceof S3NotFound)     return send404(res);
+  if (err instanceof S3Forbidden)    return send403(res);
+  if (err instanceof S3InvalidRange) return send416(res);
+  if (err instanceof S3ProxyError)   return res.status(err.statusCode).end();
+  throw err;  // unknown — let the framework's error handler take it
+}
+```
+
+The proxy is also an `EventEmitter` and emits `init` once `init()`
+resolves and `error` if it rejects — useful for logging dashboards.
 
 ```typescript
-proxy.on('error', (err: Error) => {
-  console.error('S3Proxy error:', err);
-});
+proxy.on('error', (err: Error) => console.error('S3Proxy error:', err));
+proxy.on('init',  () => console.log('S3Proxy initialized'));
+```
 
-proxy.on('init', () => {
-  console.log('S3Proxy initialized successfully');
+### `verifyOnInit` for orchestrators
+
+In Kubernetes/ECS deployments, you typically want the platform's own
+readiness probe to determine health rather than crash-looping the pod
+when S3 has a hiccup at boot. Pass `verifyOnInit: false` and call
+`proxy.healthCheck()` from your readiness handler instead.
+
+```typescript
+const proxy = new S3Proxy({ bucket: 'my-bucket', verifyOnInit: false });
+await proxy.init();   // resolves immediately, no S3 traffic
+
+app.get('/ready', async (_req, res) => {
+  try {
+    await proxy.healthCheck();
+    res.status(200).send('ready');
+  } catch (err) {
+    res.status(503).send(String(err));
+  }
 });
 ```
 
@@ -364,20 +449,24 @@ proxy.on('init', () => {
 For containerized deployments:
 
 ```bash
-docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:3.0.0
+docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:4.0.0
 ```
 
-For local development with temporary AWS credentials:
+For local development with temporary AWS credentials, write a session
+token to `~/.s3proxy/credentials.json` and bind-mount it into the
+container. Keeping credentials in your home directory (not the repo
+root) avoids any chance of committing them:
 
 ```bash
-aws sts get-session-token --duration 900 > credentials.json
+mkdir -p ~/.s3proxy
+aws sts get-session-token --duration 900 > ~/.s3proxy/credentials.json
 docker run \
-  -v $PWD/credentials.json:/src/credentials.json:ro \
+  -v ~/.s3proxy/credentials.json:/src/credentials.json:ro \
   -e BUCKET=mybucket \
   -e PORT=8080 \
   -e NODE_ENV=dev \
   -p 8080:8080 \
-  -t forkzero/s3proxy:3.0.0
+  -t forkzero/s3proxy:4.0.0
 ```
 
 ## Development
@@ -461,26 +550,31 @@ make pre-release-check     # Complete pre-release verification
 
 ```
 src/
-├── index.ts          # Main S3Proxy class
-├── UserException.ts  # Custom error class
-├── types.ts          # Type definitions
-└── version.ts        # Version information
+├── index.ts           # S3Proxy orchestrator
+├── request-parser.ts  # parseRequest, mapHeaderToParam, etc.
+├── s3-gateway.ts      # AWS SDK boundary; turns SDK output into S3FetchResponse
+├── errors.ts          # S3ProxyError + S3NotFound / S3Forbidden / S3InvalidRange / InvalidRequest
+├── UserException.ts   # Caller-misuse errors (uninitialized, missing bucket)
+├── types.ts           # Public type definitions
+└── version.ts         # Version (read from package.json at module load)
 
 examples/
 ├── express-basic.ts  # TypeScript Express example
 ├── fastify-basic.ts  # TypeScript Fastify example
 ├── fastify-docker.ts # Dockerized Fastify example
-└── http.ts          # TypeScript HTTP example
+└── http.ts           # TypeScript node:http example
 
 test/
-├── s3proxy.test.ts         # Main functionality tests
-├── parse-request.test.ts   # Request parsing tests
-├── mock-express.test.ts    # Express integration tests
-├── types.test.ts           # Type definition tests
+├── s3proxy.test.ts         # Constructor / init / healthCheck / verifyOnInit
+├── fetch.test.ts           # proxy.fetch() behavioral coverage
+├── parse-request.test.ts   # parseRequest unit tests (incl. malformed encoding)
+├── mock-express.test.ts    # Express request-shape compatibility
+├── mock-fastify.test.ts    # Fastify request-shape compatibility
+├── streaming-memory.test.ts # 100MB synthetic body, peak RSS bound
+├── concurrent.test.ts      # 10 parallel fetch() calls
 ├── version.test.ts         # Version tests
 ├── imports-esm.test.ts     # ESM import tests
 ├── package-exports.test.ts # Package export tests
-├── integration-tests.js    # Legacy integration tests
 ├── helpers/
 │   └── aws-mock.ts         # AWS SDK mocking utilities
 └── integration/
@@ -570,17 +664,17 @@ All configuration files are actively maintained and serve specific purposes in t
 
 ## Performance
 
-See [PERFORMANCE.md](PERFORMANCE.md) for detailed performance testing and benchmarks.
+See [docs/performance.md](docs/performance.md) for detailed performance testing and benchmarks.
 
 ## Getting Help
 
-- 📖 [Maintenance Guide](MAINTENANCE.md) - For contributors and advanced usage
+- 📖 [Maintenance Guide](docs/maintenance.md) - For contributors and advanced usage
 - 🐛 [Report Issues](https://github.com/gmoon/s3proxy/issues)
 - 💬 [Discussions](https://github.com/gmoon/s3proxy/discussions)
 
 ## Contributing
 
-We welcome contributions! See our [Maintenance Guide](MAINTENANCE.md) for development setup and contribution guidelines.
+We welcome contributions! See our [Maintenance Guide](docs/maintenance.md) for development setup and contribution guidelines.
 
 ## License
 

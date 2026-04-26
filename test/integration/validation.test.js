@@ -69,7 +69,7 @@ describe('S3Proxy Validation Tests', () => {
 
       expect(response.status).toBe(EXPECTED_FILES['/index.html'].statusCode);
       expect(response.headers.get('content-type')).toBe(EXPECTED_FILES['/index.html'].contentType);
-      expect(Number.parseInt(response.headers.get('content-length'))).toBe(
+      expect(Number.parseInt(response.headers.get('content-length'), 10)).toBe(
         EXPECTED_FILES['/index.html'].contentLength
       );
 
@@ -85,7 +85,7 @@ describe('S3Proxy Validation Tests', () => {
       expect(response.headers.get('content-type')).toBe(
         EXPECTED_FILES['/zerobytefile'].contentType
       );
-      expect(Number.parseInt(response.headers.get('content-length'))).toBe(
+      expect(Number.parseInt(response.headers.get('content-length'), 10)).toBe(
         EXPECTED_FILES['/zerobytefile'].contentLength
       );
 
@@ -107,7 +107,7 @@ describe('S3Proxy Validation Tests', () => {
 
         expect(response.status).toBe(EXPECTED_FILES['/large.bin'].statusCode);
         expect(response.headers.get('content-type')).toBe(EXPECTED_FILES['/large.bin'].contentType);
-        expect(Number.parseInt(response.headers.get('content-length'))).toBe(
+        expect(Number.parseInt(response.headers.get('content-length'), 10)).toBe(
           EXPECTED_FILES['/large.bin'].contentLength
         );
 
@@ -144,7 +144,7 @@ describe('S3Proxy Validation Tests', () => {
 
       expect(response.status).toBe(EXPECTED_FILES['/test1m.tmp'].statusCode);
       expect(response.headers.get('content-type')).toBe(EXPECTED_FILES['/test1m.tmp'].contentType);
-      expect(Number.parseInt(response.headers.get('content-length'))).toBe(
+      expect(Number.parseInt(response.headers.get('content-length'), 10)).toBe(
         EXPECTED_FILES['/test1m.tmp'].contentLength
       );
 
@@ -170,7 +170,7 @@ describe('S3Proxy Validation Tests', () => {
 
       expect(response.status).toBe(206); // Partial Content
       expect(response.headers.get('content-type')).toBe('application/octet-stream');
-      expect(Number.parseInt(response.headers.get('content-length'))).toBe(100);
+      expect(Number.parseInt(response.headers.get('content-length'), 10)).toBe(100);
       expect(response.headers.get('content-range')).toMatch(/^bytes 0-99\/\d+$/);
 
       const buffer = await response.arrayBuffer();
@@ -183,7 +183,7 @@ describe('S3Proxy Validation Tests', () => {
       });
 
       expect(response.status).toBe(206);
-      expect(Number.parseInt(response.headers.get('content-length'))).toBe(1000);
+      expect(Number.parseInt(response.headers.get('content-length'), 10)).toBe(1000);
       expect(response.headers.get('content-range')).toMatch(/^bytes 1000-1999\/\d+$/);
 
       const buffer = await response.arrayBuffer();
@@ -196,7 +196,7 @@ describe('S3Proxy Validation Tests', () => {
       });
 
       expect(response.status).toBe(206);
-      expect(Number.parseInt(response.headers.get('content-length'))).toBe(60);
+      expect(Number.parseInt(response.headers.get('content-length'), 10)).toBe(60);
       expect(response.headers.get('content-range')).toMatch(/^bytes 10485700-10485759\/10485760$/);
     });
 
@@ -243,7 +243,7 @@ describe('S3Proxy Validation Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.headers.get('content-type')).toBe('text/html');
-      expect(Number.parseInt(response.headers.get('content-length'))).toBe(338);
+      expect(Number.parseInt(response.headers.get('content-length'), 10)).toBe(338);
 
       // HEAD should not return body
       const text = await response.text();
@@ -257,7 +257,7 @@ describe('S3Proxy Validation Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.headers.get('content-type')).toBe('application/octet-stream');
-      expect(Number.parseInt(response.headers.get('content-length'))).toBe(10485760);
+      expect(Number.parseInt(response.headers.get('content-length'), 10)).toBe(10485760);
 
       const buffer = await response.arrayBuffer();
       expect(buffer.byteLength).toBe(0);

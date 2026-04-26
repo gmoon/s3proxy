@@ -1,8 +1,15 @@
-import type { IncomingMessage, OutgoingHttpHeaders, ServerResponse } from 'node:http';
 import type { S3ClientConfig } from '@aws-sdk/client-s3';
 
 export interface S3ProxyConfig extends S3ClientConfig {
   bucket: string;
+  /**
+   * If true (default), `init()` calls `healthCheck()` against the bucket
+   * and rejects if it fails — fail-fast on misconfiguration.
+   * Set to false in orchestrator deployments (Kubernetes, ECS) where the
+   * platform's own readiness probe should determine health, so a missing
+   * bucket doesn't crashloop the pod before logs/dashboards are wired up.
+   */
+  verifyOnInit?: boolean;
 }
 
 export interface ParsedRequest {
@@ -10,24 +17,29 @@ export interface ParsedRequest {
   query: Record<string, string | string[]>;
 }
 
-export interface S3ProxyResponse {
-  s3stream: NodeJS.ReadableStream;
-  statusCode: number;
+/**
+ * Public response shape returned by `proxy.fetch()`. Pure — caller is
+ * responsible for writing headers and piping the stream.
+ */
+export interface S3FetchResponse {
+  stream: NodeJS.ReadableStream;
+  status: number;
   headers: Record<string, string>;
 }
 
-export interface HttpRequest extends IncomingMessage {
-  path?: string;
-  query?: Record<string, string | string[]>;
-  headers: Record<string, string | string[]>;
+/**
+ * Structural subset of an HTTP request that proxy.fetch() reads.
+ * Express's Request, Fastify's request.raw, and Node's IncomingMessage
+ * all satisfy it (with light casts where method is broader-typed). Kept
+ * minimal so request objects from any framework can be passed without
+ * subclassing IncomingMessage or implementing its full surface.
+ */
+export interface HttpRequest {
   url: string;
   method?: string;
-}
-
-export interface HttpResponse extends ServerResponse {
-  // We need to be compatible with Node.js ServerResponse writeHead overloads
-  writeHead(statusCode: number, headers?: OutgoingHttpHeaders): this;
-  writeHead(statusCode: number, statusMessage?: string, headers?: OutgoingHttpHeaders): this;
+  headers: Record<string, string | string[]>;
+  path?: string;
+  query?: Record<string, string | string[]>;
 }
 
 // Error interface for S3 operations
@@ -42,7 +54,7 @@ export interface S3ProxyEvents {
 }
 
 // Utility types for better type safety
-export type S3ProxyOptions = Omit<S3ProxyConfig, 'bucket'>;
+export type S3ProxyOptions = Omit<S3ProxyConfig, 'bucket' | 'verifyOnInit'>;
 export type HeaderMap = Record<string, string | string[]>;
 export type S3Params = {
   Bucket: string;

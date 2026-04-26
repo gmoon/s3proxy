@@ -1,85 +1,75 @@
 import { describe, expect, it } from 'vitest';
-import { S3Proxy } from '../src/index.js';
-import type { ExpressRequest } from '../src/types.js';
+import { InvalidRequest } from '../src/errors.js';
+import { parseRequest } from '../src/request-parser.js';
+import type { HttpRequest } from '../src/types.js';
 
-describe('S3Proxy.parseRequest', () => {
-  it('should return key and query', () => {
-    expect(S3Proxy.parseRequest({ url: '/index.html' } as ExpressRequest)).toEqual({
+const req = (props: Partial<HttpRequest>): HttpRequest => props as HttpRequest;
+
+describe('parseRequest', () => {
+  it('returns key and query from req.url', () => {
+    expect(parseRequest(req({ url: '/index.html' }))).toEqual({
       key: 'index.html',
       query: {},
     });
 
-    expect(S3Proxy.parseRequest({ url: '/index.html?foo=bar' } as ExpressRequest)).toEqual({
+    expect(parseRequest(req({ url: '/index.html?foo=bar' }))).toEqual({
+      key: 'index.html',
+      query: { foo: 'bar' },
+    });
+  });
+
+  it('returns key and query from req.path / req.query', () => {
+    expect(parseRequest(req({ path: '/index.html', query: {} }))).toEqual({
+      key: 'index.html',
+      query: {},
+    });
+
+    expect(parseRequest(req({ path: '/index.html', query: { foo: 'bar' } }))).toEqual({
       key: 'index.html',
       query: { foo: 'bar' },
     });
 
-    expect(S3Proxy.parseRequest({ path: '/index.html', query: {} } as ExpressRequest)).toEqual({
-      key: 'index.html',
-      query: {},
-    });
-
-    expect(
-      S3Proxy.parseRequest({ path: '/index.html', query: { foo: 'bar' } } as ExpressRequest)
-    ).toEqual({ key: 'index.html', query: { foo: 'bar' } });
-
-    expect(S3Proxy.parseRequest({ path: '/index.html' } as ExpressRequest)).toEqual({
+    expect(parseRequest(req({ path: '/index.html' }))).toEqual({
       key: 'index.html',
       query: {},
     });
   });
 
-  it('should return key without url encodings', () => {
-    expect(S3Proxy.parseRequest({ url: '/file with spaces' } as ExpressRequest)).toEqual({
+  it('decodes percent-encoded paths', () => {
+    expect(parseRequest(req({ url: '/file with spaces' }))).toEqual({
       key: 'file with spaces',
       query: {},
     });
 
-    expect(S3Proxy.parseRequest({ path: '/file with spaces' } as ExpressRequest)).toEqual({
+    expect(parseRequest(req({ path: '/file with spaces' }))).toEqual({
       key: 'file with spaces',
       query: {},
     });
   });
 
-  it('should decode all the special characters', () => {
+  it('decodes all special characters', () => {
     const testString = 'specialCharacters!-_.*\'()&$@=;:+  ,?{^}%`]">[~<#|.';
-    const encodedTestString = encodeURIComponent(testString);
+    const encoded = encodeURIComponent(testString);
 
-    expect(S3Proxy.parseRequest({ url: encodedTestString } as ExpressRequest)).toEqual({
+    expect(parseRequest(req({ url: encoded }))).toEqual({
       key: testString,
       query: {},
     });
 
-    expect(S3Proxy.parseRequest({ path: encodedTestString } as ExpressRequest)).toEqual({
+    expect(parseRequest(req({ path: encoded }))).toEqual({
       key: testString,
       query: {},
     });
   });
-});
 
-describe('S3Proxy.getS3Params', () => {
-  it('should set Bucket and Key', () => {
-    const s3proxy = new S3Proxy({ bucket: '.test-bucket' });
-    const result = (s3proxy as any).getS3Params({ path: '/index.html' } as ExpressRequest);
-    expect(result).toEqual({ Bucket: '.test-bucket', Key: 'index.html' });
+  it('throws InvalidRequest for malformed percent-encoding', () => {
+    expect(() => parseRequest(req({ url: '/foo%ZZ' }))).toThrow(InvalidRequest);
+    expect(() => parseRequest(req({ path: '/foo%ZZ' }))).toThrow(InvalidRequest);
   });
 
-  it('should set Range parameter', () => {
-    const s3proxy = new S3Proxy({ bucket: '.test-bucket' });
-    const result = (s3proxy as any).getS3Params({
-      path: '/index.html',
-      headers: { range: 'bytes=0-100' },
-    } as ExpressRequest);
-    expect(result).toEqual({
-      Bucket: '.test-bucket',
-      Key: 'index.html',
-      Range: 'bytes=0-100',
-    });
-  });
-});
-
-describe('S3Proxy.version', () => {
-  it('should return a version number as major.minor.patch', () => {
-    expect(S3Proxy.version()).toMatch(/\d+\.\d+\.\d+/);
+  it('throws InvalidRequest for null bytes in the key', () => {
+    // %00 decodes to U+0000.
+    expect(() => parseRequest(req({ url: '/foo%00bar' }))).toThrow(InvalidRequest);
+    expect(() => parseRequest(req({ path: '/foo\0bar' }))).toThrow(InvalidRequest);
   });
 });

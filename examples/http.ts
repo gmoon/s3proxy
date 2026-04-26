@@ -1,12 +1,11 @@
 import { createServer } from 'node:http';
 import { S3Proxy } from '../src/index.js';
-import type { HttpRequest, HttpResponse } from '../src/types.js';
+import type { HttpRequest } from '../src/types.js';
 
 const port = Number(process.env.PORT) || 0;
 const bucketName = process.env.BUCKET || 's3proxy-public';
 const proxy = new S3Proxy({ bucket: bucketName });
 
-// Initialize proxy with proper error handling
 try {
   await proxy.init();
   console.log(`S3Proxy initialized for bucket: ${bucketName}`);
@@ -17,16 +16,20 @@ try {
 
 const server = createServer(async (req, res) => {
   try {
-    const stream = await proxy.get(req as HttpRequest, res as HttpResponse);
-    stream
-      .on('error', () => {
-        // just end the request and let the HTTP status code convey the error
-        res.end();
-      })
-      .pipe(res);
+    const { stream, status, headers } = await proxy.fetch(req as unknown as HttpRequest);
+    res.writeHead(status, headers);
+    stream.on('error', () => res.end()).pipe(res);
   } catch (error) {
-    console.error('Error handling request:', error);
-    res.statusCode = 500;
+    const statusCode =
+      typeof error === 'object' &&
+      error !== null &&
+      'statusCode' in error &&
+      typeof (error as { statusCode: unknown }).statusCode === 'number'
+        ? (error as { statusCode: number }).statusCode
+        : 500;
+    if (!res.headersSent) {
+      res.statusCode = statusCode;
+    }
     res.end();
   }
 });
