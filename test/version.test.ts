@@ -18,7 +18,7 @@ describe('Version', () => {
   it('should be accessible via S3Proxy.version() static method', () => {
     const version = S3Proxy.version();
     expect(version).toBe(VERSION);
-    expect(version).toBe('3.0.0');
+    expect(version).toBe('4.0.0');
   });
 
   it('should be a valid semantic version', () => {

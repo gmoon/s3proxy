@@ -16,7 +16,7 @@ describe('ESM Imports', () => {
 
   it('should have static version method', () => {
     expect(typeof S3Proxy.version).toBe('function');
-    expect(S3Proxy.version()).toBe('3.0.0');
+    expect(S3Proxy.version()).toBe('4.0.0');
   });
 
   it('should be a constructor function', () => {
