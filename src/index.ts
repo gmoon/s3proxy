@@ -5,7 +5,9 @@ import {
   GetObjectCommand,
   type GetObjectCommandOutput,
   HeadBucketCommand,
+  type HeadBucketCommandOutput,
   HeadObjectCommand,
+  type HeadObjectCommandOutput,
   NoSuchBucket,
   NoSuchKey,
   S3Client,
@@ -105,13 +107,14 @@ export class S3Proxy extends EventEmitter {
   }
 
   public isInitialized(): void {
+    void this.client;
+  }
+
+  private get client(): S3Client {
     if (!this.s3) {
-      const error = new UserException(
-        'UninitializedError',
-        'S3Proxy is uninitialized (call s3proxy.init)'
-      );
-      throw error;
+      throw new UserException('UninitializedError', 'S3Proxy is uninitialized (call s3proxy.init)');
     }
+    return this.s3;
   }
 
   /**
@@ -154,55 +157,43 @@ export class S3Proxy extends EventEmitter {
     return stream;
   }
 
-  /**
-   * 1. Send provided command through the s3 client
-   * 2. Use middleware to capture
-   *   2a. item.Body as Readable s3stream (empty if item.Body is missing)
-   *   2b. req.headers as headers
-   *   2c. req.statusCode as statusCode
-   * 3. return { s3stream, statusCode, headers }
-   */
-  private async send(
-    command: GetObjectCommand | HeadObjectCommand | HeadBucketCommand
-  ): Promise<S3ProxyResponse> {
-    this.isInitialized();
-    let headers: Record<string, string> = {};
-    let statusCode = 200;
-    let s3stream: Readable;
+  // Maps typed SDK output fields to lowercase HTTP header names. Replaces the
+  // command-middleware hack that read pre-serialized wire headers; this uses
+  // public typed fields, so no `any` casts are needed.
+  private static readonly OUTPUT_HEADER_MAP: ReadonlyArray<readonly [string, string]> = [
+    ['ContentType', 'content-type'],
+    ['ContentLength', 'content-length'],
+    ['ContentRange', 'content-range'],
+    ['ContentEncoding', 'content-encoding'],
+    ['ContentLanguage', 'content-language'],
+    ['ContentDisposition', 'content-disposition'],
+    ['CacheControl', 'cache-control'],
+    ['ETag', 'etag'],
+    ['LastModified', 'last-modified'],
+    ['AcceptRanges', 'accept-ranges'],
+    ['Expires', 'expires'],
+  ];
 
-    // Add middleware to capture response metadata
-    // Using any here is necessary for AWS SDK middleware compatibility
-    // biome-ignore lint/suspicious/noExplicitAny: AWS SDK middleware requires any types
-    (command as any).middlewareStack.add(
-      // biome-ignore lint/suspicious/noExplicitAny: AWS SDK middleware callback signature
-      (next: any) => async (args: any) => {
-        const result = await next(args);
-        headers = result.response.headers || {};
-        statusCode = result.response.statusCode || 200;
-        return result;
-      },
-      // priority: low is important here, otherwise middleware is never
-      // executed for non-2xx responses. Not sure why
-      // Link: https://aws.amazon.com/blogs/developer/middleware-stack-modular-aws-sdk-js/
-      { step: 'deserialize', priority: 'low' }
-    );
-
-    try {
-      // biome-ignore lint/suspicious/noExplicitAny: AWS SDK command union type compatibility
-      const item = await this.s3?.send(command as any);
-      s3stream = S3Proxy.getReadstream((item as GetObjectCommandOutput).Body);
-    } catch (e) {
-      if (S3Proxy.isNonFatalError(e)) {
-        s3stream = S3Proxy.createEmptyReadstream();
-        // Try to get the actual HTTP status code from the exception
-        if (e instanceof S3ServiceException && e.$response?.statusCode) {
-          statusCode = e.$response.statusCode;
-        }
-      } else {
-        throw e;
-      }
+  private static outputToHeaders(
+    output: GetObjectCommandOutput | HeadObjectCommandOutput | HeadBucketCommandOutput
+  ): Record<string, string> {
+    const h: Record<string, string> = {};
+    const fields = output as unknown as Record<string, unknown>;
+    for (const [src, dst] of S3Proxy.OUTPUT_HEADER_MAP) {
+      const v = fields[src];
+      if (v === undefined || v === null) continue;
+      h[dst] = v instanceof Date ? v.toUTCString() : String(v);
     }
-    return { s3stream, statusCode, headers };
+    return h;
+  }
+
+  private handleNonFatal(e: unknown): S3ProxyResponse {
+    if (!S3Proxy.isNonFatalError(e)) throw e;
+    let statusCode = 200;
+    if (e instanceof S3ServiceException && e.$response?.statusCode) {
+      statusCode = e.$response.statusCode;
+    }
+    return { s3stream: S3Proxy.createEmptyReadstream(), statusCode, headers: {} };
   }
 
   /**
@@ -224,20 +215,45 @@ export class S3Proxy extends EventEmitter {
   }
 
   private async getObject(req: HttpRequest): Promise<S3ProxyResponse> {
-    const params = this.getS3Params(req);
-    const command = new GetObjectCommand(params);
-    return this.send(command);
+    const command = new GetObjectCommand(this.getS3Params(req));
+    try {
+      const output = await this.client.send(command);
+      return {
+        s3stream: S3Proxy.getReadstream(output.Body),
+        statusCode: output.$metadata.httpStatusCode ?? 200,
+        headers: S3Proxy.outputToHeaders(output),
+      };
+    } catch (e) {
+      return this.handleNonFatal(e);
+    }
   }
 
   private async headObject(req: HttpRequest): Promise<S3ProxyResponse> {
-    const params = this.getS3Params(req);
-    const command = new HeadObjectCommand(params);
-    return this.send(command);
+    const command = new HeadObjectCommand(this.getS3Params(req));
+    try {
+      const output = await this.client.send(command);
+      return {
+        s3stream: S3Proxy.createEmptyReadstream(),
+        statusCode: output.$metadata.httpStatusCode ?? 200,
+        headers: S3Proxy.outputToHeaders(output),
+      };
+    } catch (e) {
+      return this.handleNonFatal(e);
+    }
   }
 
   private async headBucket(): Promise<S3ProxyResponse> {
     const command = new HeadBucketCommand({ Bucket: this.bucket });
-    return this.send(command);
+    try {
+      const output = await this.client.send(command);
+      return {
+        s3stream: S3Proxy.createEmptyReadstream(),
+        statusCode: output.$metadata.httpStatusCode ?? 200,
+        headers: S3Proxy.outputToHeaders(output),
+      };
+    } catch (e) {
+      return this.handleNonFatal(e);
+    }
   }
 
   /*
@@ -261,7 +277,7 @@ export class S3Proxy extends EventEmitter {
 
   public async healthCheck(): Promise<void> {
     const command = new HeadBucketCommand({ Bucket: this.bucket });
-    await this.s3?.send(command);
+    await this.client.send(command);
   }
 
   public async healthCheckStream(res: HttpResponse): Promise<Readable> {
