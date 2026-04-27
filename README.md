@@ -210,12 +210,64 @@ try {
 }
 ```
 
+### Hono Integration (Web Standards)
+
+For runtimes built on Web Standards (Bun, Cloudflare Workers, Deno),
+Hono is the natural fit. `proxy.fetch()` returns headers and a stream
+that drop straight into a Web `Response`:
+
+```typescript
+import { Readable } from 'node:stream';
+import { Hono } from 'hono';
+import { S3Proxy, S3ProxyError } from 's3proxy';
+import type { HttpRequest } from 's3proxy';
+
+const proxy = new S3Proxy({ bucket: 'my-website-bucket' });
+await proxy.init();
+
+const app = new Hono();
+
+app.get('/health', async (c) => {
+  await proxy.healthCheck();
+  return c.text('OK');
+});
+
+app.on(['GET', 'HEAD'], '/*', async (c) => {
+  const url = new URL(c.req.url);
+  const { stream, status, headers } = await proxy.fetch({
+    url: url.pathname + url.search,
+    method: c.req.method,
+    // Hono exposes Web `Headers`; HttpRequest expects a plain Record.
+    headers: Object.fromEntries(c.req.raw.headers),
+  } as HttpRequest);
+  // Node Readable → Web ReadableStream so it fits in a Response body.
+  const body = Readable.toWeb(stream as Readable) as ReadableStream;
+  return new Response(body, { status, headers });
+});
+
+app.onError((err) => {
+  const status = err instanceof S3ProxyError ? err.statusCode : 500;
+  return new Response(err.message, { status });
+});
+```
+
+> **Performance note.** On Node, Hono goes through `@hono/node-server`
+> which converts `IncomingMessage` ↔ `Web Request/Response` on every
+> request — two extra layers vs. Express's direct `stream.pipe(res)`.
+> For network-bound streaming (the typical s3proxy workload, where S3
+> RTT dominates) the conversion is unmeasurable; the smoke gate's
+> per-example latency baseline confirms parity with Express/Fastify
+> on small files. For sub-millisecond CPU-bound paths, prefer the
+> Express/Fastify examples. On Bun/Workers/Deno the conversion layer
+> doesn't exist at all and Hono is the natural fit.
+
 ### Framework Compatibility
 
 s3proxy is **framework-agnostic** and works with any Node.js HTTP framework that provides access to the underlying request and response objects:
 
 - **[Express](https://expressjs.com/)** - Fast, unopinionated web framework ✅
-- **[Fastify](https://fastify.dev/)** - Fast and low overhead web framework ✅  
+- **[Fastify](https://fastify.dev/)** - Fast and low overhead web framework ✅
+- **[Hono](https://hono.dev/)** - Web Standards framework (Bun/Workers/Deno/Node) ✅
 - **[Koa](https://koajs.com/)** - Expressive middleware framework ✅
 - **[Hapi](https://hapi.dev/)** - Rich framework for building applications ✅
 - **[NestJS](https://nestjs.com/)** - Progressive Node.js framework ✅
@@ -562,6 +614,7 @@ examples/
 ├── express-basic.ts  # TypeScript Express example
 ├── fastify-basic.ts  # TypeScript Fastify example
 ├── fastify-docker.ts # Dockerized Fastify example
+├── hono-basic.ts     # Hono / Web Standards example
 └── http.ts           # TypeScript node:http example
 
 test/
