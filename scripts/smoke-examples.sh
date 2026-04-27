@@ -11,6 +11,7 @@ set -euo pipefail
 BUCKET=${BUCKET:-s3proxy-public}
 KEY_PATH=${KEY_PATH:-/index.html}
 START_TIMEOUT_MS=${START_TIMEOUT_MS:-15000}
+LATENCY_SAMPLES=${LATENCY_SAMPLES:-10}
 
 find_free_port() {
   python3 -c 'import socket; s=socket.socket(); s.bind(("",0)); print(s.getsockname()[1]); s.close()'
@@ -84,13 +85,46 @@ run_example() {
     return 1
   fi
 
-  echo "[smoke] OK: $example (health=200, $KEY_PATH=200, missing=404)"
+  # Latency baseline: N sequential GETs of $KEY_PATH, report mean + p95
+  # so the per-example overhead (e.g. Hono's @hono/node-server double
+  # conversion vs Express direct-pipe) is visible in CI output.
+  # No threshold assertion — curl's -m 5 already catches catastrophic
+  # hangs; the rest is data, not a gate.
+  local lat=()
+  for _ in $(seq 1 "$LATENCY_SAMPLES"); do
+    local t0 t1 ms
+    t0=$(($(date +%s%N) / 1000000))
+    if ! curl -fsS -m 5 "http://localhost:$port$KEY_PATH" -o /dev/null; then
+      echo "[smoke] FAIL: $example latency sample errored"
+      cat "$log"
+      cleanup
+      return 1
+    fi
+    t1=$(($(date +%s%N) / 1000000))
+    ms=$(( t1 - t0 ))
+    lat+=("$ms")
+  done
+  local sum=0 max=0 sorted
+  for v in "${lat[@]}"; do
+    sum=$(( sum + v ))
+    [ "$v" -gt "$max" ] && max=$v
+  done
+  local mean=$(( sum / LATENCY_SAMPLES ))
+  sorted=$(printf '%s\n' "${lat[@]}" | sort -n)
+  # For n<20, p95 collapses to max (no interpolation, no fractional index).
+  # That's fine here — these numbers are reported, not gated.
+  local p95_idx=$(( LATENCY_SAMPLES - 1 ))
+  [ "$LATENCY_SAMPLES" -ge 20 ] && p95_idx=$(( LATENCY_SAMPLES * 95 / 100 ))
+  local p95
+  p95=$(echo "$sorted" | sed -n "$(( p95_idx + 1 ))p")
+
+  echo "[smoke] OK: $example (health=200, $KEY_PATH=200, missing=404, n=$LATENCY_SAMPLES mean=${mean}ms max=${max}ms p95=${p95}ms)"
   cleanup
   return 0
 }
 
 failed=0
-for example in examples/express-basic.ts examples/fastify-basic.ts; do
+for example in examples/express-basic.ts examples/fastify-basic.ts examples/hono-basic.ts; do
   run_example "$example" || failed=1
 done
 
