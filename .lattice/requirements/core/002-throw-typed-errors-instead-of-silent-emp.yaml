@@ -1,0 +1,22 @@
+id: REQ-CORE-002
+type: requirement
+title: Throw typed errors instead of silent empty-stream substitution
+body: 'GH issue #98. Create src/errors.ts with S3ProxyError base + S3NotFound (404), S3Forbidden (403), S3InvalidRange (416), InvalidRequest (400 for parser). Map AWS SDK errors via mapError(). Remove S3Proxy.isNonFatalError (vestigial). Original SDK error attached as cause. BREAKING: v3 returned an empty 200 stream for these cases.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:56:25.252014+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+priority: P0
+category: CORE
+tags:
+- errors
+- breaking
+resolution:
+  status: verified
+  resolved_at: 2026-05-11T22:59:43.605852+00:00
+  resolved_by: agent:claude-2026-05-11
+edges:
+  derives_from:
+  - target: THX-TYPED-ERRORS
+    version: 1.0.0

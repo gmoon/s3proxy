@@ -1,0 +1,21 @@
+id: IMP-EXAMPLE-001
+type: implementation
+title: Hono example for Web Standards runtimes
+body: 'PR #106 (commits 981fa74 + 274a722 + 6b01de4). examples/hono-basic.ts uses proxy.fetch() with Object.fromEntries(c.req.raw.headers) to bridge Web Headers to HttpRequest''s Record (path-A from #104), and Readable.toWeb(stream) to bridge Node Readable to Web ReadableStream for the Response body. app.on([''GET'',''HEAD''],''/*'',...) shares one handler. Smoke gate extended with per-example latency baseline (10 sequential GETs, mean/max/p95). README documents the perf tradeoff. Local smoke: mean=55-58ms across express/fastify/hono — network-bound parity.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:57:29.055437+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  language: typescript
+  files:
+  - path: examples/hono-basic.ts
+  - path: scripts/smoke-examples.sh
+  - path: README.md
+  - path: package.json
+  test_command: bash scripts/smoke-examples.sh
+edges:
+  satisfies:
+  - target: REQ-EXAMPLE-001
+    version: 1.0.0

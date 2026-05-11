@@ -1,0 +1,13 @@
+id: SRC-HONO-PR
+type: source
+title: 'Hono example PR #106'
+body: 'PR #106 added examples/hono-basic.ts demonstrating proxy.fetch() integration with a Web-Standards framework. Captures the path-A decision from #104 (adapt Web Headers to Record at the example boundary rather than widening HttpRequest). Includes per-example latency baseline (mean=55-58ms across express/fastify/hono on /index.html) confirming network-bound parity.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:55:36.444878+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  url: https://github.com/gmoon/s3proxy/pull/106
+  reliability: industry
+  retrieved_at: 2026-05-11

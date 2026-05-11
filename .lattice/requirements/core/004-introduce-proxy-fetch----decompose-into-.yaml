@@ -1,0 +1,25 @@
+id: REQ-CORE-004
+type: requirement
+title: Introduce proxy.fetch(); decompose into parser + gateway; retire wrappers
+body: 'GH issue #100. Three sub-steps: (B3a) Add public proxy.fetch(req) returning {stream, status, headers}, reimplement get/head as wrappers. (B3b) Extract src/request-parser.ts (parseRequest, mapHeaderToParam, stripLeadingSlash) and src/s3-gateway.ts (S3Client lifecycle, send). Add InvalidRequest for malformed percent-encoding and null-byte keys. (B3c) Delete proxy.get/head/healthCheckStream entirely; examples migrate to fetch + manual writeHead + pipe. BREAKING.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:56:25.315978+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+priority: P0
+category: CORE
+tags:
+- api
+- breaking
+- refactor
+resolution:
+  status: verified
+  resolved_at: 2026-05-11T22:59:43.622632+00:00
+  resolved_by: agent:claude-2026-05-11
+edges:
+  derives_from:
+  - target: THX-PURE-FETCH
+    version: 1.0.0
+  - target: THX-DECOMPOSE
+    version: 1.0.0

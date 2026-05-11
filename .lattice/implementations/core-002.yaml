@@ -1,0 +1,22 @@
+id: IMP-CORE-002
+type: implementation
+title: Typed errors; remove silent empty-stream substitution
+body: 'Commit 5ae51a5 (PR #103). Created src/errors.ts with S3ProxyError base and S3NotFound (404) / S3Forbidden (403) / S3InvalidRange (416) / InvalidRequest (400, reserved for B3b''s parser). Replaced handleNonFatal with mapError that throws typed errors; original SDK error attached as cause. Removed S3Proxy.isNonFatalError. test/s3proxy.test.ts rewritten to drive public proxy.get + assert typed rejects. test/helpers/http-mocks.ts factored makeReq/makeRes/readAll/catchError helpers.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:57:12.101544+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  language: typescript
+  files:
+  - path: src/errors.ts
+  - path: src/index.ts
+  - path: test/s3proxy.test.ts
+  - path: test/helpers/http-mocks.ts
+  - path: scripts/smoke-examples.sh
+  test_command: npm test
+edges:
+  satisfies:
+  - target: REQ-CORE-002
+    version: 1.0.0

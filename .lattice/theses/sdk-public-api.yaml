@@ -1,0 +1,18 @@
+id: THX-SDK-PUBLIC-API
+type: thesis
+title: Reaching into AWS SDK internals is a maintenance hazard
+body: v3 mutated command.middlewareStack on every request with three any casts and a Not sure why comment about priority:low. The middleware approach broke on any SDK refactor. v4 uses typed $metadata.httpStatusCode for status and reconstructs HTTP headers from typed output fields (ContentType, ContentLength, etc.). Zero any, zero biome-ignore, zero internal coupling — the SDK can refactor freely.
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:55:56.151648+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  category: risk
+  confidence: 0.95
+edges:
+  supported_by:
+  - target: SRC-AWS-SDK-MW
+    version: 1.0.0
+  - target: SRC-V4-PROMPT
+    version: 1.0.0

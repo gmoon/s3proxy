@@ -1,0 +1,13 @@
+id: SRC-V4-MIGRATION
+type: source
+title: MIGRATION.md v4.0
+body: 'User-facing migration document shipped in PR #103. Documents the v3 to v4 breaking changes (typed errors, removal of proxy.get/head/healthCheckStream, free-function exports of parseRequest et al., structural HttpRequest), the new verifyOnInit option, and where errors fire (throw from fetch() vs v3''s silent empty-stream).'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:55:30.846812+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  url: https://github.com/gmoon/s3proxy/blob/master/MIGRATION.md
+  reliability: industry
+  retrieved_at: 2026-05-11

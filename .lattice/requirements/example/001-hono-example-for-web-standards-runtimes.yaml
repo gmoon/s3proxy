@@ -1,0 +1,25 @@
+id: REQ-EXAMPLE-001
+type: requirement
+title: Hono example for Web Standards runtimes
+body: 'GH issue #104. Add examples/hono-basic.ts demonstrating proxy.fetch() integration with Hono on Node (via @hono/node-server) and by extension Bun/Workers/Deno. Use Object.fromEntries(c.req.raw.headers) to adapt Web Headers to HttpRequest''s Record. Use Readable.toWeb(stream) for the Web Response body. Wire into smoke gate. README documents the perf tradeoff (two extra conversion layers on Node, unmeasurable for network-bound streaming).'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:56:42.949340+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+priority: P2
+category: EXAMPLE
+tags:
+- hono
+- web-standards
+- examples
+resolution:
+  status: verified
+  resolved_at: 2026-05-11T22:59:43.652216+00:00
+  resolved_by: agent:claude-2026-05-11
+edges:
+  derives_from:
+  - target: THX-PURE-FETCH
+    version: 1.0.0
+  - target: THX-WEB-STANDARDS
+    version: 1.0.0
