@@ -1,0 +1,13 @@
+id: SRC-AWS-SDK-MW
+type: source
+title: AWS SDK v3 middleware stack blog post
+body: Original AWS blog explaining the modular middleware stack in AWS SDK v3. v3 of s3proxy reached into command.middlewareStack with three any casts and a Not sure why comment about priority:low — this source is the authoritative reference for that approach. v4 abandoned the middleware approach in favor of typed $metadata.httpStatusCode and reconstructed headers from typed output.
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:55:33.945024+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  url: https://aws.amazon.com/blogs/developer/middleware-stack-modular-aws-sdk-js/
+  reliability: industry
+  retrieved_at: 2026-05-11

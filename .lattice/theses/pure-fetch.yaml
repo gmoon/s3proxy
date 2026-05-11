@@ -1,0 +1,20 @@
+id: THX-PURE-FETCH
+type: thesis
+title: proxy.fetch(req) returning {stream, status, headers} enables any framework
+body: 'v3''s proxy.get(req, res) mutated the response — coupling the library to Node''s ServerResponse. A pure proxy.fetch() that returns a structured triple works for Express, Fastify, Hono, raw http, Web Response, and any future runtime. Validated by the Hono example (PR #106) which uses the same proxy.fetch() that Express and Fastify use, with no library changes.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:55:50.706349+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  category: value_prop
+  confidence: 0.95
+edges:
+  supported_by:
+  - target: SRC-V4-PROMPT
+    version: 1.0.0
+  - target: SRC-V4-MIGRATION
+    version: 1.0.0
+  - target: SRC-HONO-PR
+    version: 1.0.0

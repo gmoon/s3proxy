@@ -1,0 +1,22 @@
+id: REQ-BUILD-001
+type: requirement
+title: Share base tsconfig + vitest config; replace shell version-gen
+body: 'GH issue #96. Extract tsconfig.base.json that both tsconfig.json and tsconfig.examples.json extend. Extract vitest.shared.ts so unit and integration configs don''t duplicate globals/environment/timeouts. Replace npm pkg get | sed | echo > version.ts shell hack with createRequire-based JSON import. Delete the now-redundant version.ts generation.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:56:11.690440+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+priority: P1
+category: BUILD
+tags:
+- tooling
+- build
+resolution:
+  status: verified
+  resolved_at: 2026-05-11T22:59:43.631323+00:00
+  resolved_by: agent:claude-2026-05-11
+edges:
+  derives_from:
+  - target: THX-DECOMPOSE
+    version: 1.0.0

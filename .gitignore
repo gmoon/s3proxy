@@ -84,5 +84,10 @@ typings/
 
 /coverage
 
-# Claude Code per-user tooling/prompts
-.claude/
+# Claude Code per-user tooling/prompts.
+# Ignore .claude/ contents by default, then re-include project-scoped
+# skills and agents — those teach any agent how to work with this repo
+# (e.g. lattice integration) and should be committed.
+.claude/*
+!.claude/skills/
+!.claude/agents/

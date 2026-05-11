@@ -1,0 +1,16 @@
+id: THX-DECOMPOSE
+type: thesis
+title: The 288-line S3Proxy god class needs parser + gateway + orchestrator split
+body: v3's src/index.ts mixed HTTP request parsing, AWS SDK lifecycle, response shaping, error classification, and framework-facing API in one class. Decomposing into src/request-parser.ts (pure functions), src/s3-gateway.ts (SDK boundary), and a slimmed src/index.ts (orchestrator) makes each piece individually testable, unblocks framework adapters (Hono via Web Standards), and reduces blast radius of any future SDK change.
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:55:48.056504+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  category: technical
+  confidence: 0.9
+edges:
+  supported_by:
+  - target: SRC-V4-PROMPT
+    version: 1.0.0

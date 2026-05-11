@@ -1,0 +1,24 @@
+id: IMP-TEST-001
+type: implementation
+title: Behavioral coverage; remove implementation tests; smoke gate
+body: 'Commits 301a98a + e2c9b9b (PR #103). Phase 0 added scripts/smoke-examples.sh that boots each example on a free port and asserts /health=200, /index.html=200, and a missing key returns 404 (the v3->v4 empty-200->404 transition). B6 final sweep: zero ''as any'' in test/, zero ''(proxy as any)'' in test/, biome check 0/0. Removed test/types.test.ts (tests TS not behavior), test/integration-tests.js (mocha legacy), test/mocha.opts. Added test/concurrent.test.ts (10 parallel fetch calls, distinct streams/bytes), tightened test/streaming-memory.test.ts to 100MB body / <50MB peak RSS delta.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:57:29.011183+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  language: typescript
+  files:
+  - path: test/s3proxy.test.ts
+  - path: test/fetch.test.ts
+  - path: test/concurrent.test.ts
+  - path: test/streaming-memory.test.ts
+  - path: test/helpers/http-mocks.ts
+  - path: test/helpers/aws-mock.ts
+  - path: scripts/smoke-examples.sh
+  test_command: npm test && bash scripts/smoke-examples.sh
+edges:
+  satisfies:
+  - target: REQ-TEST-001
+    version: 1.0.0

@@ -1,0 +1,12 @@
+id: SRC-V4-PROMPT
+type: source
+title: v4.0 refactor prompt
+body: The original brief that drove the v4.0 work. Specified the seven sub-issues (#95-#101), the additive-then-subtractive migration pattern, the non-negotiable gate discipline (every commit leaves all gates passing), and the simplify-per-issue requirement. Lives at .claude/prompts/v4-refactor.md in the worktree at start of work; intentionally not committed to master.
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:55:28.330328+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  reliability: industry
+  retrieved_at: 2026-05-11

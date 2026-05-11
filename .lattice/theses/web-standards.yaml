@@ -1,0 +1,16 @@
+id: THX-WEB-STANDARDS
+type: thesis
+title: Web Standards runtimes (Bun, Workers, Deno) need the same API as Node
+body: The library's reach extends beyond Node when proxy.fetch() returns a plain triple that fits cleanly in a Web Response. On Bun/Cloudflare Workers/Deno, Hono is the natural framework and the @hono/node-server conversion layer disappears entirely. Demonstrated by examples/hono-basic.ts; smoke gate confirms parity (mean=55-58ms across all three frameworks).
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:55:58.871075+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  category: market
+  confidence: 0.85
+edges:
+  supported_by:
+  - target: SRC-HONO-PR
+    version: 1.0.0

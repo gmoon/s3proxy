@@ -1,0 +1,22 @@
+id: REQ-DOCS-001
+type: requirement
+title: Prune root markdown bloat; revise credentials guidance
+body: 'GH issue #97. Delete seven stale root markdown files (MIGRATION_SUMMARY, RELEASE*.md, TODO, AI_ASSISTED, S3PROXY_DOCKER_ADAPTATION). Move MAINTENANCE.md and PERFORMANCE.md to docs/. Update README''s credentials section: place credentials.json at ~/.s3proxy/ and bind-mount from there (not the repo root). credentials.json remains intentional dev tooling.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:56:11.717816+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+priority: P2
+category: DOCS
+tags:
+- hygiene
+- docs
+resolution:
+  status: verified
+  resolved_at: 2026-05-11T22:59:43.638859+00:00
+  resolved_by: agent:claude-2026-05-11
+edges:
+  derives_from:
+  - target: THX-DECOMPOSE
+    version: 1.0.0

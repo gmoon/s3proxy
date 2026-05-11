@@ -1,0 +1,22 @@
+id: REQ-CORE-001
+type: requirement
+title: Replace AWS SDK middleware-stack hack with public API
+body: 'GH issue #95. src/index.ts lines 173-188 in v3 used (command as any).middlewareStack with three any casts to capture response metadata. Replace with output.$metadata.httpStatusCode for status and reconstruct headers from typed AWS SDK output fields. Zero any, zero biome-ignore, zero ''Not sure why'' comment. Add a streaming-memory test asserting peak RSS delta on a synthetic 50MB body.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:56:11.659059+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+priority: P0
+category: CORE
+tags:
+- aws-sdk
+- refactor
+resolution:
+  status: verified
+  resolved_at: 2026-05-11T22:59:43.595776+00:00
+  resolved_by: agent:claude-2026-05-11
+edges:
+  derives_from:
+  - target: THX-SDK-PUBLIC-API
+    version: 1.0.0

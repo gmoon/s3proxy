@@ -1,0 +1,4 @@
+# Lattice configuration
+version: "1.0"
+project: "s3proxy"
+description: "Front AWS S3 with a web server that you control"

@@ -1,0 +1,18 @@
+id: THX-TYPED-ERRORS
+type: thesis
+title: Silent error swallowing is a contract bug; consumers need typed errors
+body: 'v3 substituted an empty 200 stream for any non-fatal S3 error (NoSuchKey, NoSuchBucket, AccessDenied, InvalidRange). Consumers had no way to distinguish a zero-byte file from a swallowed 404. v4 throws typed S3ProxyError subclasses with the SDK error attached as cause, so frameworks render the right HTTP status. Confidence: high — the silent-200 path was actively misleading load balancers and CDN cache layers in real deployments.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:55:45.013848+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  category: technical
+  confidence: 0.95
+edges:
+  supported_by:
+  - target: SRC-V4-PROMPT
+    version: 1.0.0
+  - target: SRC-V4-MIGRATION
+    version: 1.0.0

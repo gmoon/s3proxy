@@ -1,0 +1,20 @@
+id: IMP-CORE-001
+type: implementation
+title: Replace AWS SDK middleware-stack hack with public API
+body: 'Commit e24b4b6 (PR #103). Removed the (command as any).middlewareStack mutation, three any casts, two biome-ignore directives, and the Not sure why comment. Status now comes from output.$metadata.httpStatusCode; headers reconstructed from typed output fields via a src->dst table (OUTPUT_HEADER_MAP). Added test/streaming-memory.test.ts asserting peak RSS delta < 80MB on a 50MB synthetic stream (later tightened to <50MB on 100MB in B6).'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:57:00.991022+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  language: typescript
+  files:
+  - path: src/index.ts
+  - path: test/streaming-memory.test.ts
+  - path: vitest.config.ts
+  test_command: npm test
+edges:
+  satisfies:
+  - target: REQ-CORE-001
+    version: 1.0.0

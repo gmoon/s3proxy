@@ -1,0 +1,21 @@
+id: IMP-CORE-003
+type: implementation
+title: verifyOnInit option; unified init/healthCheck probe
+body: 'Commit 59aa209 (PR #103). Added verifyOnInit?: boolean to S3ProxyConfig (default true). When true, init() routes through healthCheck() — single source of truth for the probe. When false, init() resolves without S3 traffic. Three behavioral tests cover the cases. README documents the option and recommends pairing verifyOnInit:false with proxy.healthCheck() in a readiness handler.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T22:57:12.130405+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  language: typescript
+  files:
+  - path: src/index.ts
+  - path: src/types.ts
+  - path: test/s3proxy.test.ts
+  - path: README.md
+  test_command: npm test
+edges:
+  satisfies:
+  - target: REQ-CORE-003
+    version: 1.0.0
