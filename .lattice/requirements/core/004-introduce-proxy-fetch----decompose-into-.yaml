@@ -23,3 +23,6 @@ edges:
     version: 1.0.0
   - target: THX-DECOMPOSE
     version: 1.0.0
+  - target: THX-CORE-VALUE
+    version: 1.0.0
+    rationale: proxy.fetch() is the public API surface through which the value prop (stream-without-buffering) is delivered to consumers

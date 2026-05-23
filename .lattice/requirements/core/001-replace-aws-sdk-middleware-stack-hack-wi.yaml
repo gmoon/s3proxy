@@ -20,3 +20,6 @@ edges:
   derives_from:
   - target: THX-SDK-PUBLIC-API
     version: 1.0.0
+  - target: THX-NO-BUFFERING
+    version: 1.0.0
+    rationale: The new middleware-replacement path was required to not buffer; streaming-memory test asserts this

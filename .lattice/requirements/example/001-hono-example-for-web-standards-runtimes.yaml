@@ -23,3 +23,7 @@ edges:
     version: 1.0.0
   - target: THX-WEB-STANDARDS
     version: 1.0.0
+  depends_on:
+  - target: REQ-CORE-004
+    version: 1.0.0
+    rationale: 'Hono example uses proxy.fetch(); couldn''t be written before #100 shipped it'

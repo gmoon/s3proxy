@@ -1,0 +1,20 @@
+id: THX-NO-BUFFERING
+type: thesis
+title: Memory usage must be bounded by chunk size, not object size
+body: 'Hard constraint: at no point may the proxy hold more than a small constant of bytes from a single S3 object. A 10GB AI model stream must not allocate 10GB on the proxy. This forbids any internal API that reads the full body (no Buffer.concat, no await response.body.text(), no internal caching of bodies). Validated continuously by test/streaming-memory.test.ts (100MB body, peak RSS delta < 50MB) and the artillery suite. Drives backpressure preservation through every framework adapter.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T23:42:54.109725+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta: {}
+edges:
+  supported_by:
+  - target: SRC-V4-PROMPT
+    version: 1.0.0
+  - target: SRC-V4-MIGRATION
+    version: 1.0.0
+  derives_from:
+  - target: THX-CORE-VALUE
+    version: 1.0.0
+    rationale: The no-buffering constraint is the technical expression of the core value prop

@@ -1,0 +1,23 @@
+id: REQ-BUILD-002
+type: requirement
+title: Scope pool:forks (with --expose-gc) to streaming test only
+body: vitest.config.ts uses pool:'forks' + execArgv:['--expose-gc'] so test/streaming-memory.test.ts can call global.gc(). All other test files pay the fork startup cost too (~100ms/file × ~10 files = ~1s wall time per run). Use vitest 'projects' or per-file pool config to fork only the streaming test.
+status: active
+version: 1.0.0
+created_at: 2026-05-23T22:57:34.379746+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+priority: P2
+category: BUILD
+tags:
+- perf
+- test-config
+resolution:
+  status: deferred
+  reason: <0.5s saved per test run after vitest 4 oxc speedup; vitest 3.x→4.x workspace/projects config adds more complexity than the saving justifies. Revisit if test suite grows materially.
+  resolved_at: 2026-05-23T22:57:34.408591+00:00
+  resolved_by: agent:claude-2026-05-23
+edges:
+  derives_from:
+  - target: THX-DECOMPOSE
+    version: 1.0.0

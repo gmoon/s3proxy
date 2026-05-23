@@ -1,0 +1,23 @@
+id: REQ-CORE-005
+type: requirement
+title: Remove vestigial public proxy.isInitialized()
+body: 'Public isInitialized() exists for v3 backwards-compat. After v4 it does void this.gateway.isInitialized() — two indirections to throw if uninitialized. The method''s name suggests a predicate but it throws. Removing simplifies the public API (one less method to document/test) and consolidates ''uninitialized'' detection to the gateway''s lazy client getter. BREAKING but trivial: callers that used it can just call init() and trust the next call.'
+status: active
+version: 1.0.0
+created_at: 2026-05-23T22:57:34.337798+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+priority: P2
+category: CORE
+tags:
+- cleanup
+- breaking
+resolution:
+  status: deferred
+  reason: Out of scope for the v4 prompt. The method works; removing is cleanup beyond the v4 surface. Revisit when next breaking change PR opens.
+  resolved_at: 2026-05-23T22:57:34.371684+00:00
+  resolved_by: agent:claude-2026-05-23
+edges:
+  derives_from:
+  - target: THX-DECOMPOSE
+    version: 1.0.0
