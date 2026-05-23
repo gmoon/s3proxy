@@ -23,3 +23,6 @@ edges:
     version: 1.0.0
   - target: THX-PURE-FETCH
     version: 1.0.0
+  - target: THX-NO-BUFFERING
+    version: 1.0.0
+    rationale: 100MB streaming-memory test + concurrent fetch test exist specifically to enforce the no-buffering constraint

@@ -7,22 +7,15 @@ version: 1.0.0
 created_at: 2026-05-11T22:57:28.964517+00:00
 created_by: agent:claude
 requested_by: George Moon <george.moon@gmail.com>
-meta:
-  language: typescript
-  files:
-  - path: src/index.ts
-  - path: src/request-parser.ts
-  - path: src/s3-gateway.ts
-  - path: src/types.ts
-  - path: examples/express-basic.ts
-  - path: examples/fastify-basic.ts
-  - path: examples/fastify-docker.ts
-  - path: examples/http.ts
-  - path: test/fetch.test.ts
-  - path: test/parse-request.test.ts
-  - path: test/s3proxy.test.ts
-  test_command: npm test && npm run type-check && bash scripts/smoke-examples.sh
+meta: {}
 edges:
   satisfies:
   - target: REQ-CORE-004
     version: 1.0.0
+  validates:
+  - target: THX-DECOMPOSE
+    version: 1.0.0
+    rationale: Parser + gateway + orchestrator split shipped without breaking the public API; src/index.ts dropped from 288 to ~125 LOC
+  - target: THX-PURE-FETCH
+    version: 1.0.0
+    rationale: 'proxy.fetch(req) returning {stream, status, headers} works end-to-end through real S3 (artillery: 300/300 reqs, ~990MB streamed, 0 failures)'

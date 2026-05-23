@@ -7,10 +7,14 @@ version: 1.0.0
 created_at: 2026-05-11T22:55:48.056504+00:00
 created_by: agent:claude
 requested_by: George Moon <george.moon@gmail.com>
-meta:
-  category: technical
-  confidence: 0.9
+meta: {}
 edges:
   supported_by:
   - target: SRC-V4-PROMPT
     version: 1.0.0
+  - target: SRC-TS6-TYPES
+    version: 1.0.0
+    rationale: Shared tsconfig.base.json absorbs the TS 6 types:['node'] fix in one place; without the decomposition every config file would need patching
+  - target: SRC-VITEST4-MIGRATION
+    version: 1.0.0
+    rationale: Shared vitest.shared.ts + thin per-config files made the vitest 4 poolOptions flattening + esbuild→oxc migration a 3-line change instead of N

@@ -7,9 +7,7 @@ version: 1.0.0
 created_at: 2026-05-11T22:55:50.706349+00:00
 created_by: agent:claude
 requested_by: George Moon <george.moon@gmail.com>
-meta:
-  category: value_prop
-  confidence: 0.95
+meta: {}
 edges:
   supported_by:
   - target: SRC-V4-PROMPT
@@ -18,3 +16,10 @@ edges:
     version: 1.0.0
   - target: SRC-HONO-PR
     version: 1.0.0
+  - target: SRC-EXPRESS5-SPLAT
+    version: 1.0.0
+    rationale: Express 5 splat-syntax change is exactly the kind of framework-specific quirk that pure proxy.fetch() insulates the library from — the smoke gate caught it at the example layer, not in src/
+  derives_from:
+  - target: THX-CORE-VALUE
+    version: 1.0.0
+    rationale: Stream-without-buffering value prop requires an API that doesn't force callers to mutate a Node res; pure fetch enables any host

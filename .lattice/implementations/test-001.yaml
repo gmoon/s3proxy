@@ -7,18 +7,12 @@ version: 1.0.0
 created_at: 2026-05-11T22:57:29.011183+00:00
 created_by: agent:claude
 requested_by: George Moon <george.moon@gmail.com>
-meta:
-  language: typescript
-  files:
-  - path: test/s3proxy.test.ts
-  - path: test/fetch.test.ts
-  - path: test/concurrent.test.ts
-  - path: test/streaming-memory.test.ts
-  - path: test/helpers/http-mocks.ts
-  - path: test/helpers/aws-mock.ts
-  - path: scripts/smoke-examples.sh
-  test_command: npm test && bash scripts/smoke-examples.sh
+meta: {}
 edges:
   satisfies:
   - target: REQ-TEST-001
     version: 1.0.0
+  validates:
+  - target: THX-NO-BUFFERING
+    version: 1.0.0
+    rationale: Streaming-memory test pipes 100MB through proxy.fetch() asserting peak RSS delta < 50MB; concurrent test confirms 10 parallel streams produce distinct bytes (no shared buffer)

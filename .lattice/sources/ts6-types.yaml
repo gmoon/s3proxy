@@ -1,0 +1,13 @@
+id: SRC-TS6-TYPES
+type: source
+title: TypeScript 6 stops auto-including @types/* when lib is explicit
+body: 'TS 6 changed @types/* auto-inclusion semantics. In TS 5 and earlier, with ''lib'' set explicitly (e.g. [''ES2022'']), @types/node was still implicitly available. In TS 6, you must opt-in via ''types'': [''node''] in compilerOptions. Without the opt-in: ''Cannot find name node:events'', ''Cannot find namespace NodeJS'', ''Property captureStackTrace does not exist on type ErrorConstructor'', etc. Fix: add ''types'': [''node''] to tsconfig.base.json. Bit us during the TS 5→6 bump in PR #105.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T23:43:08.552197+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  url: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html#types-typeroots-and-types
+  reliability: industry
+  retrieved_at: 2026-05-11

@@ -1,0 +1,13 @@
+id: SRC-VITEST4-MIGRATION
+type: source
+title: 'Vitest 4: poolOptions flattened, oxc replaces esbuild'
+body: 'Two breaking changes in vitest 4: (1) test.poolOptions was removed; pool-specific options are now top-level under test. Migrate test.poolOptions.forks.execArgv → test.forks.execArgv. (2) Default transformer is now oxc, not esbuild. Setting esbuild config warns ''both esbuild and oxc options were set; oxc options will be used and esbuild options will be ignored.'' We dropped the esbuild target:''node18'' since engines already requires Node 22.13+. Bit us during the vitest 3→4 bump in PR #105.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T23:43:08.614754+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  url: https://vitest.dev/guide/migration#migrating-to-vitest-4-0
+  reliability: industry
+  retrieved_at: 2026-05-11

@@ -1,0 +1,30 @@
+id: REQ-CORE-006
+type: requirement
+title: 'Widen HttpRequest[''headers''] to Headers | Record (path B from #104)'
+body: 'Current HttpRequest.headers is Record<string, string|string[]> (Node convention). Frameworks built on Web Standards (Hono, future Remix/SvelteKit/Vercel handlers) hand you a Web Headers object — examples/hono-basic.ts adapts at the boundary with Object.fromEntries. Widening the type to accept both would remove the adapter step but adds dual-shape complexity to the parser. The decision in #104 was ''wait for a second framework to force it'' — when a second framework lands needing the same adapter, the case for B strengthens.'
+status: active
+version: 1.0.0
+created_at: 2026-05-23T22:57:58.229935+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+priority: P2
+category: CORE
+tags:
+- api
+- types
+- framework
+resolution:
+  status: deferred
+  reason: Path A (adapter at example boundary) is correct until a second Web-Standards framework forces the same conversion. Re-evaluate when adding a Remix/SvelteKit/Vercel example or when a user files an issue about the cast.
+  resolved_at: 2026-05-23T22:57:58.256303+00:00
+  resolved_by: agent:claude-2026-05-23
+edges:
+  derives_from:
+  - target: THX-PURE-FETCH
+    version: 1.0.0
+  - target: THX-WEB-STANDARDS
+    version: 1.0.0
+  depends_on:
+  - target: REQ-CORE-004
+    version: 1.0.0
+    rationale: Path B widens HttpRequest['headers'] — the type only became public in REQ-CORE-004

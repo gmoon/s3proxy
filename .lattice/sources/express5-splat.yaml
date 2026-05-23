@@ -1,0 +1,13 @@
+id: SRC-EXPRESS5-SPLAT
+type: source
+title: Express 5's path-to-regexp 6+ requires named wildcards
+body: 'Express 4 accepted app.get(''/*'', ...) as a catch-all. Express 5 upgraded path-to-regexp to v6+, which requires named parameters: app.get(''/*splat'', ...) — the wildcard must have a name. Unnamed ''/*'' throws ''TypeError: Missing parameter name at 2'' at route registration time, crashing the server on startup. The v4 smoke gate caught this on its first run; the fix is a one-character change in examples/express-basic.ts.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T23:43:08.587584+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  url: https://expressjs.com/en/guide/migrating-5.html
+  reliability: industry
+  retrieved_at: 2026-05-11

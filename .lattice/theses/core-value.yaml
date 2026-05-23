@@ -1,0 +1,16 @@
+id: THX-CORE-VALUE
+type: thesis
+title: Stream S3 objects to HTTP clients without buffering on the proxy
+body: 's3proxy turns any S3 bucket into a high-performance web server. The core value: files stream directly from S3 to users with no intermediate buffering on the proxy host. This is the difference between s3proxy and ''an Express handler that calls S3Client.send()'' — bounded memory, sub-millisecond TTFB, range-request passthrough, no disk involvement. Every other thesis derives from this constraint.'
+status: active
+version: 1.0.0
+created_at: 2026-05-11T23:42:54.076405+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  category: value_prop
+  confidence: 0.99
+edges:
+  supported_by:
+  - target: SRC-V4-MIGRATION
+    version: 1.0.0
