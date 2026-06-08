@@ -2,3 +2,4 @@
 version: "1.0"
 project: "s3proxy"
 description: "Front AWS S3 with a web server that you control"
+schema_version: "0.2.0"
