@@ -8,6 +8,7 @@
   Author: George Moon <george.moon@gmail.com>
 */
 
+import { pipeline } from 'node:stream';
 import { XmlNode, XmlText } from '@aws-sdk/xml-builder';
 import bodyParser from 'body-parser';
 import express, { type Request, type Response } from 'express';
@@ -108,7 +109,11 @@ app
     try {
       const { stream, status, headers } = await proxy.fetch(req as unknown as HttpRequest);
       res.writeHead(status, headers);
-      stream.on('error', (err: ErrorWithDetails) => handleError(req, res, err)).pipe(res);
+      // pipeline (not .pipe) destroys the S3 source stream on client disconnect
+      // or write error, so the underlying S3 socket isn't leaked.
+      pipeline(stream, res, (err) => {
+        if (err) handleError(req, res, err as ErrorWithDetails);
+      });
     } catch (error) {
       handleError(req, res, error as ErrorWithDetails);
     }
