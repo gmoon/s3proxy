@@ -82,7 +82,7 @@ describe('proxy.pipe / proxy.middleware (convenience adapter)', () => {
   });
 
   describe('mid-stream failure', () => {
-    it('ends the response and resolves when the S3 body errors after headers are sent', async () => {
+    it('terminates the response and resolves when the S3 body errors after headers are sent', async () => {
       s3Mock.on(GetObjectCommand, { Bucket: '.test-bucket', Key: 'flaky-stream.bin' }).resolves({
         Body: new Readable({
           read() {
@@ -95,7 +95,10 @@ describe('proxy.pipe / proxy.middleware (convenience adapter)', () => {
       const res = new FakeResponse();
       await expect(proxy.pipe(makeReq('/flaky-stream.bin'), res)).resolves.toBeUndefined();
       expect(res.status).toBe(200); // headers already went out before the stream broke
-      expect(res.writableEnded).toBe(true);
+      // pipeline() destroys the response on a mid-stream source error rather than
+      // end()-ing it: a truncated body is surfaced as a broken connection, not a
+      // silently-short "successful" response. destroy() also tears down the S3 source.
+      expect(res.destroyed).toBe(true);
     });
   });
 });

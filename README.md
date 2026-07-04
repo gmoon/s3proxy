@@ -103,7 +103,10 @@ app.get('/*splat', (req, res) => proxy.pipe(req, res));
 ```
 
 Both resolve when the body finishes streaming, and neither rejects on a
-classified S3 failure; they write the correct status instead. Use the
+classified S3 failure; they write the correct status instead. If S3 fails
+mid-stream (after the headers are already sent), the response is terminated
+rather than cleanly ended, so a truncated body surfaces as a broken
+connection instead of a silently short success. Use the
 explicit `fetch()` + try/catch form (below) when you need a custom error
 body (XML/HTML), structured logging, or a non-Express framework.
 

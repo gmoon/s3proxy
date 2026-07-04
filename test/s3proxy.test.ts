@@ -1,8 +1,9 @@
 import { HeadBucketCommand } from '@aws-sdk/client-s3';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { S3NotFound, S3Proxy, UserException } from '../src/index.js';
+import { S3NotFound, S3Proxy, S3ProxyError, UserException } from '../src/index.js';
 import type { S3ProxyConfig } from '../src/types.js';
 import { s3Mock, setupS3Mocks, teardownS3Mocks } from './helpers/aws-mock.js';
+import { catchError } from './helpers/http-mocks.js';
 
 describe('S3Proxy', () => {
   beforeEach(() => {
@@ -72,8 +73,14 @@ describe('S3Proxy', () => {
       const errorSpy = vi.fn();
       proxy.on('error', errorSpy);
 
-      await expect(proxy.init()).rejects.toThrow('Init failed');
-      expect(errorSpy).toHaveBeenCalledWith(initError);
+      // init() rejects with a sanitized S3ProxyError (raw message not exposed);
+      // the original is preserved on `cause` and the same error is emitted.
+      const err = await catchError(proxy.init());
+      expect(err).toBeInstanceOf(S3ProxyError);
+      expect((err as S3ProxyError).statusCode).toBe(500);
+      expect((err as Error).message).not.toContain('Init failed');
+      expect((err as S3ProxyError).cause).toBe(initError);
+      expect(errorSpy).toHaveBeenCalledWith(err);
     });
   });
 
@@ -99,10 +106,14 @@ describe('S3Proxy', () => {
   });
 
   describe('verifyOnInit', () => {
-    it('defaults to true: rejects when the bucket is unreachable', async () => {
+    it('defaults to true: rejects with a sanitized error when the bucket is unreachable', async () => {
       const proxy = new S3Proxy({ bucket: '.test-bucket' });
-      s3Mock.on(HeadBucketCommand).rejectsOnce(new Error('unreachable'));
-      await expect(proxy.init()).rejects.toThrow('unreachable');
+      const cause = new Error('unreachable');
+      s3Mock.on(HeadBucketCommand).rejectsOnce(cause);
+      const err = await catchError(proxy.init());
+      expect(err).toBeInstanceOf(S3ProxyError);
+      expect((err as Error).message).not.toContain('unreachable');
+      expect((err as S3ProxyError).cause).toBe(cause);
     });
 
     it('false: init() resolves without sending a HeadBucket', async () => {
