@@ -1,6 +1,6 @@
 import { GetObjectCommand, S3ServiceException } from '@aws-sdk/client-s3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { S3Forbidden, S3InvalidRange, S3NotFound, S3Proxy } from '../src/index.js';
+import { S3Forbidden, S3InvalidRange, S3NotFound, S3Proxy, S3ProxyError } from '../src/index.js';
 import { s3Mock, setupS3Mocks, teardownS3Mocks } from './helpers/aws-mock.js';
 import { catchError, makeReq, readAll } from './helpers/http-mocks.js';
 
@@ -75,20 +75,29 @@ describe('proxy.fetch', () => {
     expect((err as S3InvalidRange).cause).toBe(invalidRange);
   });
 
-  it('rethrows non-AWS errors unchanged', async () => {
+  it('wraps non-AWS errors in a sanitized 500 (original preserved on cause)', async () => {
+    // Unmapped errors (network failures, unexpected AWS exceptions like
+    // PermanentRedirect/SlowDown) must not leak their raw message to the client.
     const networkError = new Error('Network error');
     s3Mock.on(GetObjectCommand, { Bucket: '.test-bucket', Key: 'flaky.txt' }).rejects(networkError);
-    await expect(proxy.fetch(makeReq('/flaky.txt'))).rejects.toThrow('Network error');
+    const err = await catchError(proxy.fetch(makeReq('/flaky.txt')));
+    expect(err).toBeInstanceOf(S3ProxyError);
+    expect((err as S3ProxyError).statusCode).toBe(500);
+    expect((err as Error).message).not.toContain('Network error');
+    expect((err as S3ProxyError).cause).toBe(networkError);
   });
 
-  it('throws for unrecognized body type', async () => {
+  it('wraps an unrecognized body type in a sanitized 500 (original on cause)', async () => {
     s3Mock.on(GetObjectCommand, { Bucket: '.test-bucket', Key: 'weird.txt' }).resolves({
       Body: { invalid: 'body' } as never,
       ContentLength: 100,
       ContentType: 'text/plain',
       $metadata: { httpStatusCode: 200, requestId: 'mock' },
     });
-    await expect(proxy.fetch(makeReq('/weird.txt'))).rejects.toThrow('unrecognized type');
+    const err = await catchError(proxy.fetch(makeReq('/weird.txt')));
+    expect(err).toBeInstanceOf(S3ProxyError);
+    expect((err as S3ProxyError).statusCode).toBe(500);
+    expect(((err as S3ProxyError).cause as Error).message).toBe('unrecognized type');
   });
 
   it('does not write to a response (pure)', async () => {

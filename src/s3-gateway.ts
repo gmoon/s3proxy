@@ -11,7 +11,7 @@ import {
   S3Client,
   S3ServiceException,
 } from '@aws-sdk/client-s3';
-import { S3Forbidden, S3InvalidRange, S3NotFound, type S3ProxyError } from './errors.js';
+import { S3Forbidden, S3InvalidRange, S3NotFound, S3ProxyError } from './errors.js';
 import type { S3FetchResponse, S3ProxyOptions } from './types.js';
 import { UserException } from './UserException.js';
 
@@ -55,7 +55,7 @@ function outputToHeaders(output: SupportedOutput): Record<string, string> {
   return h;
 }
 
-function mapError(e: unknown, target: string): S3ProxyError | never {
+function mapError(e: unknown, target: string): S3ProxyError {
   if (e instanceof NoSuchKey || e instanceof NoSuchBucket) {
     return new S3NotFound(target, { cause: e });
   }
@@ -63,7 +63,13 @@ function mapError(e: unknown, target: string): S3ProxyError | never {
     if (e.name === 'AccessDenied') return new S3Forbidden(target, { cause: e });
     if (e.name === 'InvalidRange') return new S3InvalidRange(target, { cause: e });
   }
-  throw e;
+  // Anything else — an unmapped S3ServiceException (e.g. PermanentRedirect,
+  // SlowDown, InternalError), a network error, or an unexpected throw — is
+  // wrapped in a generic 500. Raw AWS details (bucket region/endpoint,
+  // requestId, internal messages) must never reach the client; the original
+  // is preserved on `cause` for server-side logging only. Consumers that log
+  // errors should log `err.cause`, never surface it in a response body.
+  return new S3ProxyError(`S3 request failed: ${target}`, 500, { cause: e });
 }
 
 /**

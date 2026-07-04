@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { pipeline } from 'node:stream';
 import { S3Proxy } from '../src/index.js';
 import type { HttpRequest } from '../src/types.js';
 
@@ -18,7 +19,11 @@ const server = createServer(async (req, res) => {
   try {
     const { stream, status, headers } = await proxy.fetch(req as unknown as HttpRequest);
     res.writeHead(status, headers);
-    stream.on('error', () => res.end()).pipe(res);
+    // pipeline (not .pipe) destroys the S3 source stream if the client
+    // disconnects mid-transfer, so the underlying S3 socket isn't leaked.
+    pipeline(stream, res, (err) => {
+      if (err && !res.writableEnded) res.end();
+    });
   } catch (error) {
     const statusCode =
       typeof error === 'object' &&
