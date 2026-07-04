@@ -164,6 +164,50 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
       },
     });
 
+  // Mock a nested index document (for static-site '/blog/' resolution)
+  s3Mock.on(GetObjectCommand, { Bucket: '.test-bucket', Key: 'blog/index.html' }).resolves({
+    Body: Readable.from(['<h1>blog index</h1>']),
+    ContentLength: 19,
+    ContentType: 'text/html',
+    $metadata: { httpStatusCode: 200, requestId: 'mock-request-id' },
+  });
+
+  // Mock a custom error document (for static-site errorDocument)
+  const errorDoc = '<h1>Not found</h1>';
+  s3Mock.on(GetObjectCommand, { Bucket: '.test-bucket', Key: '404.html' }).resolves({
+    Body: Readable.from([errorDoc]),
+    ContentLength: errorDoc.length,
+    ContentType: 'text/html',
+    $metadata: { httpStatusCode: 200, requestId: 'mock-request-id' },
+  });
+  s3Mock.on(HeadObjectCommand, { Bucket: '.test-bucket', Key: '404.html' }).resolves({
+    ContentLength: errorDoc.length,
+    ContentType: 'text/html',
+    $metadata: { httpStatusCode: 200, requestId: 'mock-request-id' },
+  });
+
+  // Mock an object carrying user metadata + S3-specific headers, to prove
+  // fetch() forwards x-amz-meta-* and x-amz-* headers (v4 header-passthrough
+  // regression fix).
+  s3Mock
+    .on(GetObjectCommand, {
+      Bucket: '.test-bucket',
+      Key: 'with-metadata.bin',
+    })
+    .resolves({
+      Body: Readable.from([Buffer.alloc(10, 'A')]),
+      ContentLength: 10,
+      ContentType: 'application/octet-stream',
+      Metadata: { author: 'george', 'trace-id': 'abc123' },
+      ServerSideEncryption: 'aws:kms',
+      SSEKMSKeyId: 'arn:aws:kms:us-east-1:111122223333:key/abcd',
+      VersionId: 'v42',
+      $metadata: {
+        httpStatusCode: 200,
+        requestId: 'mock-request-id',
+      },
+    });
+
   // Mock range requests for large.bin (for MockExpress test)
   s3Mock
     .on(GetObjectCommand, {
