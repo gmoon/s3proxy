@@ -6,33 +6,33 @@
 
 **Stream files directly from AWS S3 to your users without downloading them to your server first.**
 
-s3proxy turns any S3 bucket into a high-performance web server. Perfect for serving static websites, file downloads, or media content directly from S3 while maintaining full control over access, headers, and routing.
+s3proxy turns an S3 bucket into a web server. Use it to serve static websites, file downloads, or media directly from S3 while keeping control over access, headers, and routing.
 
 ## Why s3proxy?
 
-- **Zero server storage** - Files stream directly from S3 to users
-- **Lightning fast** - No intermediate downloads or caching delays  
-- **Cost effective** - Reduce server storage and bandwidth costs
-- **Scalable** - Leverage S3's global infrastructure
-- **Range requests** - Support for partial content and resumable downloads
-- **Express integration** - Drop into existing Node.js applications
-- **TypeScript support** - Full type safety and modern tooling
-- **Large file friendly** - Perfect for AI models, datasets, and media assets
+- **Zero server storage**: files stream directly from S3 to users
+- **Low latency**: no intermediate downloads or disk buffering
+- **Cost effective**: reduce server storage and bandwidth costs
+- **Scalable**: backed by S3
+- **Range requests**: partial content and resumable downloads
+- **Framework support**: Express, Fastify, Hono, and plain `node:http`
+- **TypeScript**: typed API, ESM-only
+- **Large files**: suited to AI models, datasets, and media assets
 
 ## Quick Start
 
-### ⚠️ Breaking changes in v4.0
+### Breaking changes in v4.0
 
 v4 fixes the v3 error contract and replaces the response-mutating
 `proxy.get(req, res)` / `proxy.head(req, res)` / `proxy.healthCheckStream(res)`
 wrappers with a single pure entry point: **`proxy.fetch(req)`**.
 
 ```typescript
-// v3.x — wrapper writes res headers as a side effect, swallows 404 as empty 200
+// v3.x: wrapper writes res headers as a side effect, swallows 404 as an empty 200
 const stream = await proxy.get(req, res);
 stream.pipe(res);
 
-// v4 — pure fetch + you write the response
+// v4: pure fetch, you write the response
 const { stream, status, headers } = await proxy.fetch(req);
 res.writeHead(status, headers);
 stream.pipe(res);
@@ -41,9 +41,9 @@ stream.pipe(res);
 Missing keys, AccessDenied, and InvalidRange now throw typed
 `S3NotFound` / `S3Forbidden` / `S3InvalidRange` errors instead of
 silently returning empty 200 streams. See [MIGRATION.md](MIGRATION.md)
-for the full v3 → v4 sed-able cheat sheet.
+for the full v3 to v4 migration guide.
 
-ESM-only since v3 — no CommonJS support. For CommonJS projects, add
+ESM-only since v3. No CommonJS support. For CommonJS projects, add
 `"type": "module"` to your `package.json` or use dynamic import:
 `const { S3Proxy } = await import('s3proxy');`
 
@@ -82,15 +82,14 @@ app.listen(3000);
 
 > **Express 5 path syntax.** The `/*splat` wildcard is Express 5's
 > `path-to-regexp` requirement; on Express 4 use `'/*'`. Mixing the
-> two forms crashes at route-registration time (this is exactly what
-> the v4 examples-smoke gate caught when ported from Express 4).
+> two forms crashes at route registration.
 
-### Even simpler: `proxy.middleware()`
+### Simpler: `proxy.middleware()`
 
-If you don't need a custom error page, skip the try/catch entirely.
-`proxy.middleware()` is a drop-in handler built on `fetch()` — it writes
-the status, headers, and body for you, and renders **honest** 404/403/416
-responses (no v3-style empty-200 lie):
+If you don't need a custom error page, skip the try/catch.
+`proxy.middleware()` is a handler built on `fetch()` that writes the
+status, headers, and body for you. Missing, forbidden, and bad-range
+requests return the real 404/403/416 status instead of an empty 200:
 
 ```javascript
 app.get('/*splat', proxy.middleware());
@@ -102,19 +101,19 @@ Or write to a response yourself in one call with `proxy.pipe(req, res)`:
 app.get('/*splat', (req, res) => proxy.pipe(req, res));
 ```
 
-Both resolve the moment the body finishes streaming and never reject for a
-classified S3 failure — they render it with the correct status. Reach for
-the explicit `fetch()` + try/catch form (below) only when you need a custom
-error body (XML/HTML), structured logging, or a non-Express framework.
+Both resolve when the body finishes streaming, and neither rejects on a
+classified S3 failure; they write the correct status instead. Use the
+explicit `fetch()` + try/catch form (below) when you need a custom error
+body (XML/HTML), structured logging, or a non-Express framework.
 
 ### Static website hosting: `proxy.staticSite()`
 
-Want S3 static-website behavior — index documents and a custom error page —
-but with a **private** bucket and your own app in front of it?
-`proxy.staticSite()` layers exactly that on top of `fetch()`:
+`proxy.staticSite()` reproduces the core of S3 static website hosting
+(index documents and a custom error page) on a private bucket, with your
+app in front of it:
 
 ```javascript
-// / and /dir/ resolve to index.html; missing/forbidden keys serve
+// / and /dir/ resolve to index.html; missing or forbidden keys serve
 // 404.html with the correct 4xx status.
 const site = proxy.staticSite({ indexDocument: 'index.html', errorDocument: '404.html' });
 app.use((req, res) => site(req, res));   // app.use so `/` matches too
@@ -127,14 +126,32 @@ app.use((req, res) => site(req, res));   // app.use so `/` matches too
 | `/style.css`           | `style.css` (200)                             |
 | missing / forbidden    | `404.html` with the original 404/403 status   |
 
-`indexDocument` defaults to `'index.html'` (set `''` to disable);
-`errorDocument` is optional (without it, 404/403 render a plaintext status).
-If the error document is itself missing, it falls back to a bare status
-instead of looping. This is a pure layer — `fetch()` still throws typed
-errors; none of this behavior touches the core. Full example:
+`indexDocument` defaults to `'index.html'` (set it to `''` to disable).
+`errorDocument` is optional; without it, 404 and 403 return a plaintext
+status. If the error document is itself missing, `staticSite` falls back
+to a bare status instead of looping. The core `fetch()` is unchanged and
+still throws typed errors. Full example:
 [`examples/static-site.ts`](examples/static-site.ts).
 
-> Mount with `app.use(...)`, not `app.get('/*splat', ...)` — the Express 5
+Behavior:
+
+- Handles GET and HEAD, and passes Range requests through (a range still
+  returns 206 with `Content-Range`).
+- Forwards the object's S3 response headers: `content-type`,
+  `cache-control`, `etag`, `x-amz-meta-*`, and so on.
+- Serves the error document for missing (404) and access-denied (403)
+  keys, keeping the original status.
+
+Limitations (differences from an S3 website endpoint):
+
+- A path without a trailing slash is fetched as a literal key.
+  `staticSite` does not issue S3's `/photos` to `/photos/` directory
+  redirect, which would need an extra lookup.
+- Only 404 and 403 use the error document. A 416 (bad range), 400
+  (malformed request), or 500 returns a plaintext status.
+- No routing rules.
+
+> Mount with `app.use(...)`, not `app.get('/*splat', ...)`: the Express 5
 > wildcard doesn't match the root path `/`, so index resolution for `/`
 > would be skipped.
 
@@ -265,9 +282,9 @@ try {
 
 ### Hono Integration (Web Standards)
 
-For runtimes built on Web Standards (Bun, Cloudflare Workers, Deno),
-Hono is the natural fit. `proxy.fetch()` returns headers and a stream
-that drop straight into a Web `Response`:
+On Web Standards runtimes (Bun, Cloudflare Workers, Deno), Hono fits
+well. `proxy.fetch()` returns headers and a stream that go straight into
+a Web `Response`:
 
 ```typescript
 import { Readable } from 'node:stream';
@@ -293,7 +310,7 @@ app.on(['GET', 'HEAD'], '/*', async (c) => {
     // Hono exposes Web `Headers`; HttpRequest expects a plain Record.
     headers: Object.fromEntries(c.req.raw.headers),
   } as HttpRequest);
-  // Node Readable → Web ReadableStream so it fits in a Response body.
+  // Node Readable to Web ReadableStream so it fits in a Response body.
   const body = Readable.toWeb(stream as Readable) as ReadableStream;
   return new Response(body, { status, headers });
 });
@@ -305,14 +322,14 @@ app.onError((err) => {
 ```
 
 > **Performance note.** On Node, Hono goes through `@hono/node-server`
-> which converts `IncomingMessage` ↔ `Web Request/Response` on every
-> request — two extra layers vs. Express's direct `stream.pipe(res)`.
-> For network-bound streaming (the typical s3proxy workload, where S3
-> RTT dominates) the conversion is unmeasurable; the smoke gate's
-> per-example latency baseline confirms parity with Express/Fastify
-> on small files. For sub-millisecond CPU-bound paths, prefer the
-> Express/Fastify examples. On Bun/Workers/Deno the conversion layer
-> doesn't exist at all and Hono is the natural fit.
+> which converts `IncomingMessage` and `Web Request/Response` on every
+> request, two extra layers compared with Express's direct
+> `stream.pipe(res)`. For network-bound streaming (the typical s3proxy
+> workload, where S3 round-trip time dominates) the conversion cost is
+> negligible, and the smoke test's per-example latency baseline shows
+> parity with Express and Fastify on small files. For CPU-bound paths
+> measured in microseconds, prefer the Express or Fastify examples. On
+> Bun, Workers, and Deno there is no conversion layer.
 
 ### Framework Compatibility
 
@@ -333,15 +350,15 @@ s3proxy is **framework-agnostic** and works with any Node.js HTTP framework that
 - **[Netlify Functions](https://www.netlify.com/products/functions/)** - Serverless functions ✅
 
 **Key requirement**: the framework must give you a request with `url`,
-`method`, and `headers` (or `path`/`query`). All major frameworks
-expose this — usually as `req.raw` / `request.raw` / `request.req`.
+`method`, and `headers` (or `path`/`query`). All of the frameworks above
+expose this, usually as `req.raw`, `request.raw`, or `request.req`.
 Since `proxy.fetch()` returns `{ stream, status, headers }` and never
-touches a response, you wire the response however the framework
-prefers (`res.writeHead`, a `Web Response`, `reply.send`, etc.).
+touches a response, you wire the response however the framework prefers
+(`res.writeHead`, a `Web Response`, `reply.send`, and so on).
 
 ### Range Requests (Partial Content)
 
-s3proxy automatically handles HTTP Range requests for efficient streaming of large files:
+s3proxy handles HTTP Range requests for efficient streaming of large files:
 
 ```bash
 # Download only bytes 0-99 of a large file
@@ -350,7 +367,7 @@ curl --range 0-99 http://localhost:3000/large-video.mp4 -o partial.mp4
 
 ### Large File Streaming
 
-Perfect for streaming large assets without server storage:
+Stream large assets without server storage:
 
 ```typescript
 // Stream AI models, datasets, or media files
@@ -364,8 +381,8 @@ app.get('/models/:version/*splat', async (req: Request, res: Response) => {
   }
 });
 
-// Now serve multi-GB files efficiently:
-// GET /models/v1/llama-7b.bin -> streams from S3 without local storage
+// Now serve multi-GB files without local storage:
+// GET /models/v1/llama-7b.bin streams from S3
 ```
 
 ### Health Checks
@@ -428,7 +445,7 @@ new S3Proxy(config: S3ProxyConfig)
 ##### `await proxy.init(): Promise<void>`
 Initialize the underlying S3 client. By default also runs
 `healthCheck()` against the bucket and rejects on failure (set
-`verifyOnInit: false` in the config to skip the probe — see
+`verifyOnInit: false` to skip the probe; see
 [verifyOnInit](#verifyoninit-for-orchestrators)).
 
 ##### `await proxy.fetch(req: HttpRequest): Promise<S3FetchResponse>`
@@ -440,28 +457,30 @@ the two convenience methods below are built on.
 
 ##### `await proxy.pipe(req: HttpRequest, res: HttpResponse): Promise<void>`
 Convenience over `fetch()`: writes status + headers and pipes the body to
-`res`. Resolves when the body finishes; renders the honest 404/403/416
-for a classified S3 failure (never the v3 empty-200) and does **not**
-reject for it. Rejects only if `res.writeHead` throws. Use `fetch()`
-directly when you need a custom error body.
+`res`. Resolves when the body finishes; writes the real 404/403/416 for a
+classified S3 failure and does **not** reject for it. Rejects only if
+`res.writeHead` throws. Use `fetch()` directly when you need a custom
+error body.
 
 ##### `proxy.middleware(): (req, res, next?) => void`
-Returns an Express/Connect handler built on `pipe()` — drop it straight
+Returns an Express/Connect handler built on `pipe()`. Drop it straight
 into a route: `app.get('/*splat', proxy.middleware())`. Unexpected
 (non-classified) errors are forwarded to `next` when present.
 
 ##### `proxy.staticSite(options?: StaticSiteOptions): (req, res, next?) => void`
-Returns a handler that replicates S3 static website hosting on top of
-`fetch()`: index-document resolution (`/` → `index.html`, `/dir/` →
-`dir/index.html`) and, when `errorDocument` is set, serving it with the
-original 4xx status for missing/forbidden keys. Mount with `app.use(...)`
-so the root path `/` is matched. See
-[Static website hosting](#static-website-hosting-proxystaticsite).
+Returns a handler that reproduces the core of S3 static website hosting
+on top of `fetch()`: index-document resolution (`/` to `index.html`,
+`/dir/` to `dir/index.html`) and, when `errorDocument` is set, serving it
+with the original status for missing (404) and forbidden (403) keys.
+Handles GET and HEAD and passes Range requests through. It does not
+perform S3's trailing-slash directory redirect, and only 404/403 use the
+error document. Mount with `app.use(...)` so the root path `/` is matched.
+See [Static website hosting](#static-website-hosting-proxystaticsite).
 
 ##### `await proxy.healthCheck(): Promise<void>`
 Verify bucket connectivity. Resolves on success, throws a typed
-`S3ProxyError` on failure. Use this from a `/health` or `/ready`
-handler — render the response yourself.
+`S3ProxyError` on failure. Use it from a `/health` or `/ready` handler
+and render the response yourself.
 
 ##### `proxy.isInitialized(): void`
 Throws `UserException` if `init()` hasn't been called yet.
@@ -475,8 +494,8 @@ The library version.
 
 `parseRequest(req)`, `mapHeaderToParam(req, headerKey, paramKey)`, and
 `stripLeadingSlash(s)` are exported as free functions. They previously
-lived as `S3Proxy.parseRequest` etc.; the move makes them tree-shakeable
-for callers that just want the parser.
+lived as `S3Proxy.parseRequest` and so on; the move makes them
+tree-shakeable for callers that just want the parser.
 
 ### Types
 
@@ -485,7 +504,7 @@ interface S3ProxyConfig extends S3ClientConfig {
   bucket: string;
   /**
    * If true (default), init() calls healthCheck() and rejects when
-   * the bucket is unreachable — fail-fast on misconfiguration.
+   * the bucket is unreachable, to fail fast on misconfiguration.
    * Set to false in orchestrator deployments (Kubernetes, ECS).
    */
   verifyOnInit?: boolean;
@@ -538,10 +557,10 @@ interface StaticSiteOptions {
 ```typescript
 import {
   S3ProxyError,    // base class (statusCode, code, cause)
-  S3NotFound,      // 404 — NoSuchKey or NoSuchBucket
-  S3Forbidden,     // 403 — AccessDenied
-  S3InvalidRange,  // 416 — InvalidRange
-  // (InvalidRequest — 400 — thrown by parseRequest for malformed input)
+  S3NotFound,      // 404: NoSuchKey or NoSuchBucket
+  S3Forbidden,     // 403: AccessDenied
+  S3InvalidRange,  // 416: InvalidRange
+  // InvalidRequest: 400, thrown by parseRequest for malformed input
 } from 's3proxy';
 
 try {
@@ -553,12 +572,13 @@ try {
   if (err instanceof S3Forbidden)    return send403(res);
   if (err instanceof S3InvalidRange) return send416(res);
   if (err instanceof S3ProxyError)   return res.status(err.statusCode).end();
-  throw err;  // unknown — let the framework's error handler take it
+  throw err;  // unknown: let the framework's error handler take it
 }
 ```
 
-The proxy is also an `EventEmitter` and emits `init` once `init()`
-resolves and `error` if it rejects — useful for logging dashboards.
+The proxy is also an `EventEmitter`. It emits `init` when `init()`
+resolves and `error` when it rejects, which is useful for logging
+dashboards.
 
 ```typescript
 proxy.on('error', (err: Error) => console.error('S3Proxy error:', err));
@@ -637,7 +657,7 @@ npm run type-check
 
 ### Testing & Quality Assurance
 
-s3proxy maintains comprehensive test coverage across multiple dimensions to ensure reliability and performance:
+Tests run across several dimensions:
 
 #### Test Coverage Matrix
 
@@ -673,7 +693,7 @@ make all                    # Complete test suite
 make test                   # Core tests (build, lint, unit)
 make functional-tests       # Integration and Docker tests
 
-# Individual test categories  
+# Individual test categories
 make test-validation-docker # 24 comprehensive validation tests
 make artillery-docker       # Performance/load testing
 
@@ -705,11 +725,14 @@ examples/
 ├── fastify-basic.ts  # TypeScript Fastify example
 ├── fastify-docker.ts # Dockerized Fastify example
 ├── hono-basic.ts     # Hono / Web Standards example
+├── static-site.ts    # staticSite index + error document example
 └── http.ts           # TypeScript node:http example
 
 test/
 ├── s3proxy.test.ts         # Constructor / init / healthCheck / verifyOnInit
 ├── fetch.test.ts           # proxy.fetch() behavioral coverage
+├── pipe.test.ts            # proxy.pipe() and proxy.middleware()
+├── static-site.test.ts     # proxy.staticSite() behavior
 ├── parse-request.test.ts   # parseRequest unit tests (incl. malformed encoding)
 ├── mock-express.test.ts    # Express request-shape compatibility
 ├── mock-fastify.test.ts    # Fastify request-shape compatibility
@@ -742,7 +765,7 @@ s3proxy uses several configuration files for different aspects of development an
 - **`vitest.config.ts`** - Unit test configuration
   - Unit test settings with 30s timeout
   - Coverage reporting (text, HTML, LCOV, JSON)
-  - 80% coverage thresholds for all metrics
+  - Coverage thresholds: branches 85%, functions 95%, lines/statements 90%
   - Excludes integration tests and examples from unit test runs
 - **`vitest.integration.config.ts`** - Integration test configuration
   - Runs validation tests that require a live server
@@ -794,15 +817,13 @@ s3proxy uses several configuration files for different aspects of development an
 - **`examples/aws-ecs/`** - ECS deployment configurations
   - CloudFormation templates for production deployment
 
-All configuration files are actively maintained and serve specific purposes in the development, testing, and deployment pipeline.
-
 ## Use Cases
 
 - **Static websites** - Serve React/Vue/Angular builds from S3
 - **File downloads** - Stream large files without server storage
 - **Media serving** - Video/audio streaming with range request support
 - **API backends** - Serve user uploads or generated content
-- **AI & ML workflows** - Stream models, datasets, and training data efficiently
+- **AI & ML workflows** - Stream models, datasets, and training data
 - **CDN alternative** - Cost-effective content delivery
 
 ## Performance
@@ -811,13 +832,13 @@ See [docs/performance.md](docs/performance.md) for detailed performance testing 
 
 ## Getting Help
 
-- 📖 [Maintenance Guide](docs/maintenance.md) - For contributors and advanced usage
-- 🐛 [Report Issues](https://github.com/gmoon/s3proxy/issues)
-- 💬 [Discussions](https://github.com/gmoon/s3proxy/discussions)
+- [Maintenance Guide](docs/maintenance.md): for contributors and advanced usage
+- [Report issues](https://github.com/gmoon/s3proxy/issues)
+- [Discussions](https://github.com/gmoon/s3proxy/discussions)
 
 ## Contributing
 
-We welcome contributions! See our [Maintenance Guide](docs/maintenance.md) for development setup and contribution guidelines.
+Contributions are welcome. See the [Maintenance Guide](docs/maintenance.md) for development setup and contribution guidelines.
 
 ## License
 
