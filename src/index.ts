@@ -229,11 +229,11 @@ export class S3Proxy extends EventEmitter {
     errorDocument: string,
     status: number
   ): Promise<void> {
-    // Fetch the error document without the original Range header — a range
+    // Fetch the error document without the original Range header. A range
     // against the error page would produce a 206 that contradicts the 4xx
-    // status we're about to write.
-    const errReq: HttpRequest = { ...req, headers: { ...req.headers } };
-    delete errReq.headers.range;
+    // status we are about to write.
+    const { range: _range, ...headers } = req.headers;
+    const errReq: HttpRequest = { ...req, headers };
     try {
       // Serve the error document's body under the original 4xx status.
       const response = await this.fetchKey(errorDocument, errReq);

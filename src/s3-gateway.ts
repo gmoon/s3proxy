@@ -69,8 +69,7 @@ function outputToHeaders(output: SupportedOutput): Record<string, string> {
   const metadata = (output as { Metadata?: Record<string, string> }).Metadata;
   if (metadata) {
     for (const [k, v] of Object.entries(metadata)) {
-      if (v === undefined || v === null) continue;
-      h[`x-amz-meta-${k.toLowerCase()}`] = String(v);
+      h[`x-amz-meta-${k.toLowerCase()}`] = v;
     }
   }
   return h;
