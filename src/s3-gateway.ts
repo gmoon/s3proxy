@@ -30,6 +30,16 @@ const OUTPUT_HEADER_MAP: ReadonlyArray<readonly [string, string]> = [
   ['LastModified', 'last-modified'],
   ['AcceptRanges', 'accept-ranges'],
   ['Expires', 'expires'],
+  // S3-specific headers. v3 forwarded these because it passed the raw HTTP
+  // response headers straight through; v4 rebuilds headers from the typed
+  // SDK output, so each one has to be listed explicitly or it is dropped.
+  ['ServerSideEncryption', 'x-amz-server-side-encryption'],
+  ['SSEKMSKeyId', 'x-amz-server-side-encryption-aws-kms-key-id'],
+  ['VersionId', 'x-amz-version-id'],
+  ['StorageClass', 'x-amz-storage-class'],
+  ['WebsiteRedirectLocation', 'x-amz-website-redirect-location'],
+  ['Expiration', 'x-amz-expiration'],
+  ['Restore', 'x-amz-restore'],
 ];
 
 function createEmptyReadstream(): Readable {
@@ -51,6 +61,17 @@ function outputToHeaders(output: SupportedOutput): Record<string, string> {
     const v = fields[src];
     if (v === undefined || v === null) continue;
     h[dst] = v instanceof Date ? v.toUTCString() : String(v);
+  }
+  // User-defined object metadata. The SDK exposes it as a bare map (keys
+  // without the wire prefix), so re-attach the `x-amz-meta-` prefix that
+  // the client actually receives. v3 forwarded these; dropping them was a
+  // silent regression for callers that round-trip custom metadata.
+  const metadata = (output as { Metadata?: Record<string, string> }).Metadata;
+  if (metadata) {
+    for (const [k, v] of Object.entries(metadata)) {
+      if (v === undefined || v === null) continue;
+      h[`x-amz-meta-${k.toLowerCase()}`] = String(v);
+    }
   }
   return h;
 }

@@ -35,6 +35,19 @@ describe('proxy.fetch', () => {
     expect(body.length).toBe(101);
   });
 
+  it('forwards user metadata as x-amz-meta-* and S3 headers as x-amz-*', async () => {
+    const { headers } = await proxy.fetch(makeReq('/with-metadata.bin'));
+    // user-defined object metadata (dropped by v4 before the passthrough fix)
+    expect(headers['x-amz-meta-author']).toBe('george');
+    expect(headers['x-amz-meta-trace-id']).toBe('abc123');
+    // S3-specific response headers
+    expect(headers['x-amz-server-side-encryption']).toBe('aws:kms');
+    expect(headers['x-amz-server-side-encryption-aws-kms-key-id']).toBe(
+      'arn:aws:kms:us-east-1:111122223333:key/abcd'
+    );
+    expect(headers['x-amz-version-id']).toBe('v42');
+  });
+
   it('throws S3NotFound for a missing key', async () => {
     await expect(proxy.fetch(makeReq('/nonexistent-file.txt'))).rejects.toBeInstanceOf(S3NotFound);
   });

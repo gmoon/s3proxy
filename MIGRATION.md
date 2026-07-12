@@ -151,6 +151,57 @@ app.get('/ready', async (_req, res) => {
 });
 ```
 
+## New: `proxy.middleware()` / `proxy.pipe()` — v3's ergonomics, honestly
+
+The pure `fetch()` primitive is the right foundation, but on its own it
+made the common case wordier than v3's one-line `proxy.get(req, res)`.
+The convenience adapter closes that gap **without** bringing back the
+empty-200 lie — it writes the response for you and renders honest
+404/403/416 statuses.
+
+```typescript
+// v3.x — one call, but swallowed 404/403/416 as empty 200
+const stream = await proxy.get(req, res);
+stream.on('error', () => res.end()).pipe(res);
+
+// v4.1 — one call again, honest status codes
+app.get('/*splat', proxy.middleware());
+// or, if you want the request handler explicit:
+app.get('/*splat', (req, res) => proxy.pipe(req, res));
+```
+
+`pipe()` resolves when the body finishes streaming and never rejects for a
+classified S3 failure (it renders it). Use the explicit `fetch()` +
+try/catch form when you need a custom error body or non-Express framework.
+
+## New: `proxy.staticSite()` — S3 website hosting, on a private bucket
+
+If you used v3 to serve a website (and hand-rolled index/error handling
+around `proxy.get`), `staticSite()` now does it for you — index-document
+resolution plus a custom error document — as an opt-in layer over `fetch()`:
+
+```typescript
+const site = proxy.staticSite({ indexDocument: 'index.html', errorDocument: '404.html' });
+app.use((req, res) => site(req, res));   // app.use so `/` matches too
+```
+
+`/` and `/dir/` resolve to the index document; a missing or forbidden key
+serves the error document with the original 4xx status (falling back to a
+bare status if the error document is itself missing). Unlike v3, this can't
+mask a real failure — `fetch()` still throws typed errors underneath, and
+none of this behavior is baked into the core.
+
+## New: restored header passthrough
+
+v4.0 rebuilt response headers from the SDK's typed output and, in doing so,
+silently dropped user metadata (`x-amz-meta-*`) and S3-specific headers
+that v3 forwarded. v4.1 restores them: `fetch()` now emits `x-amz-meta-*`
+for every object-metadata entry, plus `x-amz-server-side-encryption`,
+`x-amz-server-side-encryption-aws-kms-key-id`, `x-amz-version-id`,
+`x-amz-storage-class`, `x-amz-website-redirect-location`,
+`x-amz-expiration`, and `x-amz-restore` when present. If you round-trip
+custom metadata through the proxy, upgrade to v4.1.
+
 ## "I just want the old behavior"
 
 Pin to v3.x:
@@ -166,7 +217,7 @@ the parser/gateway split, or the `verifyOnInit` option.
 
 | v3.x                                    | v4                                                            |
 |-----------------------------------------|---------------------------------------------------------------|
-| `proxy.get(req, res)`                   | `await proxy.fetch(req)` + `res.writeHead(status, headers)`   |
+| `proxy.get(req, res)`                   | `proxy.middleware()` / `proxy.pipe(req, res)`, or `fetch()` + `writeHead` |
 | `proxy.head(req, res)`                  | `await proxy.fetch({...req, method: 'HEAD'})` + `writeHead`   |
 | `proxy.healthCheckStream(res)`          | `await proxy.healthCheck()` (throws on failure)               |
 | 404/403/416 → empty 200 stream          | throws `S3NotFound` / `S3Forbidden` / `S3InvalidRange`        |

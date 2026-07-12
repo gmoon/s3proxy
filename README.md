@@ -85,6 +85,59 @@ app.listen(3000);
 > two forms crashes at route-registration time (this is exactly what
 > the v4 examples-smoke gate caught when ported from Express 4).
 
+### Even simpler: `proxy.middleware()`
+
+If you don't need a custom error page, skip the try/catch entirely.
+`proxy.middleware()` is a drop-in handler built on `fetch()` — it writes
+the status, headers, and body for you, and renders **honest** 404/403/416
+responses (no v3-style empty-200 lie):
+
+```javascript
+app.get('/*splat', proxy.middleware());
+```
+
+Or write to a response yourself in one call with `proxy.pipe(req, res)`:
+
+```javascript
+app.get('/*splat', (req, res) => proxy.pipe(req, res));
+```
+
+Both resolve the moment the body finishes streaming and never reject for a
+classified S3 failure — they render it with the correct status. Reach for
+the explicit `fetch()` + try/catch form (below) only when you need a custom
+error body (XML/HTML), structured logging, or a non-Express framework.
+
+### Static website hosting: `proxy.staticSite()`
+
+Want S3 static-website behavior — index documents and a custom error page —
+but with a **private** bucket and your own app in front of it?
+`proxy.staticSite()` layers exactly that on top of `fetch()`:
+
+```javascript
+// / and /dir/ resolve to index.html; missing/forbidden keys serve
+// 404.html with the correct 4xx status.
+const site = proxy.staticSite({ indexDocument: 'index.html', errorDocument: '404.html' });
+app.use((req, res) => site(req, res));   // app.use so `/` matches too
+```
+
+| Request                | Served                                        |
+|------------------------|-----------------------------------------------|
+| `/`                    | `index.html` (200)                            |
+| `/blog/`               | `blog/index.html` (200)                       |
+| `/style.css`           | `style.css` (200)                             |
+| missing / forbidden    | `404.html` with the original 404/403 status   |
+
+`indexDocument` defaults to `'index.html'` (set `''` to disable);
+`errorDocument` is optional (without it, 404/403 render a plaintext status).
+If the error document is itself missing, it falls back to a bare status
+instead of looping. This is a pure layer — `fetch()` still throws typed
+errors; none of this behavior touches the core. Full example:
+[`examples/static-site.ts`](examples/static-site.ts).
+
+> Mount with `app.use(...)`, not `app.get('/*splat', ...)` — the Express 5
+> wildcard doesn't match the root path `/`, so index resolution for `/`
+> would be skipped.
+
 ### TypeScript/ESM
 ```bash
 npm install s3proxy express
@@ -382,7 +435,28 @@ Initialize the underlying S3 client. By default also runs
 Pure fetch. Returns `{ stream, status, headers }` without touching a
 response. Dispatches GET vs HEAD based on `req.method` (defaults to
 GET). Throws a typed `S3ProxyError` on classified failures (404, 403,
-416, malformed request); rethrows anything else.
+416, malformed request); rethrows anything else. This is the primitive
+the two convenience methods below are built on.
+
+##### `await proxy.pipe(req: HttpRequest, res: HttpResponse): Promise<void>`
+Convenience over `fetch()`: writes status + headers and pipes the body to
+`res`. Resolves when the body finishes; renders the honest 404/403/416
+for a classified S3 failure (never the v3 empty-200) and does **not**
+reject for it. Rejects only if `res.writeHead` throws. Use `fetch()`
+directly when you need a custom error body.
+
+##### `proxy.middleware(): (req, res, next?) => void`
+Returns an Express/Connect handler built on `pipe()` — drop it straight
+into a route: `app.get('/*splat', proxy.middleware())`. Unexpected
+(non-classified) errors are forwarded to `next` when present.
+
+##### `proxy.staticSite(options?: StaticSiteOptions): (req, res, next?) => void`
+Returns a handler that replicates S3 static website hosting on top of
+`fetch()`: index-document resolution (`/` → `index.html`, `/dir/` →
+`dir/index.html`) and, when `errorDocument` is set, serving it with the
+original 4xx status for missing/forbidden keys. Mount with `app.use(...)`
+so the root path `/` is matched. See
+[Static website hosting](#static-website-hosting-proxystaticsite).
 
 ##### `await proxy.healthCheck(): Promise<void>`
 Verify bucket connectivity. Resolves on success, throws a typed
@@ -440,6 +514,22 @@ interface HttpRequest {
 interface ParsedRequest {
   key: string;
   query: Record<string, string | string[]>;
+}
+
+/**
+ * Structural response the convenience adapter (pipe/middleware/staticSite)
+ * writes to. Node's ServerResponse, Express's Response, and Fastify's
+ * reply.raw all satisfy it. The pure fetch() primitive never touches it.
+ */
+interface HttpResponse extends NodeJS.WritableStream {
+  writeHead(statusCode: number, headers?: Record<string, string>): unknown;
+  readonly headersSent?: boolean;
+}
+
+/** Options for proxy.staticSite(). */
+interface StaticSiteOptions {
+  indexDocument?: string;  // default 'index.html'; '' disables
+  errorDocument?: string;  // optional; served with the original 4xx status
 }
 ```
 

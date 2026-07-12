@@ -124,7 +124,7 @@ run_example() {
 }
 
 failed=0
-for example in examples/express-basic.ts examples/fastify-basic.ts examples/hono-basic.ts; do
+for example in ${SMOKE_EXAMPLES:-examples/express-basic.ts examples/fastify-basic.ts examples/hono-basic.ts examples/static-site.ts}; do
   run_example "$example" || failed=1
 done
 
