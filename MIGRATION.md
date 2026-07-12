@@ -1,9 +1,9 @@
 # Migrating to s3proxy v4.0
 
-v4.0 fixes the v3 error contract and decomposes a 288-line god class into
-parser + gateway + orchestrator. The library is the same idea — stream S3
-objects to HTTP responses without buffering on your server — with a
-smaller, more honest surface.
+v4.0 fixes the v3 error contract and splits a 288-line class into
+parser, gateway, and orchestrator. The library does the same thing (stream
+S3 objects to HTTP responses without buffering on your server) with a
+smaller, more focused surface.
 
 ## What broke and why
 
@@ -40,10 +40,10 @@ SDK error). Discriminate by `instanceof` (preferred) or by `err.name`
 They all extend `S3ProxyError`, which extends `Error`.
 
 **Important shift in *where* the error fires.** In v3, 404/403/416 came
-back as a successful empty stream — your `stream.on('error', ...)`
+back as a successful empty stream, so your `stream.on('error', ...)`
 handler never saw them. In v4, those throw from `proxy.fetch()` itself,
-*before* `res.writeHead` runs. So a v3 stream-error handler that was
-catching these will now see nothing — wrap the `await proxy.fetch()`
+*before* `res.writeHead` runs. A v3 stream-error handler that was
+catching these will now see nothing, so wrap the `await proxy.fetch()`
 call in a try/catch instead.
 
 ### 2. `proxy.get(req, res)` / `proxy.head(req, res)` / `proxy.healthCheckStream(res)` are gone
@@ -125,15 +125,17 @@ Fastify `request.raw`, and Node `IncomingMessage` all satisfy it
 extends `IncomingMessage`.
 
 `HttpResponse` was only useful for the deleted `proxy.get(req, res)`
-APIs. v4 doesn't take a response, so the type is gone — use Node's
-`ServerResponse` directly when you need to type one.
+APIs, so v4.0 dropped it. Use Node's `ServerResponse` directly when you
+need to type one. (v4.1 re-introduced `HttpResponse` as a structural type
+for the `pipe` / `middleware` / `staticSite` adapter; you still don't need
+it for `fetch()`.)
 
 ## New: `verifyOnInit` for orchestrator deployments
 
 `init()` calls `healthCheck()` by default and rejects on failure.
 That's right for most apps. In Kubernetes/ECS deployments, this can
 crashloop a pod when S3 has a transient hiccup or the bucket name is
-mistyped — before logs/dashboards can surface what's wrong. Set
+mistyped, before logs/dashboards can surface what's wrong. Set
 `verifyOnInit: false` and let your platform's readiness probe drive
 health.
 
@@ -151,20 +153,20 @@ app.get('/ready', async (_req, res) => {
 });
 ```
 
-## New: `proxy.middleware()` / `proxy.pipe()` — v3's ergonomics, honestly
+## New: `proxy.middleware()` / `proxy.pipe()` for v3-style ergonomics
 
 The pure `fetch()` primitive is the right foundation, but on its own it
 made the common case wordier than v3's one-line `proxy.get(req, res)`.
 The convenience adapter closes that gap **without** bringing back the
-empty-200 lie — it writes the response for you and renders honest
-404/403/416 statuses.
+empty-200 behavior. It writes the response for you and returns the real
+404/403/416 status.
 
 ```typescript
-// v3.x — one call, but swallowed 404/403/416 as empty 200
+// v3.x: one call, but swallowed 404/403/416 as empty 200
 const stream = await proxy.get(req, res);
 stream.on('error', () => res.end()).pipe(res);
 
-// v4.1 — one call again, honest status codes
+// v4.1: one call again, real status codes
 app.get('/*splat', proxy.middleware());
 // or, if you want the request handler explicit:
 app.get('/*splat', (req, res) => proxy.pipe(req, res));
@@ -174,11 +176,11 @@ app.get('/*splat', (req, res) => proxy.pipe(req, res));
 classified S3 failure (it renders it). Use the explicit `fetch()` +
 try/catch form when you need a custom error body or non-Express framework.
 
-## New: `proxy.staticSite()` — S3 website hosting, on a private bucket
+## New: `proxy.staticSite()` for S3 website hosting on a private bucket
 
 If you used v3 to serve a website (and hand-rolled index/error handling
-around `proxy.get`), `staticSite()` now does it for you — index-document
-resolution plus a custom error document — as an opt-in layer over `fetch()`:
+around `proxy.get`), `staticSite()` now does it for you: index-document
+resolution plus a custom error document, as an opt-in layer over `fetch()`:
 
 ```typescript
 const site = proxy.staticSite({ indexDocument: 'index.html', errorDocument: '404.html' });
@@ -188,7 +190,7 @@ app.use((req, res) => site(req, res));   // app.use so `/` matches too
 `/` and `/dir/` resolve to the index document; a missing or forbidden key
 serves the error document with the original 4xx status (falling back to a
 bare status if the error document is itself missing). Unlike v3, this can't
-mask a real failure — `fetch()` still throws typed errors underneath, and
+mask a real failure: `fetch()` still throws typed errors underneath, and
 none of this behavior is baked into the core.
 
 ## New: restored header passthrough
