@@ -16,7 +16,7 @@ aws cloudformation update-stack --stack-name S3ProxyECS --template-body file://S
 ```
 
 ### Deploy new container image to existing service
-From the [aws ecs update-service](https://docs.aws.amazon.com/cli/latest/reference/ecs/update-service.html) documentation: If your updated Docker image uses the same tag as what is in the existing task definition for your service (for example, my_image:latest ), you do not need to create a new revision of your task definition. You can update the service using the forceNewDeployment option. The new tasks launched by the deployment pull the current image/tag combination from your repository when they start.https://docs.aws.amazon.com/cli/latest/reference/ecs/update-service.htmlhttps://docs.aws.amazon.com/cli/latest/reference/ecs/update-service.html
+From the [aws ecs update-service](https://docs.aws.amazon.com/cli/latest/reference/ecs/update-service.html) documentation: If your updated Docker image uses the same tag as what is in the existing task definition for your service (for example, my_image:latest ), you do not need to create a new revision of your task definition. You can update the service using the forceNewDeployment option. The new tasks launched by the deployment pull the current image/tag combination from your repository when they start.
 
 ``` bash
 aws ecs update-service --cluster S3Proxy --service S3ProxyService --force-new-deployment

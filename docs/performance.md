@@ -1,6 +1,6 @@
 # s3proxy Performance Guide
 
-This document provides comprehensive guidance on load testing s3proxy and understanding its performance characteristics.
+This document covers load testing s3proxy and understanding its performance characteristics.
 
 ## Overview
 
