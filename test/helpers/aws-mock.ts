@@ -10,6 +10,15 @@ import { mockClient } from 'aws-sdk-client-mock';
 export const s3Mock = mockClient(S3Client);
 
 /**
+ * Build a GetObject mock Body the way S3 does: a stream of bytes, never
+ * strings. A string-chunked stream passes Node consumers (pipe tolerates
+ * strings) but breaks the Web path (Readable.toWeb -> Response requires bytes).
+ */
+function mockBody(content: string | Buffer): Readable {
+  return Readable.from([Buffer.isBuffer(content) ? content : Buffer.from(content)]);
+}
+
+/**
  * Sets up comprehensive S3 mocks for unit testing
  * Mocks all AWS SDK calls to avoid hitting real AWS services
  */
@@ -70,7 +79,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
       Key: 'index.html',
     })
     .resolves({
-      Body: Readable.from([mockHtmlContent]),
+      Body: mockBody(mockHtmlContent),
       ContentLength: 338,
       ContentType: 'text/html',
       ETag: '"b772dda7744f7e67697c8946afbf04f1"',
@@ -152,7 +161,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
       Range: 'bytes=0-100',
     })
     .resolves({
-      Body: Readable.from([mockHtmlContent.substring(0, 101)]),
+      Body: mockBody(mockHtmlContent.substring(0, 101)),
       ContentLength: 101,
       ContentRange: 'bytes 0-100/338',
       ContentType: 'text/html',
@@ -166,7 +175,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
 
   // Mock a nested index document (for static-site '/blog/' resolution)
   s3Mock.on(GetObjectCommand, { Bucket: '.test-bucket', Key: 'blog/index.html' }).resolves({
-    Body: Readable.from(['<h1>blog index</h1>']),
+    Body: mockBody('<h1>blog index</h1>'),
     ContentLength: 19,
     ContentType: 'text/html',
     $metadata: { httpStatusCode: 200, requestId: 'mock-request-id' },
@@ -175,7 +184,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
   // Mock a custom error document (for static-site errorDocument)
   const errorDoc = '<h1>Not found</h1>';
   s3Mock.on(GetObjectCommand, { Bucket: '.test-bucket', Key: '404.html' }).resolves({
-    Body: Readable.from([errorDoc]),
+    Body: mockBody(errorDoc),
     ContentLength: errorDoc.length,
     ContentType: 'text/html',
     $metadata: { httpStatusCode: 200, requestId: 'mock-request-id' },
@@ -195,7 +204,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
       Key: 'with-metadata.bin',
     })
     .resolves({
-      Body: Readable.from([Buffer.alloc(10, 'A')]),
+      Body: mockBody(Buffer.alloc(10, 'A')),
       ContentLength: 10,
       ContentType: 'application/octet-stream',
       Metadata: { author: 'george', 'trace-id': 'abc123' },
@@ -216,7 +225,7 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
       Range: 'bytes=0-99',
     })
     .resolves({
-      Body: Readable.from([Buffer.alloc(100, 'A')]), // 100 bytes of 'A'
+      Body: mockBody(Buffer.alloc(100, 'A')),
       ContentLength: 100,
       ContentRange: 'bytes 0-99/1000',
       ContentType: 'application/octet-stream',

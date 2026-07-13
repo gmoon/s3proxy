@@ -193,6 +193,26 @@ bare status if the error document is itself missing). Unlike v3, this can't
 mask a real failure: `fetch()` still throws typed errors underneath, and
 none of this behavior is baked into the core.
 
+## New: `proxy.fetchWeb()` for Web-standard runtimes
+
+`pipe()` / `middleware()` / `staticSite()` write to a Node `ServerResponse`.
+For Web-standard runtimes (Hono, Bun, Cloudflare Workers, Deno), `fetchWeb()`
+is the Web-typed sibling of `fetch()`: it takes a Web `Request` and returns a
+Web `Response`, so you stop hand-rolling the `Request` -> `HttpRequest` and
+`Readable` -> `ReadableStream` conversion.
+
+```typescript
+// Hono, one line
+app.on(['GET', 'HEAD'], '/*', (c) => proxy.fetchWeb(c.req.raw));
+
+// Bun / Deno / Cloudflare Workers
+export default { fetch: (req: Request) => proxy.fetchWeb(req) };
+```
+
+Like `fetch()` (and unlike `pipe()`), it **throws** the typed `S3ProxyError`
+on 404/403/416, so the framework's error handler owns the error-body format.
+It uses the runtime's global `Request`/`Response`; no extra dependency.
+
 ## New: restored header passthrough
 
 v4.0 rebuilt response headers from the SDK's typed output and, in doing so,
