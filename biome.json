@@ -12,7 +12,6 @@
       "!**/dist",
       "!**/coverage",
       "!**/node_modules",
-      "!**/shared-testing",
       "!**/examples/sam-app",
       "!**/*.tgz",
       "!**/credentials.json"

@@ -4,6 +4,10 @@ PACKAGE_VERSION  := $(shell jq --raw-output '.version' package.json 2>/dev/null)
 GIT_REV          := $(shell git rev-parse --short HEAD 2>/dev/null || echo 0)
 UUID             := $(shell date +%s)
 
+# Shared load-test assets, published as an npm package and installed as a
+# devDependency (was the in-repo shared-testing/ directory).
+TEST_KIT         := node_modules/@forkzero/s3-website-test-kit
+
 .PHONY: lint
 lint:
 	npm run lint
@@ -48,7 +52,7 @@ artillery-docker: dockerize-for-test credentials
 		-t s3proxy:test
 	@trap 'docker kill s3proxy-test 2>/dev/null || true' EXIT; \
 	npx wait-on http://localhost:8080/index.html && \
-	TEST_ENVIRONMENT=docker-container npx artillery run --config shared-testing/configs/load-test.yml shared-testing/scenarios/load-test.yml
+	TEST_ENVIRONMENT=docker-container npx artillery run --config $(TEST_KIT)/configs/load-test.yml $(TEST_KIT)/scenarios/core/load-test.yml
 
 .PHONY: test-validation-docker
 test-validation-docker: dockerize-for-test credentials
