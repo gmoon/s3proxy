@@ -57,10 +57,4 @@ jobs:
       - name: Publish to npm
         # No token: authentication is the OIDC exchange against the configured
         # Trusted Publisher. Provenance is attached automatically.
-        run: |
-          echo "npm version: $(npm --version)"
-          echo "node version: $(node --version)"
-          echo "OIDC request url present: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
-          echo "OIDC request token present: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+yes}"
-          echo "workflow ref: ${GITHUB_WORKFLOW_REF}"
-          npm publish --loglevel verbose 2>&1 | grep -iE "oidc|trusted|publish|http|auth|error|401|403|404" | head -40
+        run: npm publish
