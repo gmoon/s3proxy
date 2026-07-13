@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { Readable } from 'node:stream';
 import { GetObjectCommand, HeadBucketCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { S3Forbidden, S3NotFound, S3ProxyError } from './errors.js';
 import { mapHeaderToParam, parseRequest } from './request-parser.js';
@@ -81,6 +82,36 @@ export class S3Proxy extends EventEmitter {
    */
   public async fetch(req: HttpRequest): Promise<S3FetchResponse> {
     return this.fetchKey(parseRequest(req).key, req);
+  }
+
+  /**
+   * Web-standard sibling of `fetch()`: take a Web `Request`, return a Web
+   * `Response` streaming the object from S3. The Web-runtime peer of the
+   * Node-typed `fetch()` primitive (same semantics, Web I/O). One line for
+   * Hono / Bun / Cloudflare Workers / Deno consumers instead of hand-rolling
+   * the `Request` -> `HttpRequest` and `Readable` -> `ReadableStream`
+   * conversions on every deployment.
+   *
+   * Throws the typed `S3ProxyError` on classified failures (404/403/416), so
+   * the framework's own error handler (Hono `app.onError`, a Workers
+   * try/catch) renders the error body however it likes. It is the peer of
+   * `fetch()`, not `pipe()`: it removes the success-path adaptation without
+   * imposing an error-body format.
+   */
+  public async fetchWeb(request: Request): Promise<Response> {
+    const { stream, status, headers } = await this.fetch({
+      url: request.url,
+      // Pass the parsed pathname as `path` so parseRequest uses it directly
+      // rather than re-parsing the URL. The S3 key derives from the path
+      // alone, so the query string is irrelevant here.
+      path: new URL(request.url).pathname,
+      method: request.method,
+      headers: Object.fromEntries(request.headers),
+    });
+    // No body for HEAD; otherwise adapt the Node stream to a Web stream.
+    // Backpressure propagates through the wrapper, so nothing buffers.
+    const body = request.method === 'HEAD' ? null : (Readable.toWeb(stream) as ReadableStream);
+    return new Response(body, { status, headers });
   }
 
   /**
