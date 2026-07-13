@@ -27,8 +27,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
+          # Deliberately no registry-url: it makes setup-node write an .npmrc
+          # with always-auth + a _authToken line and point npm at it via
+          # NPM_CONFIG_USERCONFIG. npm then treats token auth as configured and
+          # skips the OIDC exchange entirely, publishing anonymously (404). With
+          # no configured auth, npm >= 11.5.1 performs trusted publishing via
+          # OIDC against the default registry (registry.npmjs.org).
 
       - name: Install dependencies
         run: npm ci
