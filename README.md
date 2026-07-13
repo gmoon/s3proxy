@@ -793,16 +793,14 @@ s3proxy uses several configuration files for different aspects of development an
 - **`.github/workflows/manual-release.yml`** - Manual release workflow
 
 #### Performance Testing
-- **`shared-testing/configs/`** - Artillery load test configurations
-  - `load-test.yml` - Main load testing config (used in Makefile)
-  - `docker-container.yml` - Docker-specific load testing
-  - `npm-package.yml` - NPM package load testing
-  - `performance-comparison.yml` - Performance benchmarking
-- **`shared-testing/scenarios/`** - Artillery test scenarios
-  - `load-test.yml` - Basic load testing scenarios
-  - `basic-load.yml` - Simple load patterns
-  - `sustained-load.yml` - Extended load testing
-  - `spike-load.yml` - Traffic spike simulation
+
+Artillery load-test configs and scenarios come from
+[`@forkzero/s3-website-test-kit`](https://www.npmjs.com/package/@forkzero/s3-website-test-kit),
+a devDependency shared with `forkzero/s3proxy-docker`. `make artillery-docker`
+runs the kit's `configs/load-test.yml` + `scenarios/core/load-test.yml` against
+the container. The kit is target-agnostic (native S3 website hosting or
+s3proxy); its `scenarios/core/` are portable, and `scenarios/s3proxy/` holds the
+s3proxy-only checks (for example `/health`).
   - `range-requests.yml` - HTTP range request testing
 
 #### Development Tools

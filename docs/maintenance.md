@@ -52,8 +52,10 @@ make artillery-docker        # Load test the Docker container
 make test-performance        # Resource usage under load
 ```
 
-Load test configurations and scenarios live in `shared-testing/`. See
-[shared-testing/README.md](../shared-testing/README.md).
+Load-test configurations and scenarios come from the
+[`@forkzero/s3-website-test-kit`](https://www.npmjs.com/package/@forkzero/s3-website-test-kit)
+devDependency (installed under `node_modules/@forkzero/s3-website-test-kit`),
+shared with `forkzero/s3proxy-docker`.
 
 #### Docker Testing
 
