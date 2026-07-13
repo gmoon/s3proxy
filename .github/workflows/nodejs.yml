@@ -203,11 +203,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # The tag was created and pushed in the previous step, so the
+          # release attaches to it directly. Do not pass --target: that sets
+          # target_commitish, which must be a branch or commit SHA (a tag name
+          # is rejected with "target_commitish is invalid").
           gh release create "${{ steps.package-version.outputs.version }}" \
             --title "Release ${{ steps.package-version.outputs.version }}" \
             --notes "${{ steps.commit-message.outputs.message }}" \
-            --draft \
-            --target "${{ steps.package-version.outputs.version }}"
+            --draft
 
   # Package verification - ensure package contents are correct
   package-verification:
