@@ -54,6 +54,24 @@ artillery-docker: dockerize-for-test credentials
 	npx wait-on http://localhost:8080/index.html && \
 	TEST_ENVIRONMENT=docker-container npx artillery run --config $(TEST_KIT)/configs/load-test.yml $(TEST_KIT)/scenarios/core/load-test.yml
 
+# Fast local loop: run the shared test kit against a locally-run example server.
+# tsx runs the TypeScript in src/ directly, so your local s3proxy edits are
+# exercised with no build and no Docker image — change src/, re-run this. Uses
+# your AWS credential chain against the public s3proxy-public bucket. Override
+# EXAMPLE to test a different framework, e.g.
+#   make artillery-local EXAMPLE=examples/express-basic.ts
+EXAMPLE ?= examples/hono-basic.ts
+
+.PHONY: artillery-local
+artillery-local:
+	@echo "Starting local $(EXAMPLE) with cleanup on exit..."
+	@PORT=8080 BUCKET=s3proxy-public npx tsx $(EXAMPLE) & \
+	SERVER_PID=$$!; \
+	trap 'kill $$SERVER_PID 2>/dev/null || true' EXIT; \
+	npx wait-on http://localhost:8080/index.html && \
+	TEST_ENVIRONMENT=local npx artillery run --target http://localhost:8080 \
+		--config $(TEST_KIT)/configs/load-test.yml $(TEST_KIT)/scenarios/core/load-test.yml
+
 .PHONY: test-validation-docker
 test-validation-docker: dockerize-for-test credentials
 	@echo "Starting validation-docker test with cleanup on exit..."
