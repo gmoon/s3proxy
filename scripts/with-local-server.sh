@@ -15,7 +15,7 @@ shift 2
 
 PORT="$PORT" BUCKET="${BUCKET:-s3proxy-public}" npx tsx "$EXAMPLE" &
 SERVER_PID=$!
-trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 
 if ! npx wait-on -t 30000 "http://localhost:${PORT}/index.html"; then
   echo "server ($EXAMPLE) failed to start on port ${PORT}" >&2
