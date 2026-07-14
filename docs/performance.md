@@ -169,18 +169,20 @@ npm run artillery-local-3000
 artillery run --target http://localhost:3000 --config test/artillery-config-perf-ecs.yml test/artillery.yml
 ```
 
-### Docker Testing
+### Local source testing
 
-1. **Build and run container**:
+Run the kit against a `tsx` example server on your local `src/` (no build, no
+Docker image):
+
 ```bash
-npm run dockerize-for-test
-npm run docker
+make artillery-local        # load test
+make conformance-local      # HTTP-contract gate
 ```
 
-2. **Test container**:
-```bash
-npm run artillery-local-8080
-```
+### Container image testing
+
+The published container image is built and load/conformance-tested in
+[`forkzero/s3proxy-docker`](https://github.com/forkzero/s3proxy-docker), not here.
 
 ### Production Testing
 
