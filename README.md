@@ -865,8 +865,6 @@ s3proxy-only checks (for example `/health`).
 - **[AWS Fargate reference deployment](https://github.com/forkzero/s3proxy-docker/tree/main/deploy/aws-ecs)** -
   parameterized CloudFormation stack (in `forkzero/s3proxy-docker`); see
   [Deployment](#deployment) above
-- **`examples/aws-ecs/`** - the forkzero-specific ECS stack this project runs
-  (account-specific; use the reference above for your own deploy)
 
 ## Use Cases
 

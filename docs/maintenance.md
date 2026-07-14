@@ -157,8 +157,8 @@ aws sts get-session-token --duration 900 > ~/.s3proxy/credentials.json
 
 ### AWS ECS (Fargate)
 
-See [examples/aws-ecs/](../examples/aws-ecs/) for a CloudFormation-based
-ECS deployment.
+See the [parameterized Fargate reference stack](https://github.com/forkzero/s3proxy-docker/tree/main/deploy/aws-ecs)
+in `forkzero/s3proxy-docker` for a CloudFormation-based ECS deployment.
 
 ### Containers
 
