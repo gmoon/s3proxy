@@ -1,0 +1,31 @@
+id: REQ-CORE-008
+type: requirement
+title: 'Add pipe()/middleware()/staticSite(): Node convenience layers over fetch()'
+body: 'GH issues #126, #127. PR #129 (commit e395019). Recover v3''s one-call ergonomics without v3''s empty-200 lie, and add S3 static-website-hosting semantics, as opt-in layers on the pure fetch() primitive (refactored onto private fetchKey()/writeBody()). public pipe(req, res): Promise<void> -- fetch + writeHead + pipe straight to a Node ServerResponse; renders honest 404/403/416 instead of a swallowed empty-200, and never rejects for a classified S3 failure. public middleware(): RequestHandler -- returns an Express/Connect-style handler built on pipe() (app.get(''/*splat'', proxy.middleware())), forwarding unexpected errors to next. public staticSite({indexDocument, errorDocument}): RequestHandler -- index-document resolution (''/'' -> index.html) and a custom error document served under the original 4xx status, also built on fetch()/pipe(). Config lives on the staticSite() factory, not the constructor, so nothing leaks into fetch(). Shared internal seams: single writeBody() write path, onHandlerError() policy, public RequestHandler type. These are the Node-side siblings of fetchWeb() (REQ-CORE-007): fetchWeb()''s JSDoc calls itself ''the Web analog of pipe()/middleware()''.'
+status: active
+version: 1.0.0
+created_at: 2026-07-14T17:19:33.405588+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+priority: P1
+category: CORE
+tags:
+- api
+- ergonomics
+- node
+- static-site
+resolution:
+  status: verified
+  resolved_at: 2026-07-14T17:20:06.334593+00:00
+  resolved_by: agent:claude-2026-07-14
+edges:
+  derives_from:
+  - target: THX-PURE-FETCH
+    version: 1.0.0
+  - target: THX-CORE-VALUE
+    version: 1.0.0
+  - target: THX-TYPED-ERRORS
+    version: 1.0.0
+  depends_on:
+  - target: REQ-CORE-004
+    version: 1.0.0
