@@ -1,0 +1,21 @@
+id: IMP-TEST-002
+type: implementation
+title: Exclude streaming-memory RSS test from coverage instrumentation
+body: 'Commit 361bc96 (PR #154). Exclude test/streaming-memory.test.ts from test:coverage (vitest run --coverage --exclude ''test/streaming-memory.test.ts''); it still runs with the strict 50MB bound in test:unit, where the measurement is stable. Coverage is unaffected -- the streaming path is covered by other tests (99.37% lines, all thresholds green with it excluded).'
+status: active
+version: 1.0.0
+created_at: 2026-07-14T17:03:51.640844+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  files:
+  - path: package.json
+  - path: test/streaming-memory.test.ts
+edges:
+  satisfies:
+  - target: REQ-TEST-002
+    version: 1.0.0
+  validates:
+  - target: THX-NO-BUFFERING
+    version: 1.0.0
+    rationale: Keeps the 100MB/<50MB peak-RSS-delta assertion meaningful and stable by running it only where V8 instrumentation isn't skewing the measurement

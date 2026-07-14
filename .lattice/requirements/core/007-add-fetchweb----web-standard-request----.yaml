@@ -1,0 +1,25 @@
+id: REQ-CORE-007
+type: requirement
+title: 'Add fetchWeb(): Web Standard Request -> Response adapter over fetch()'
+body: 'GH issue #142, PR #144 (+ #145 docs framing). Add public async fetchWeb(request: Request): Promise<Response> to src/index.ts: a convenience adapter over the pure fetch() primitive for Web-standard runtimes (Hono, Bun, Cloudflare Workers, Deno) that takes a WHATWG Request and returns a WHATWG Response (via Readable.toWeb), removing the Request->HttpRequest and Readable->ReadableStream conversion consumers otherwise hand-roll on every deployment. It throws the typed S3ProxyError on classified failures (404/403/416) rather than rendering them, so the framework''s own error handler (Hono app.onError, a Workers try/catch) owns the error-body format -- the Web-standards analog of pipe()/middleware() (which serve a Node ServerResponse). #145 refined the framing: fetchWeb is an adapter over fetch(), not a peer method.'
+status: active
+version: 1.0.0
+created_at: 2026-07-14T16:59:20.518317+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+priority: P2
+category: CORE
+tags:
+- web-standards
+- fetch
+- adapter
+resolution:
+  status: verified
+  resolved_at: 2026-07-14T17:00:03.897206+00:00
+  resolved_by: agent:claude-2026-07-14
+edges:
+  derives_from:
+  - target: THX-PURE-FETCH
+    version: 1.0.0
+  - target: THX-WEB-STANDARDS
+    version: 1.0.0

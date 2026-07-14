@@ -1,0 +1,28 @@
+id: REQ-BUILD-003
+type: requirement
+title: Adopt shared, target-agnostic test-kit; add hard CI conformance gate
+body: 'gmoon PRs #143, #150, #151, #152. The in-repo shared-testing/ load-test directory (configs/scenarios/utils) was extracted to the published npm package @forkzero/s3-website-test-kit and consumed as a devDependency instead of copied by tarball, shared with forkzero/s3proxy-docker (#143, ^0.1.0). Bumped to ^0.2.0 (#150: self-contained kit, one-line conformance gate config, bootstrap-s3-target.sh, URL-encoding fix) then ^0.2.1 (#151: made the core conformance gate target-agnostic -- scenarios/core/conformance.yml asserts only statusCode for a missing key; the s3proxy-specific application/xml body assertion moved to the opt-in scenarios/s3proxy/error-contract.yml). #152 wired a hard CI gate running the kit''s expect-enabled conformance config against both scenarios/core/conformance.yml (status/content-type/content-length) and scenarios/s3proxy/error-contract.yml (404/403 -> application/xml) -- unlike the load test (throughput only, no assertions), any mismatch exits non-zero. No load-timing gate: absolute latency thresholds are flaky on shared CI runners.'
+status: active
+version: 1.0.0
+created_at: 2026-07-14T17:00:13.572628+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+priority: P1
+category: BUILD
+tags:
+- testing
+- ci
+- conformance
+resolution:
+  status: verified
+  resolved_at: 2026-07-14T17:00:57.141746+00:00
+  resolved_by: agent:claude-2026-07-14
+edges:
+  derives_from:
+  - target: THX-TYPED-ERRORS
+    version: 1.0.0
+  - target: THX-NO-BUFFERING
+    version: 1.0.0
+  depends_on:
+  - target: REQ-BUILD-001
+    version: 1.0.0

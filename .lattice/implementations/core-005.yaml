@@ -1,0 +1,31 @@
+id: IMP-CORE-005
+type: implementation
+title: fetchWeb() Web Standard adapter
+body: 'Commit 42992b6 (PR #144) + bb67b24 (PR #145, docs framing). Added public async fetchWeb(request: Request): Promise<Response> to src/index.ts, adapting Web Request -> fetch() -> Web Response via Readable.toWeb; throws typed S3ProxyError on 404/403/416 so the framework''s own error handler renders the body. New test/fetch-web.test.ts (6 tests). examples/hono-basic.ts collapsed from the hand-rolled Object.fromEntries(headers) + Readable.toWeb conversion (IMP-EXAMPLE-001) to app.on([''GET'',''HEAD''],''/*'',(c)=>proxy.fetchWeb(c.req.raw)).'
+status: active
+version: 1.0.0
+created_at: 2026-07-14T16:59:26.881835+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  files:
+  - path: src/index.ts
+  - path: test/fetch-web.test.ts
+  - path: examples/hono-basic.ts
+edges:
+  satisfies:
+  - target: REQ-CORE-007
+    version: 1.0.0
+  - target: REQ-EXAMPLE-001
+    version: 1.0.0
+  validates:
+  - target: THX-PURE-FETCH
+    version: 1.0.0
+    rationale: fetchWeb() is a thin adapter over fetch(); the same proxy.fetch() triple powers Express/Fastify/Hono-via-res and now Web Response directly, with no core changes
+  - target: THX-WEB-STANDARDS
+    version: 1.0.0
+    rationale: fetchWeb() removes the last hand-rolled conversion layer for Bun/Workers/Deno/Hono; examples/hono-basic.ts now calls it directly with zero adapter code in the example itself
+  supersedes:
+  - target: IMP-EXAMPLE-001
+    version: 1.0.1
+    rationale: fetchWeb() subsumes the hand-rolled Object.fromEntries(headers) + Readable.toWeb conversion that IMP-EXAMPLE-001 implemented directly in examples/hono-basic.ts; the example now delegates to the library

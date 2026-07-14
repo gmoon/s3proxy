@@ -2,8 +2,8 @@ id: REQ-EXAMPLE-002
 type: requirement
 title: Hono Docker integration parallel to fastify-docker
 body: examples/fastify-docker.ts is the integration test target (make test-validation-docker). If Hono becomes a primary deployment story, we'd want examples/hono-docker.ts with its own Dockerfile and Makefile target — to test that proxy.fetch() via Hono + @hono/node-server holds under the 24-test validation suite and artillery load.
-status: active
-version: 1.0.0
+status: superseded
+version: 1.0.1
 created_at: 2026-05-23T22:57:58.183754+00:00
 created_by: agent:claude
 requested_by: George Moon <george.moon@gmail.com>
@@ -14,10 +14,10 @@ tags:
 - docker
 - integration
 resolution:
-  status: deferred
-  reason: No published Hono Docker variant of s3proxy exists; the smoke gate already validates examples/hono-basic.ts boots and serves correctly. Revisit if someone publishes a hono-on-bun or hono-on-workers deployment story.
-  resolved_at: 2026-05-23T22:57:58.223057+00:00
-  resolved_by: agent:claude-2026-05-23
+  status: wontfix
+  reason: 'Premise obsoleted: examples/fastify-docker.ts (the parallel integration target named in this requirement) was deleted in PR #156, and this repo''s Docker-based CI was replaced with local tsx targets (conformance-local, validation-local, artillery-local) that test src/ directly. The ''Hono Docker deployment story'' this requirement was waiting on now exists outside this repo''s example matrix: forkzero/s3proxy-docker''s server.js (Hono + fetchWeb(), prod-hardened image) is published as forkzero/s3proxy to Docker Hub. Superseded by REQ-EXAMPLE-003 / IMP-EXAMPLE-002 (container consolidation) and REQ-CORE-007 / IMP-CORE-005 (fetchWeb(), the adapter that server.js is built on).'
+  resolved_at: 2026-07-14T17:03:14.541943+00:00
+  resolved_by: agent:claude-2026-07-14
 edges:
   derives_from:
   - target: THX-WEB-STANDARDS

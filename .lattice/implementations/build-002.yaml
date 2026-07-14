@@ -1,0 +1,27 @@
+id: IMP-BUILD-002
+type: implementation
+title: Shared test-kit devDependency + conformance gate
+body: 'Commits 4e01d4d (#143), 81e79ad (#150), 8800421 (#151), 4dd2102 (#152). Removed shared-testing/ (configs, scenarios, utils, README); added @forkzero/s3-website-test-kit as a devDependency plus .npmrc pinning the @forkzero scope to public npm. Makefile TEST_KIT var points at node_modules/@forkzero/s3-website-test-kit. Added make conformance-docker (later renamed conformance-local in PR #156): stands up a test image/server, then runs the kit''s expect-enabled conformance config against scenarios/core/conformance.yml and scenarios/s3proxy/error-contract.yml, wired into the CI Performance Tests job as a fail-fast step before the load run. Verified locally each step (artillery-docker/artillery-local 0 failures; conformance 16/16 core + 4/4 error-contract expectations passing against the built container).'
+status: active
+version: 1.0.0
+created_at: 2026-07-14T17:00:51.086157+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  files:
+  - path: package.json
+  - path: .npmrc
+  - path: Makefile
+  - path: .github/workflows/nodejs.yml
+  - path: docs/maintenance.md
+edges:
+  satisfies:
+  - target: REQ-BUILD-003
+    version: 1.0.0
+  validates:
+  - target: THX-TYPED-ERRORS
+    version: 1.0.0
+    rationale: The error-contract conformance gate asserts 404/403 -> application/xml, directly enforcing the typed-error contract established by THX-TYPED-ERRORS in CI, not just in unit tests
+  - target: THX-NO-BUFFERING
+    version: 1.0.0
+    rationale: The core conformance gate asserts content-length correctness end-to-end, a CI-level check that the response is not silently truncated or buffered incorrectly
