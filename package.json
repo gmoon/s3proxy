@@ -54,7 +54,7 @@
     "start": "tsx examples/fastify-basic.ts",
     "test": "npm run test:unit",
     "test:unit": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --exclude 'test/streaming-memory.test.ts'",
     "test:validation": "vitest run --config vitest.integration.config.ts",
     "test:smoke": "bash scripts/smoke-examples.sh",
     "test:integration": "npm run lint && npm run type-check",

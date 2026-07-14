@@ -5,6 +5,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { S3Proxy } from '../src/index.js';
 import { makeReq } from './helpers/http-mocks.js';
 
+// Runs in the plain `test:unit` pass only — `test:coverage` excludes this file
+// (see package.json). The assertion measures process RSS, and V8 coverage
+// instrumentation inflates RSS and shifts GC timing enough to push the peak
+// delta past the bound (~57-62MB observed vs. the 50MB limit), producing false
+// failures that have nothing to do with s3proxy's buffering. Un-instrumented,
+// the measurement is stable and meaningful, so the strict bound lives here.
 describe('streaming memory bound', () => {
   const s3Mock = mockClient(S3Client);
 
