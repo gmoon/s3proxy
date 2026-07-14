@@ -18,7 +18,7 @@
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.832.0",
     "@biomejs/biome": "^2.0.4",
-    "@forkzero/s3-website-test-kit": "^0.1.0",
+    "@forkzero/s3-website-test-kit": "^0.2.0",
     "@hono/node-server": "^2.0.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
