@@ -637,8 +637,13 @@ app.get('/ready', async (_req, res) => {
 For containerized deployments:
 
 ```bash
-docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:4.0.0
+docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:latest
 ```
+
+The `forkzero/s3proxy` image is published from
+[`forkzero/s3proxy-docker`](https://github.com/forkzero/s3proxy-docker) with the
+tags `X.Y.Z`, `X.Y`, and `latest`. `latest` is shown here for quick start; pin a
+specific version for production (for example `forkzero/s3proxy:4.2`).
 
 For local development with temporary AWS credentials, write a session
 token to `~/.s3proxy/credentials.json` and bind-mount it into the
@@ -654,7 +659,7 @@ docker run \
   -e PORT=8080 \
   -e NODE_ENV=dev \
   -p 8080:8080 \
-  -t forkzero/s3proxy:4.0.0
+  -t forkzero/s3proxy:latest
 ```
 
 ## Development

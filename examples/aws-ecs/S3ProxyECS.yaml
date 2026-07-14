@@ -29,7 +29,8 @@ Parameters:
     Type: String
   ContainerImage:
     Type: String
-    Default: forkzero/s3proxy:2.0.2
+    # Pin a specific version for production, e.g. forkzero/s3proxy:4.2
+    Default: forkzero/s3proxy:latest
 Resources: 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
