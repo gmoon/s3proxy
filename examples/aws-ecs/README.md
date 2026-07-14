@@ -1,5 +1,12 @@
 ## Deploying S3Proxy on ECS Fargate
 
+> **Looking for a reusable template?** `S3ProxyECS.yaml` here is the
+> **account-specific** stack this project runs (hardcoded VPC/subnets, the
+> `s3proxy.forkzero.com` domain, a fixed stack ARN). For a **parameterized,
+> reusable** Fargate deployment — bring your own VPC/subnets/bucket, optional
+> HTTPS/DNS — use the reference stack in
+> [`forkzero/s3proxy-docker` → `deploy/aws-ecs/`](https://github.com/forkzero/s3proxy-docker/tree/main/deploy/aws-ecs).
+
 https://docs.aws.amazon.com/AmazonECS/latest/userguide/fargate-task-networking.html
 https://github.com/1Strategy/fargate-cloudformation-example/blob/master/fargate.yaml
 
