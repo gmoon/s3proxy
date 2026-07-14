@@ -18,6 +18,10 @@ edges:
     version: 1.0.0
   - target: REQ-EXAMPLE-001
     version: 1.0.0
+  extends:
+  - target: IMP-CORE-006
+    version: 1.0.0
+    rationale: fetchWeb() is the Web-standard sibling of the Node convenience-layer pattern established by pipe()/middleware(); its own JSDoc calls it 'the Web analog of pipe()/middleware()'
   validates:
   - target: THX-PURE-FETCH
     version: 1.0.0

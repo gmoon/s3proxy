@@ -1,0 +1,33 @@
+id: IMP-CORE-006
+type: implementation
+title: pipe()/middleware()/staticSite() Node convenience layers
+body: 'Commit e395019 (PR #129, closes #126 #127). Added pipe(), middleware(), staticSite() to src/index.ts, refactored onto private fetchKey()/writeBody()/onHandlerError()/renderError() seams. examples/express-basic.ts converted to middleware(); new examples/static-site.ts (mounted with app.use) demonstrates staticSite(). Both covered by the smoke gate against a real bucket (scripts/smoke-examples.sh extended with overridable SMOKE_EXAMPLES + the static-site example). New test/pipe.test.ts (pipe/middleware: happy path, honest 404, never-rejects, range passthrough, next()-forwarding, mid-stream failure) and test/static-site.test.ts (index-document resolution, error-document with original 4xx status, fallback when the error document itself is missing, fetch() unaffected). New FakeResponse/serve() test doubles in test/helpers/http-mocks.ts; new public RequestHandler type in src/types.ts.'
+status: active
+version: 1.0.0
+created_at: 2026-07-14T17:19:42.630382+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  files:
+  - path: src/index.ts
+  - path: src/types.ts
+  - path: examples/express-basic.ts
+  - path: examples/static-site.ts
+  - path: test/pipe.test.ts
+  - path: test/static-site.test.ts
+  - path: test/helpers/http-mocks.ts
+  - path: scripts/smoke-examples.sh
+edges:
+  satisfies:
+  - target: REQ-CORE-008
+    version: 1.0.0
+  validates:
+  - target: THX-PURE-FETCH
+    version: 1.0.0
+    rationale: pipe()/middleware()/staticSite() are all built on the pure fetch() primitive with zero changes to fetch() itself -- direct evidence that fetch()'s triple is a sufficient foundation for higher-level ergonomic layers
+  - target: THX-CORE-VALUE
+    version: 1.0.0
+    rationale: writeBody() pipes the S3 stream straight to the Node response with no intermediate buffering, delivering the stream-without-buffering value prop through the one-call ergonomic surface, not just the pure fetch() primitive
+  - target: THX-TYPED-ERRORS
+    version: 1.0.0
+    rationale: pipe()/middleware() render honest 404/403/416 (via the same typed S3ProxyError classification) instead of v3's swallowed empty-200, and middleware()/staticSite() forward unexpected errors to next() rather than swallowing them
