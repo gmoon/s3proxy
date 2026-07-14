@@ -1,0 +1,25 @@
+id: IMP-EXAMPLE-002
+type: implementation
+title: Container server consolidated to forkzero/s3proxy-docker; local tsx CI targets
+body: 'Commit 857409a (PR #156), plus context commits 4496eb2 (#153) and 0033a05 (#155). Deleted examples/fastify-docker.ts and examples/Dockerfile. Replaced *-docker Make targets with local tsx equivalents (conformance-local, validation-local; artillery-local kept its name); factored the boot/wait/run/cleanup boilerplate into scripts/with-local-server.sh. conformance-local/validation-local default to examples/fastify-basic.ts, whose XML error bodies match the published image''s error contract. CI: Validation + Performance jobs run the -local targets (no Docker build, no Build step -- tsx runs src/ directly); the published image is built and conformance-tested in forkzero/s3proxy-docker''s own CI. Also: README Deployment section documents Docker / AWS Fargate / local-dev-creds paths (#153); examples/aws-ecs/ (the account-specific ECS stack) was removed from this repo and relocated with git history to the private forkzero/s3proxy-ops repo (#155), leaving a link to the reusable Fargate reference stack in forkzero/s3proxy-docker/deploy/aws-ecs. Verified locally: conformance-local, validation-local (24/24), and artillery-local all exit 0. Net -148 lines in #156.'
+status: active
+version: 1.0.0
+created_at: 2026-07-14T17:03:01.136731+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+meta:
+  files:
+  - path: Makefile
+  - path: scripts/with-local-server.sh
+  - path: .github/workflows/nodejs.yml
+  - path: README.md
+  - path: docs/maintenance.md
+  - path: docs/performance.md
+edges:
+  satisfies:
+  - target: REQ-EXAMPLE-003
+    version: 1.0.0
+  validates:
+  - target: THX-WEB-STANDARDS
+    version: 1.0.0
+    rationale: The single published container image (Hono + fetchWeb(), non-root, tini) is the concrete Web-standards deployment story that examples/hono-basic.ts and this repo's Docker CI previously only approximated

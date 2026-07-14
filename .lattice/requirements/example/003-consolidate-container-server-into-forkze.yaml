@@ -1,0 +1,35 @@
+id: REQ-EXAMPLE-003
+type: requirement
+title: Consolidate container server into forkzero/s3proxy-docker; replace Docker CI with local tsx targets
+body: 'gmoon PR #156 (+ context: #153, #155). This repo carried a second container server (examples/fastify-docker.ts + examples/Dockerfile) that existed only to give Docker-based CI something to run; it duplicated and had drifted from the published image''s server (older proxy.fetch() with manual writeHead/pipe/hijack, a /health that skipped the S3 check, tsx-in-image with NODE_ENV=development). The real, prod-hardened server (Hono + fetchWeb(), digest-pinned image, non-root, tini) lives in forkzero/s3proxy-docker/server.js and is published as forkzero/s3proxy to Docker Hub -- make that the single source of truth. examples/fastify-docker.ts and examples/Dockerfile are deleted; the *-docker Make targets (conformance-docker, test-validation-docker, artillery-docker) are replaced by local tsx equivalents (conformance-local, validation-local, artillery-local) that test the library directly against src/ with no build and no Docker image, via scripts/with-local-server.sh. CI''s Validation and Performance jobs run the -local targets; the published image is built and conformance-tested in s3proxy-docker''s own CI. Context: PR #153 added a README Deployment section covering Docker / AWS Fargate / local-dev paths and removed unrelated stock AWS-OTEL sample cruft from examples/aws-ecs/; PR #155 relocated the account-specific production ECS stack (examples/aws-ecs/S3ProxyECS.yaml + update-stack.sh, with full git history) to the new private forkzero/s3proxy-ops repo, leaving only a link to the reusable, parameterized Fargate reference stack added in forkzero/s3proxy-docker/deploy/aws-ecs (forkzero PR #114). examples/aws-ecs/ no longer exists in this repo.'
+status: active
+version: 1.0.0
+created_at: 2026-07-14T17:02:51.580154+00:00
+created_by: agent:claude
+requested_by: George Moon <george.moon@gmail.com>
+priority: P2
+category: EXAMPLE
+tags:
+- hono
+- docker
+- container
+- ci
+resolution:
+  status: verified
+  resolved_at: 2026-07-14T17:03:09.075130+00:00
+  resolved_by: agent:claude-2026-07-14
+edges:
+  derives_from:
+  - target: THX-WEB-STANDARDS
+    version: 1.0.0
+  - target: THX-PURE-FETCH
+    version: 1.0.0
+  depends_on:
+  - target: REQ-CORE-007
+    version: 1.0.0
+  - target: REQ-BUILD-003
+    version: 1.0.0
+  supersedes:
+  - target: REQ-EXAMPLE-002
+    version: 1.0.1
+    rationale: 'REQ-EXAMPLE-002 asked for a Hono Docker integration parallel to fastify-docker.ts; fastify-docker.ts itself was deleted (PR #156) and the Hono Docker deployment story it was waiting on now exists as forkzero/s3proxy-docker''s server.js (Hono + fetchWeb()), published to Docker Hub -- outside this repo''s example matrix'
