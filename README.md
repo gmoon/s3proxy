@@ -632,9 +632,12 @@ app.get('/ready', async (_req, res) => {
 });
 ```
 
-## Docker Deployment
+## Deployment
 
-For containerized deployments:
+You can deploy s3proxy as your own Node app (the examples above) or run the
+prebuilt container. The three common paths:
+
+### Docker
 
 ```bash
 docker run --env BUCKET=mybucket --env PORT=8080 --publish 8080:8080 -t forkzero/s3proxy:latest
@@ -644,6 +647,22 @@ The `forkzero/s3proxy` image is published from
 [`forkzero/s3proxy-docker`](https://github.com/forkzero/s3proxy-docker) with the
 tags `X.Y.Z`, `X.Y`, and `latest`. `latest` is shown here for quick start; pin a
 specific version for production (for example `forkzero/s3proxy:4.2`).
+
+### AWS Fargate
+
+To run the container on AWS Fargate behind an Application Load Balancer, use the
+reference CloudFormation stack in
+[`forkzero/s3proxy-docker` → `deploy/aws-ecs/`](https://github.com/forkzero/s3proxy-docker/tree/main/deploy/aws-ecs).
+It parameterizes your VPC, subnets, and bucket, scopes the task role to
+`s3:GetObject` on that bucket, health-checks `/health`, and makes HTTPS + DNS
+optional. Its README walks through deploying — including pointing it at the
+public `s3proxy-public` demo bucket to see it work end to end.
+
+In orchestrators (Fargate/ECS, Kubernetes) you typically disable s3proxy's own
+startup check and rely on the platform's readiness probe — see
+[`verifyOnInit` for orchestrators](#verifyoninit-for-orchestrators).
+
+### Local development with temporary credentials
 
 For local development with temporary AWS credentials, write a session
 token to `~/.s3proxy/credentials.json` and bind-mount it into the
@@ -843,8 +862,11 @@ s3proxy-only checks (for example `/health`).
   - Provides consistent commands across environments
 
 #### AWS & Docker
-- **`examples/aws-ecs/`** - ECS deployment configurations
-  - CloudFormation templates for production deployment
+- **[AWS Fargate reference deployment](https://github.com/forkzero/s3proxy-docker/tree/main/deploy/aws-ecs)** -
+  parameterized CloudFormation stack (in `forkzero/s3proxy-docker`); see
+  [Deployment](#deployment) above
+- **`examples/aws-ecs/`** - the forkzero-specific ECS stack this project runs
+  (account-specific; use the reference above for your own deploy)
 
 ## Use Cases
 
