@@ -50,8 +50,16 @@ the test bucket (default `s3proxy-public`).
 ```bash
 make artillery-local         # Fast local loop: kit vs a tsx server on local src/
 make artillery-docker        # Load test the Docker container (packs local src/)
+make conformance-docker      # HTTP-contract gate against the container (CI gate)
 make test-performance        # Resource usage under load
 ```
+
+`make conformance-docker` is a hard gate (also run in CI): it asserts the
+container's status codes, content-types, and content-lengths with the kit's
+`expect`-enabled config — the portable `scenarios/core/conformance.yml` plus the
+s3proxy-specific `scenarios/s3proxy/error-contract.yml` (404/403 → `application/xml`).
+The load targets measure throughput only and assert nothing, so a header/status
+regression that still returns 200 slips past them but fails this gate.
 
 Load-test configurations and scenarios come from the
 [`@forkzero/s3-website-test-kit`](https://www.npmjs.com/package/@forkzero/s3-website-test-kit)
@@ -133,8 +141,9 @@ aws sts get-session-token --duration 900 > ~/.s3proxy/credentials.json
 ### GitHub Actions
 
 - **`.github/workflows/nodejs.yml`**: core tests (lint, type-check,
-  build, unit tests), examples smoke test, validation tests, performance
-  tests, and package verification. Unit tests run on Node 22 and 23.
+  build, unit tests), examples smoke test, validation tests, the
+  conformance gate and load tests, and package verification. Unit tests
+  run on Node 22 and 23.
 - **`.github/workflows/release.yml`**: runs on a published GitHub release.
 - **`.github/workflows/manual-release.yml`**: manual release
   (`workflow_dispatch`).

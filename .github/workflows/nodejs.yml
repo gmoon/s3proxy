@@ -151,6 +151,8 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
+      - name: Run conformance gate
+        run: make conformance-docker
       - name: Run load tests
         run: make artillery-docker
       - name: Upload performance test results

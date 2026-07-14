@@ -54,6 +54,27 @@ artillery-docker: dockerize-for-test credentials
 	npx wait-on http://localhost:8080/index.html && \
 	TEST_ENVIRONMENT=docker-container npx artillery run --config $(TEST_KIT)/configs/load-test.yml $(TEST_KIT)/scenarios/core/load-test.yml
 
+# Conformance gate: assert the container's HTTP contract (status, content-type,
+# content-length) with the test kit's `expect`-enabled config. Unlike the load
+# test above (throughput only, no assertions), any mismatch exits non-zero, so
+# this is a hard CI gate. Two scenarios: the portable core one, then the
+# s3proxy-specific XML error contract (the container renders 404/403 as
+# application/xml via fastify-docker.ts).
+.PHONY: conformance-docker
+conformance-docker: dockerize-for-test credentials
+	@echo "Starting conformance-docker gate with cleanup on exit..."
+	@docker kill s3proxy-conformance 2>/dev/null || true
+	@docker run -v $(shell pwd)/credentials.json:/src/credentials.json:ro --rm --name s3proxy-conformance -d -p 8081:8080 \
+		-e BUCKET=s3proxy-public \
+		-e AWS_REGION=us-east-1 \
+		-e PORT=8080 \
+		-e NODE_ENV=dev \
+		-t s3proxy:test
+	@trap 'docker kill s3proxy-conformance 2>/dev/null || true' EXIT; \
+	npx wait-on http://localhost:8081/index.html && \
+	npx artillery run --target http://localhost:8081 --config $(TEST_KIT)/configs/conformance.yml $(TEST_KIT)/scenarios/core/conformance.yml && \
+	npx artillery run --target http://localhost:8081 --config $(TEST_KIT)/configs/conformance.yml $(TEST_KIT)/scenarios/s3proxy/error-contract.yml
+
 # Fast local loop: run the shared test kit against a locally-run example server.
 # tsx runs the TypeScript in src/ directly, so your local s3proxy edits are
 # exercised with no build and no Docker image — change src/, re-run this. Uses
