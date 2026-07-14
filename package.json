@@ -70,7 +70,7 @@
     "package:contents": "npm pack && tar -tzf *.tgz && rm *.tgz",
     "release:dry-run": "semantic-release --dry-run",
     "release:local": "semantic-release --no-ci",
-    "cleanup": "rm -fv s3proxy*.tgz; rm -fv examples/s3proxy*.tgz",
+    "cleanup": "rm -fv s3proxy*.tgz",
     "ncu-upgrade": "ncu --upgrade"
   },
   "repository": {

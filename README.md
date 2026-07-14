@@ -724,16 +724,17 @@ Tests run across several dimensions:
 | Build Verification | `make build` | ✅ Node CI | TypeScript compilation |
 | Package Verification | `make pre-release-check` | ✅ Node CI | npm package integrity |
 | **Functional Testing** | | | |
-| Validation Tests | `make test-validation-docker` | ✅ Node CI | 24 comprehensive functionality tests |
+| Validation Tests | `make validation-local` | ✅ Node CI | 24 comprehensive functionality tests |
+| Conformance Gate | `make conformance-local` | ✅ Node CI | HTTP-contract assertions (status/type/length) |
 | Binary Integrity | Included in validation | ✅ Node CI | File corruption detection |
 | Range Requests | Included in validation | ✅ Node CI | HTTP range request handling |
 | Error Handling | Included in validation | ✅ Node CI | Proper error status codes |
 | **Performance Testing** | | | |
-| Load Testing | `make artillery-docker` | ✅ Node CI | High-throughput performance |
+| Load Testing | `make artillery-local` | ✅ Node CI | High-throughput performance |
 | Stress Testing | `make test-performance` | ✅ Node CI | Resource usage under load |
 | **Platform Testing** | | | |
-| Docker Integration | `make test-all-docker` | ✅ Node CI | Containerized deployment |
 | Multi-Node | Node 22, 23 | ✅ Node CI | Cross-version compatibility |
+| Container Image | [`forkzero/s3proxy-docker`](https://github.com/forkzero/s3proxy-docker) CI | ✅ | The published image is built + conformance-tested there |
 
 #### Test Commands
 
@@ -741,11 +742,12 @@ Tests run across several dimensions:
 # Run all tests locally
 make all                    # Complete test suite
 make test                   # Core tests (build, lint, unit)
-make functional-tests       # Integration and Docker tests
+make functional-tests       # Conformance, validation, and load tests
 
-# Individual test categories
-make test-validation-docker # 24 comprehensive validation tests
-make artillery-docker       # Performance/load testing
+# Individual test categories (each runs a tsx example server on src/)
+make validation-local       # 24 comprehensive validation tests
+make conformance-local      # HTTP-contract gate (status/type/length)
+make artillery-local        # Performance/load testing
 
 # Quality checks
 make pre-release-check     # Complete pre-release verification
@@ -773,7 +775,6 @@ src/
 examples/
 ├── express-basic.ts  # TypeScript Express example
 ├── fastify-basic.ts  # TypeScript Fastify example
-├── fastify-docker.ts # Dockerized Fastify example
 ├── hono-basic.ts     # Hono / Web Standards example
 ├── static-site.ts    # staticSite index + error document example
 └── http.ts           # TypeScript node:http example
@@ -846,9 +847,9 @@ s3proxy uses several configuration files for different aspects of development an
 
 Artillery load-test configs and scenarios come from
 [`@forkzero/s3-website-test-kit`](https://www.npmjs.com/package/@forkzero/s3-website-test-kit),
-a devDependency shared with `forkzero/s3proxy-docker`. `make artillery-docker`
-runs the kit's `configs/load-test.yml` + `scenarios/core/load-test.yml` against
-the container. The kit is target-agnostic (native S3 website hosting or
+a devDependency shared with `forkzero/s3proxy-docker`. `make artillery-local`
+runs the kit's `configs/load-test.yml` + `scenarios/core/load-test.yml` against a
+tsx example server on your local `src/`. The kit is target-agnostic (native S3 website hosting or
 s3proxy); its `scenarios/core/` are portable, and `scenarios/s3proxy/` holds the
 s3proxy-only checks (for example `/health`).
   - `range-requests.yml` - HTTP range request testing

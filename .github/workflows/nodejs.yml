@@ -112,10 +112,8 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
-      - name: Build
-        run: npm run build
       - name: Run validation tests
-        run: make test-validation-docker
+        run: make validation-local
       - name: Upload validation test results
         uses: actions/upload-artifact@v7
         if: always()
@@ -149,12 +147,10 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
-      - name: Build
-        run: npm run build
       - name: Run conformance gate
-        run: make conformance-docker
+        run: make conformance-local
       - name: Run load tests
-        run: make artillery-docker
+        run: make artillery-local
       - name: Upload performance test results
         uses: actions/upload-artifact@v7
         if: always()

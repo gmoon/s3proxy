@@ -48,37 +48,35 @@ the test bucket (default `s3proxy-public`).
 #### Load Testing
 
 ```bash
-make artillery-local         # Fast local loop: kit vs a tsx server on local src/
-make artillery-docker        # Load test the Docker container (packs local src/)
-make conformance-docker      # HTTP-contract gate against the container (CI gate)
+make conformance-local       # HTTP-contract gate (status/type/length) — CI gate
+make validation-local        # 24 end-to-end validation tests
+make artillery-local         # Load test: kit vs a tsx server on local src/
 make test-performance        # Resource usage under load
 ```
 
-`make conformance-docker` is a hard gate (also run in CI): it asserts the
-container's status codes, content-types, and content-lengths with the kit's
-`expect`-enabled config — the portable `scenarios/core/conformance.yml` plus the
-s3proxy-specific `scenarios/s3proxy/error-contract.yml` (404/403 → `application/xml`).
-The load targets measure throughput only and assert nothing, so a header/status
-regression that still returns 200 slips past them but fails this gate.
+Each of these boots an example server with `tsx` against your local `src/`
+(no build, no Docker image) via `scripts/with-local-server.sh`, runs the kit or
+the validation suite against it, and cleans up. Change `src/`, re-run. Override
+the framework with `EXAMPLE=examples/express-basic.ts` (conformance/validation
+default to `fastify-basic.ts`, whose XML error bodies match the published
+image's error contract).
+
+`make conformance-local` is a hard gate (also run in CI): it asserts status
+codes, content-types, and content-lengths with the kit's `expect`-enabled config
+— the portable `scenarios/core/conformance.yml` plus the s3proxy-specific
+`scenarios/s3proxy/error-contract.yml` (404/403 → `application/xml`). The load
+target measures throughput only and asserts nothing, so a header/status
+regression that still returns 200 slips past it but fails this gate.
 
 Load-test configurations and scenarios come from the
 [`@forkzero/s3-website-test-kit`](https://www.npmjs.com/package/@forkzero/s3-website-test-kit)
 devDependency (installed under `node_modules/@forkzero/s3-website-test-kit`),
 shared with `forkzero/s3proxy-docker`.
 
-`make artillery-local` is the fast inner-loop for testing local `src/` changes:
-`tsx` runs the TypeScript source directly (no build, no Docker image), starts an
-example server, runs the kit against it, and cleans up. Change `src/`, re-run.
-Override the framework with `EXAMPLE=examples/express-basic.ts`. `make
-artillery-docker` is the heavier, container-parity path — it `npm pack`s your
-local source into the image, so it also tests local changes, just slower.
-
-#### Docker Testing
-
-```bash
-make dockerize-for-test      # Build the test image
-make test-all-docker         # Run the Docker test suite
-```
+The deployable container image is not built here — it lives in
+[`forkzero/s3proxy-docker`](https://github.com/forkzero/s3proxy-docker), which
+builds and conformance-tests the published `forkzero/s3proxy` image in its own
+CI. This repo tests the library directly against `src/`.
 
 ### Code Quality
 
@@ -118,9 +116,9 @@ target version as input.
 ### Docker Images
 
 Container images are published as
-[`forkzero/s3proxy`](https://hub.docker.com/r/forkzero/s3proxy) on Docker
-Hub. The `examples/Dockerfile` and `examples/fastify-docker.ts` show a
-containerized deployment.
+[`forkzero/s3proxy`](https://hub.docker.com/r/forkzero/s3proxy) on Docker Hub,
+built from [`forkzero/s3proxy-docker`](https://github.com/forkzero/s3proxy-docker)
+(the container server, Dockerfile, and publish pipeline all live there).
 
 ### Credentials for Local Testing
 
@@ -162,8 +160,10 @@ in `forkzero/s3proxy-docker` for a CloudFormation-based ECS deployment.
 
 ### Containers
 
-See `examples/Dockerfile` and `examples/fastify-docker.ts` for a
-containerized deployment.
+See [`forkzero/s3proxy-docker`](https://github.com/forkzero/s3proxy-docker) for
+the container image, and its
+[`deploy/aws-ecs/`](https://github.com/forkzero/s3proxy-docker/tree/main/deploy/aws-ecs)
+for a Fargate deployment.
 
 ## Monitoring and Debugging
 

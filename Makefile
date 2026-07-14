@@ -32,83 +32,41 @@ artillery-ci:
 credentials:
 	aws sts get-session-token --duration 900 > credentials.json
 
-.PHONY: package-for-docker
-package-for-docker:
-	npm run build && npm pack && mv s3proxy-*.tgz examples/
-
-.PHONY: dockerize-for-test
-dockerize-for-test: package-for-docker
-	cd examples && docker buildx build --progress plain --build-arg VERSION=$(PACKAGE_VERSION) --load -t s3proxy:test .
-
-.PHONY: artillery-docker
-artillery-docker: dockerize-for-test credentials
-	@echo "Starting artillery-docker test with cleanup on exit..."
-	@docker kill s3proxy-test 2>/dev/null || true
-	@docker run -v $(shell pwd)/credentials.json:/src/credentials.json:ro --rm --name s3proxy-test -d -p 8080:8080 \
-		-e BUCKET=s3proxy-public \
-		-e AWS_REGION=us-east-1 \
-		-e PORT=8080 \
-		-e NODE_ENV=dev \
-		-t s3proxy:test
-	@trap 'docker kill s3proxy-test 2>/dev/null || true' EXIT; \
-	npx wait-on http://localhost:8080/index.html && \
-	TEST_ENVIRONMENT=docker-container npx artillery run --config $(TEST_KIT)/configs/load-test.yml $(TEST_KIT)/scenarios/core/load-test.yml
-
-# Conformance gate: assert the container's HTTP contract (status, content-type,
-# content-length) with the test kit's `expect`-enabled config. Unlike the load
-# test above (throughput only, no assertions), any mismatch exits non-zero, so
-# this is a hard CI gate. Two scenarios: the portable core one, then the
-# s3proxy-specific XML error contract (the container renders 404/403 as
-# application/xml via fastify-docker.ts).
-.PHONY: conformance-docker
-conformance-docker: dockerize-for-test credentials
-	@echo "Starting conformance-docker gate with cleanup on exit..."
-	@docker kill s3proxy-conformance 2>/dev/null || true
-	@docker run -v $(shell pwd)/credentials.json:/src/credentials.json:ro --rm --name s3proxy-conformance -d -p 8081:8080 \
-		-e BUCKET=s3proxy-public \
-		-e AWS_REGION=us-east-1 \
-		-e PORT=8080 \
-		-e NODE_ENV=dev \
-		-t s3proxy:test
-	@trap 'docker kill s3proxy-conformance 2>/dev/null || true' EXIT; \
-	npx wait-on http://localhost:8081/index.html && \
-	npx artillery run --target http://localhost:8081 --config $(TEST_KIT)/configs/conformance.yml $(TEST_KIT)/scenarios/core/conformance.yml && \
-	npx artillery run --target http://localhost:8081 --config $(TEST_KIT)/configs/conformance.yml $(TEST_KIT)/scenarios/s3proxy/error-contract.yml
-
-# Fast local loop: run the shared test kit against a locally-run example server.
-# tsx runs the TypeScript in src/ directly, so your local s3proxy edits are
-# exercised with no build and no Docker image — change src/, re-run this. Uses
-# your AWS credential chain against the public s3proxy-public bucket. Override
-# EXAMPLE to test a different framework, e.g.
+# The container image + server (the deployable artifact) live in
+# forkzero/s3proxy-docker, which is where the built image is conformance- and
+# load-tested. This repo tests the library itself by running an example server
+# with tsx against src/ directly — no build, no Docker image, exercising your
+# local changes. Override EXAMPLE to test another framework, e.g.
 #   make artillery-local EXAMPLE=examples/express-basic.ts
+# fastify-basic renders XML error bodies, matching the s3proxy-docker image's
+# error contract, so the conformance/validation targets default to it.
 EXAMPLE ?= examples/hono-basic.ts
+RUN_LOCAL := bash scripts/with-local-server.sh
 
 .PHONY: artillery-local
 artillery-local:
-	@echo "Starting local $(EXAMPLE) with cleanup on exit..."
-	@PORT=8080 BUCKET=s3proxy-public npx tsx $(EXAMPLE) & \
-	SERVER_PID=$$!; \
-	trap 'kill $$SERVER_PID 2>/dev/null || true' EXIT; \
-	npx wait-on http://localhost:8080/index.html && \
-	TEST_ENVIRONMENT=local npx artillery run --target http://localhost:8080 \
-		--config $(TEST_KIT)/configs/load-test.yml $(TEST_KIT)/scenarios/core/load-test.yml
+	@echo "Load-testing $(EXAMPLE) on :8080..."
+	@$(RUN_LOCAL) $(EXAMPLE) 8080 \
+		env TEST_ENVIRONMENT=local npx artillery run --target http://localhost:8080 \
+			--config $(TEST_KIT)/configs/load-test.yml $(TEST_KIT)/scenarios/core/load-test.yml
 
-.PHONY: test-validation-docker
-test-validation-docker: dockerize-for-test credentials
-	@echo "Starting validation-docker test with cleanup on exit..."
-	@docker kill s3proxy-validation 2>/dev/null || true
-	@docker run -v $(shell pwd)/credentials.json:/src/credentials.json:ro --rm --name s3proxy-validation -d -p 8082:8080 \
-		-e BUCKET=s3proxy-public \
-		-e AWS_REGION=us-east-1 \
-		-e PORT=8080 \
-		-e NODE_ENV=dev \
-		-t s3proxy:test
-	@trap 'docker kill s3proxy-validation 2>/dev/null || true' EXIT; \
-	npx wait-on http://localhost:8082/index.html && \
-	S3PROXY_URL=http://localhost:8082 npm run test:validation
+# Conformance gate: assert the HTTP contract (status, content-type,
+# content-length) with the test kit's `expect`-enabled config. Unlike the load
+# test (throughput only, no assertions), any mismatch exits non-zero, so this is
+# a hard CI gate. Two scenarios: the portable core one, then the s3proxy XML
+# error contract (fastify-basic renders 404/403 as application/xml).
+.PHONY: conformance-local
+conformance-local:
+	@echo "Running conformance gate against examples/fastify-basic.ts on :8081..."
+	@$(RUN_LOCAL) examples/fastify-basic.ts 8081 \
+		sh -c 'npx artillery run --target http://localhost:8081 --config $(TEST_KIT)/configs/conformance.yml $(TEST_KIT)/scenarios/core/conformance.yml && \
+		       npx artillery run --target http://localhost:8081 --config $(TEST_KIT)/configs/conformance.yml $(TEST_KIT)/scenarios/s3proxy/error-contract.yml'
 
-.PHONY: test-all-docker
-test-all-docker: test-validation-docker artillery-docker
+.PHONY: validation-local
+validation-local:
+	@echo "Running validation tests against examples/fastify-basic.ts on :8082..."
+	@$(RUN_LOCAL) examples/fastify-basic.ts 8082 \
+		env S3PROXY_URL=http://localhost:8082 npm run test:validation
 
 # Pre-release verification - runs all quality checks
 .PHONY: pre-release-check
@@ -154,10 +112,10 @@ pre-release-check:
 test : build type-check lint unit-tests
 
 .PHONY: test-performance
-test-performance: artillery-ci artillery-docker
+test-performance: artillery-ci artillery-local
 
 .PHONY: functional-tests
-functional-tests: artillery-docker
+functional-tests: conformance-local validation-local artillery-local
 
 .PHONY: all
 all: test functional-tests
