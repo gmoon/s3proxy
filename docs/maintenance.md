@@ -48,7 +48,8 @@ the test bucket (default `s3proxy-public`).
 #### Load Testing
 
 ```bash
-make artillery-docker        # Load test the Docker container
+make artillery-local         # Fast local loop: kit vs a tsx server on local src/
+make artillery-docker        # Load test the Docker container (packs local src/)
 make test-performance        # Resource usage under load
 ```
 
@@ -56,6 +57,13 @@ Load-test configurations and scenarios come from the
 [`@forkzero/s3-website-test-kit`](https://www.npmjs.com/package/@forkzero/s3-website-test-kit)
 devDependency (installed under `node_modules/@forkzero/s3-website-test-kit`),
 shared with `forkzero/s3proxy-docker`.
+
+`make artillery-local` is the fast inner-loop for testing local `src/` changes:
+`tsx` runs the TypeScript source directly (no build, no Docker image), starts an
+example server, runs the kit against it, and cleans up. Change `src/`, re-run.
+Override the framework with `EXAMPLE=examples/express-basic.ts`. `make
+artillery-docker` is the heavier, container-parity path — it `npm pack`s your
+local source into the image, so it also tests local changes, just slower.
 
 #### Docker Testing
 
