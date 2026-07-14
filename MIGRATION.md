@@ -196,10 +196,10 @@ none of this behavior is baked into the core.
 ## New: `proxy.fetchWeb()` for Web-standard runtimes
 
 `pipe()` / `middleware()` / `staticSite()` write to a Node `ServerResponse`.
-For Web-standard runtimes (Hono, Bun, Cloudflare Workers, Deno), `fetchWeb()`
-is the Web-typed sibling of `fetch()`: it takes a Web `Request` and returns a
-Web `Response`, so you stop hand-rolling the `Request` -> `HttpRequest` and
-`Readable` -> `ReadableStream` conversion.
+`fetchWeb()` is their counterpart for Web-standard runtimes (Hono, Bun,
+Cloudflare Workers, Deno): the adapter over `fetch()` that takes a Web
+`Request` and returns a Web `Response`, so you stop hand-rolling the `Request`
+-> `HttpRequest` and `Readable` -> `ReadableStream` conversion.
 
 ```typescript
 // Hono, one line

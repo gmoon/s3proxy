@@ -85,18 +85,21 @@ export class S3Proxy extends EventEmitter {
   }
 
   /**
-   * Web-standard sibling of `fetch()`: take a Web `Request`, return a Web
-   * `Response` streaming the object from S3. The Web-runtime peer of the
-   * Node-typed `fetch()` primitive (same semantics, Web I/O). One line for
-   * Hono / Bun / Cloudflare Workers / Deno consumers instead of hand-rolling
-   * the `Request` -> `HttpRequest` and `Readable` -> `ReadableStream`
-   * conversions on every deployment.
+   * Convenience adapter over `fetch()` for Web-standard runtimes: take a Web
+   * `Request`, return a Web `Response` streaming the object from S3. The Web
+   * analog of `pipe()` / `middleware()` (which serve to a Node
+   * `ServerResponse`). Not framework-specific: it uses the WHATWG `Request` /
+   * `Response` that are global on Bun, Deno, Cloudflare Workers and Node, and
+   * works with any framework exposing the raw `Request` (Hono's `c.req.raw`, a
+   * Workers/Bun/Deno handler's argument). Removes the `Request` ->
+   * `HttpRequest` and `Readable` -> `ReadableStream` conversion consumers
+   * otherwise hand-roll on every deployment.
    *
-   * Throws the typed `S3ProxyError` on classified failures (404/403/416), so
-   * the framework's own error handler (Hono `app.onError`, a Workers
-   * try/catch) renders the error body however it likes. It is the peer of
-   * `fetch()`, not `pipe()`: it removes the success-path adaptation without
-   * imposing an error-body format.
+   * Unlike `pipe()`, it does not render errors: it throws the typed
+   * `S3ProxyError` on classified failures (404/403/416) so the framework's own
+   * error handler (Hono `app.onError`, a Workers `try/catch`) owns the
+   * error-body format. Call `fetch()` directly if you need to build the
+   * `Response` yourself.
    */
   public async fetchWeb(request: Request): Promise<Response> {
     const { stream, status, headers } = await this.fetch({

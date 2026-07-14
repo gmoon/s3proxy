@@ -280,11 +280,13 @@ try {
 }
 ```
 
-### Hono Integration (Web Standards)
+### Web Standard runtimes (Hono, Bun, Workers, Deno)
 
-On Web Standards runtimes (Bun, Cloudflare Workers, Deno), Hono fits
-well. Use **`proxy.fetchWeb(request)`** - the Web-standard sibling of
-`fetch()` - to serve an object in one line:
+**`proxy.fetchWeb(request)`** is the Web-runtime convenience adapter over
+`fetch()` (the counterpart of `pipe()` / `middleware()` for Node). It takes a
+Web `Request` and returns a Web `Response`, so it is not tied to Hono - it
+works with any framework exposing the raw `Request`, or as a runtime's
+top-level `fetch` handler. With Hono it is one line:
 
 ```typescript
 import { Hono } from 'hono';
@@ -465,16 +467,7 @@ Pure fetch. Returns `{ stream, status, headers }` without touching a
 response. Dispatches GET vs HEAD based on `req.method` (defaults to
 GET). Throws a typed `S3ProxyError` on classified failures (404, 403,
 416, malformed request); rethrows anything else. This is the primitive
-the convenience methods below are built on.
-
-##### `await proxy.fetchWeb(request: Request): Promise<Response>`
-Web-standard sibling of `fetch()`: takes a Web `Request`, returns a Web
-`Response` streaming the object. One line for Hono / Bun / Cloudflare
-Workers / Deno (`app.on(['GET','HEAD'], '/*', (c) => proxy.fetchWeb(c.req.raw))`).
-Like `fetch()` it **throws** the typed `S3ProxyError` on 404/403/416 (it is
-the peer of `fetch()`, not `pipe()`), so your framework's error handler owns
-the error-body format. HEAD responses have a `null` body. Uses the runtime's
-global `Request`/`Response`; no extra dependency.
+the convenience adapters below are built on.
 
 ##### `await proxy.pipe(req: HttpRequest, res: HttpResponse): Promise<void>`
 Convenience over `fetch()`: writes status + headers and pipes the body to
@@ -497,6 +490,18 @@ Handles GET and HEAD and passes Range requests through. It does not
 perform S3's trailing-slash directory redirect, and only 404/403 use the
 error document. Mount with `app.use(...)` so the root path `/` is matched.
 See [Static website hosting](#static-website-hosting-proxystaticsite).
+
+##### `await proxy.fetchWeb(request: Request): Promise<Response>`
+The Web-runtime adapter over `fetch()`: takes a Web `Request`, returns a Web
+`Response` streaming the object. The Web analog of `pipe()` / `middleware()`,
+for any WHATWG-fetch runtime (Bun, Deno, Cloudflare Workers, Node) and any
+framework exposing the raw `Request` -
+`app.on(['GET','HEAD'], '/*', (c) => proxy.fetchWeb(c.req.raw))` or
+`export default { fetch: (req) => proxy.fetchWeb(req) }`. Unlike `pipe()` it
+does **not** render errors: it throws the typed `S3ProxyError` on 404/403/416,
+so your framework's error handler owns the error-body format. HEAD responses
+have a `null` body. Uses the runtime's global `Request` / `Response`; no extra
+dependency.
 
 ##### `await proxy.healthCheck(): Promise<void>`
 Verify bucket connectivity. Resolves on success, throws a typed
