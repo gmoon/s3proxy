@@ -2,6 +2,7 @@
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
 [![Node CI][actions-image]][actions-url]
+[![Node Version][node-image]][node-url]
 [![Docker Pulls][dockerpulls-image]][dockerpulls-url]
 
 **Stream files directly from AWS S3 to your users without downloading them to your server first.**
@@ -733,7 +734,7 @@ Tests run across several dimensions:
 | Load Testing | `make artillery-local` | ✅ Node CI | High-throughput performance |
 | Stress Testing | `make test-performance` | ✅ Node CI | Resource usage under load |
 | **Platform Testing** | | | |
-| Multi-Node | Node 22, 23 | ✅ Node CI | Cross-version compatibility |
+| Multi-Node | Node 22, 24, 26 | ✅ Node CI | Cross-version compatibility |
 | Container Image | [`forkzero/s3proxy-docker`](https://github.com/forkzero/s3proxy-docker) CI | ✅ | The published image is built + conformance-tested there |
 
 #### Test Commands
@@ -900,5 +901,7 @@ Apache 2.0 - see [LICENSE](LICENSE) file.
 [downloads-url]: https://npmjs.org/package/s3proxy
 [actions-image]: https://github.com/gmoon/s3proxy/workflows/Node%20CI/badge.svg
 [actions-url]: https://github.com/gmoon/s3proxy/actions
+[node-image]: https://img.shields.io/node/v/s3proxy.svg
+[node-url]: https://nodejs.org
 [dockerpulls-image]: https://img.shields.io/docker/pulls/forkzero/s3proxy.svg
 [dockerpulls-url]: https://hub.docker.com/r/forkzero/s3proxy
