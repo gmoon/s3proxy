@@ -109,10 +109,6 @@ npm run release:local    # Run a release locally
 npm run ncu-upgrade      # Update dependencies (npm-check-updates)
 ```
 
-A manual release can also be triggered from the GitHub Actions
-`manual-release.yml` workflow (`workflow_dispatch`), which takes the
-target version as input.
-
 ### Docker Images
 
 Container images are published as
@@ -143,8 +139,6 @@ aws sts get-session-token --duration 900 > ~/.s3proxy/credentials.json
   conformance gate and load tests, and package verification. Unit tests
   run on Node 22 and 23.
 - **`.github/workflows/release.yml`**: runs on a published GitHub release.
-- **`.github/workflows/manual-release.yml`**: manual release
-  (`workflow_dispatch`).
 
 ### Build Scripts
 

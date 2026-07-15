@@ -842,7 +842,6 @@ s3proxy uses several configuration files for different aspects of development an
   - Performance testing with Artillery
   - Package verification
 - **`.github/workflows/release.yml`** - Automated releases
-- **`.github/workflows/manual-release.yml`** - Manual release workflow
 
 #### Performance Testing
 
