@@ -47,8 +47,36 @@ RUN_LOCAL := bash scripts/with-local-server.sh
 artillery-local:
 	@echo "Load-testing $(EXAMPLE) on :8080..."
 	@$(RUN_LOCAL) $(EXAMPLE) 8080 \
-		env TEST_ENVIRONMENT=local npx artillery run --target http://localhost:8080 \
-			--config $(TEST_KIT)/configs/load-test.yml $(TEST_KIT)/scenarios/core/load-test.yml
+		npx artillery run --target http://localhost:8080 \
+			--config $(TEST_KIT)/configs/load-test.yml \
+			-o artillery-report-$(basename $(notdir $(EXAMPLE))).json \
+			$(TEST_KIT)/scenarios/core/load-test.yml
+
+# Opt-in A/B load comparison of two framework examples, diffed by the kit's
+# perf-compare over Artillery's own `-o` reports (test-kit >= 0.4.0). Manual
+# only — deliberately NOT in `all`/`functional-tests`: two full load runs are
+# ~2 GB of S3 egress.
+#   make perf-compare BASELINE=examples/express-basic.ts CANDIDATE=examples/hono-basic.ts
+BASELINE  ?= examples/express-basic.ts
+CANDIDATE ?= examples/hono-basic.ts
+
+.PHONY: perf-compare
+perf-compare:
+	@echo "Baseline:  $(BASELINE) on :8080"
+	@$(RUN_LOCAL) $(BASELINE) 8080 \
+		npx artillery run --target http://localhost:8080 \
+			--config $(TEST_KIT)/configs/load-test.yml \
+			-o artillery-report-baseline.json \
+			$(TEST_KIT)/scenarios/core/load-test.yml
+	@echo "Candidate: $(CANDIDATE) on :8081"
+	@$(RUN_LOCAL) $(CANDIDATE) 8081 \
+		npx artillery run --target http://localhost:8081 \
+			--config $(TEST_KIT)/configs/load-test.yml \
+			-o artillery-report-candidate.json \
+			$(TEST_KIT)/scenarios/core/load-test.yml
+	@npx s3-website-perf-compare compare \
+		--baseline  artillery-report-baseline.json  --baseline-label  $(basename $(notdir $(BASELINE))) \
+		--candidate artillery-report-candidate.json --candidate-label $(basename $(notdir $(CANDIDATE)))
 
 # Conformance gate: assert the HTTP contract (status, content-type,
 # content-length) with the test kit's `expect`-enabled config. Unlike the load
