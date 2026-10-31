@@ -832,11 +832,11 @@ s3proxy uses several configuration files for different aspects of development an
   - Import organization and formatting rules
 
 #### Release & CI/CD
-- **`.releaserc.json`** - Semantic release configuration
-  - Conventional commits for automated versioning
-  - Generates CHANGELOG.md automatically
-  - Publishes to npm and creates GitHub releases
-  - Handles version bumping and git tagging
+- **`release.yml`** - npm publish via OIDC trusted publishing
+  - Triggered when a GitHub release is published
+  - Version is set manually in a `chore(release)` PR; `nodejs.yml` tags and
+    drafts the release on merge to `master`
+  - `CHANGELOG.md` is maintained by hand in the release PR
 
 #### GitHub Actions
 - **`.github/workflows/nodejs.yml`** - Main CI pipeline
