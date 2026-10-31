@@ -99,13 +99,17 @@ Coverage reports are written to the `coverage/` directory after running
 
 ## Release Process
 
-Releases are driven by
-[semantic-release](https://semantic-release.gitbook.io/) from Conventional
-Commit messages.
+Releases are cut manually and published by CI:
+
+1. Open a `chore(release): X.Y.Z` PR that bumps the version
+   (`npm version X.Y.Z --no-git-tag-version`) and updates `CHANGELOG.md`.
+2. On merge to `master`, the `create-tag-and-draft-release` job (`nodejs.yml`)
+   reads the version from `package.json`, pushes tag `vX.Y.Z`, and opens a
+   **draft** GitHub release.
+3. Publishing that draft release triggers `release.yml`, which publishes to
+   npm via OIDC trusted publishing (no stored token).
 
 ```bash
-npm run release:dry-run  # Preview the next release without publishing
-npm run release:local    # Run a release locally
 npm run ncu-upgrade      # Update dependencies (npm-check-updates)
 ```
 
