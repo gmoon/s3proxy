@@ -175,8 +175,15 @@ Run the kit against a `tsx` example server on your local `src/` (no build, no
 Docker image):
 
 ```bash
-make artillery-local        # load test
+make artillery-local        # load test (writes artillery-report-<example>.json)
 make conformance-local      # HTTP-contract gate
+```
+
+A/B load comparison between two framework examples (opt-in; two load runs are
+~2 GB of S3 egress, so it is not part of `make all`):
+
+```bash
+make perf-compare BASELINE=examples/express-basic.ts CANDIDATE=examples/hono-basic.ts
 ```
 
 ### Container image testing
