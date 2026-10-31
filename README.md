@@ -339,6 +339,31 @@ const { stream, status, headers } = await proxy.fetch({
 return new Response(Readable.toWeb(stream) as ReadableStream, { status, headers });
 ```
 
+#### Custom URL → key mapping (`fetchWebKey`)
+
+When the URL path is not the S3 key — a bucket mounted under `/files/*`, or
+keys living under a prefix — use **`proxy.fetchWebKey(key, request)`**. The
+caller names the key; the `Request` still supplies the method and
+conditional/`Range` headers, and you get the same `Response` with the same HTTP
+translation as `fetchWeb`:
+
+```typescript
+// Serve s3://my-bucket/assets/<path> under the /files/* route.
+app.on(['GET', 'HEAD'], '/files/*', (c) => {
+  const key = `assets/${c.req.path.slice('/files/'.length)}`;
+  return proxy.fetchWebKey(key, c.req.raw);
+});
+```
+
+This avoids round-tripping the key through URL encode/decode — the subtle bug
+where a key containing `%`, `+`, spaces, or other reserved characters serves the
+wrong object (or 404s) unless your encoder and s3proxy's decoder agree exactly.
+The key is used verbatim.
+
+> If you don't need an HTTP `Response` at all (backend processing, ETL, an API
+> shaping its own headers), use the AWS SDK directly — s3proxy adds nothing
+> there. Its job is serving S3 objects over HTTP, correctly.
+
 > **Performance note.** On Node, Hono goes through `@hono/node-server`
 > which converts `IncomingMessage` and `Web Request/Response` on every
 > request, two extra layers compared with Express's direct
@@ -506,6 +531,15 @@ does **not** render errors: it throws the typed `S3ProxyError` on 404/403/416,
 so your framework's error handler owns the error-body format. HEAD responses
 have a `null` body. Uses the runtime's global `Request` / `Response`; no extra
 dependency.
+
+##### `await proxy.fetchWebKey(key: string, request: Request): Promise<Response>`
+Key-addressed sibling of `fetchWeb`: the caller supplies the S3 `key` and the
+`Request` contributes only the method and conditional/`Range` headers — the URL
+is not consulted for key selection. Same HTTP translation and typed-error
+behavior as `fetchWeb`. Use it when your URL → key mapping is not identity (a
+prefix, a mount point); it avoids the URL encode/decode round-trip that corrupts
+keys containing `%`, `+`, spaces, or other reserved characters. The `key` is
+used verbatim.
 
 ##### `await proxy.healthCheck(): Promise<void>`
 Verify bucket connectivity. Resolves on success, throws a typed

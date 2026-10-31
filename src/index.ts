@@ -102,12 +102,43 @@ export class S3Proxy extends EventEmitter {
    * `Response` yourself.
    */
   public async fetchWeb(request: Request): Promise<Response> {
-    const { stream, status, headers } = await this.fetch({
+    // URL picks the key: derive it from the request path (percent-decoded by
+    // parseRequest), then hand off to the key-addressed seam. The query string
+    // plays no role in key selection.
+    const key = parseRequest({
       url: request.url,
-      // Pass the parsed pathname as `path` so parseRequest uses it directly
-      // rather than re-parsing the URL. The S3 key derives from the path
-      // alone, so the query string is irrelevant here.
       path: new URL(request.url).pathname,
+      method: request.method,
+      headers: Object.fromEntries(request.headers),
+    }).key;
+    return this.fetchWebKey(key, request);
+  }
+
+  /**
+   * Key-addressed sibling of `fetchWeb`: the *caller* names the S3 key and the
+   * `Request` contributes only the method (GET/HEAD) and conditional/`Range`
+   * headers — the request URL plays no role in key selection. Returns the same
+   * Web `Response` with the same HTTP <-> S3 translation as `fetchWeb`
+   * (`Range` -> 206, missing/denied -> typed 404/403, header mapping, HEAD
+   * semantics, Node -> Web stream), and likewise throws the typed
+   * `S3ProxyError` on classified failures rather than rendering them.
+   *
+   * Use this when your URL -> key mapping is not identity (e.g. a bucket
+   * mounted under `/files/*`). It avoids round-tripping the key through URL
+   * encode/decode, which otherwise forces your encoder and s3proxy's decoder to
+   * agree exactly for keys containing `%`, `+`, spaces, or other reserved
+   * characters — or the wrong object is served / a valid key 404s. The key is
+   * used verbatim as the S3 object key.
+   *
+   * If you do not need an HTTP `Response` at all (backend processing, ETL, an
+   * API shaping its own headers), use the AWS SDK directly — s3proxy adds
+   * nothing there. s3proxy's job is serving S3 objects over HTTP, correctly.
+   */
+  public async fetchWebKey(key: string, request: Request): Promise<Response> {
+    // The URL is unused for key selection here; fetchKey reads only the method
+    // and Range header. Passing request.url keeps the HttpRequest well-formed.
+    const { stream, status, headers } = await this.fetchKey(key, {
+      url: request.url,
       method: request.method,
       headers: Object.fromEntries(request.headers),
     });
