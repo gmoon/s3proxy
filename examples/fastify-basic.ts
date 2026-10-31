@@ -5,6 +5,7 @@
  * v4 proxy.fetch() API: pure data fetch, frameworks own the response.
  */
 
+import { pipeline } from 'node:stream';
 import { XmlNode, XmlText } from '@aws-sdk/xml-builder';
 import Fastify from 'fastify';
 import { S3Proxy } from '../src/index.js';
@@ -60,18 +61,12 @@ fastify.head('/*', async (request, reply) => {
 fastify.get('/*', async (request, reply) => {
   const { stream, status, headers } = await proxy.fetch(request.raw as unknown as HttpRequest);
   reply.raw.writeHead(status, headers);
-  stream.on('error', (err: S3Error) => {
-    const errorXml = createErrorXml(err, request.url);
-    if (!reply.raw.headersSent) {
-      reply
-        .status(err.statusCode || 500)
-        .type('application/xml')
-        .send(errorXml);
-    } else {
-      reply.raw.end();
-    }
+  // pipeline (not .pipe) destroys the S3 source stream if the client disconnects
+  // mid-transfer, so the underlying S3 socket isn't leaked. Headers are already
+  // sent by writeHead above, so on a stream error we can only end the response.
+  pipeline(stream, reply.raw, (err) => {
+    if (err && !reply.raw.writableEnded) reply.raw.end();
   });
-  stream.pipe(reply.raw);
   return reply.hijack();
 });
 

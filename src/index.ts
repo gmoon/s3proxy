@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { Readable } from 'node:stream';
+import { pipeline, Readable } from 'node:stream';
 import { GetObjectCommand, HeadBucketCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { S3Forbidden, S3NotFound, S3ProxyError } from './errors.js';
 import { mapHeaderToParam, parseRequest } from './request-parser.js';
@@ -147,6 +147,12 @@ export class S3Proxy extends EventEmitter {
    * Resolves once the body has finished streaming (or the error response
    * has been written). Never rejects for classified S3 failures — it
    * renders them. It only rejects if `res.writeHead` itself throws.
+   *
+   * If S3 fails *mid-stream* — after the status and headers have already
+   * gone out — the response is terminated (destroyed), not cleanly ended:
+   * the client sees a broken connection instead of a silently truncated
+   * "successful" body, and the S3 source socket is torn down. (Before v4.2.2
+   * the response was `end()`-ed, which could mask a short read as success.)
    */
   public pipe(req: HttpRequest, res: HttpResponse): Promise<void> {
     return this.fetch(req).then(
@@ -170,12 +176,12 @@ export class S3Proxy extends EventEmitter {
   ): Promise<void> {
     res.writeHead(status, headers);
     return new Promise<void>((resolve) => {
-      stream.on('error', () => {
-        res.end();
-        resolve();
-      });
-      stream.on('end', resolve);
-      stream.pipe(res);
+      // pipeline (not .pipe) destroys the S3 source stream when the client
+      // disconnects mid-transfer or a write fails, so the underlying S3 socket
+      // isn't leaked. Headers are already sent, so a mid-stream failure can only
+      // be handled by ending the response — hence resolve (never reject) in all
+      // cases; middleware()/pipe() treat a rendered/terminated response as done.
+      pipeline(stream, res, () => resolve());
     });
   }
 
