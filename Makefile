@@ -89,6 +89,9 @@ conformance-local:
 	@$(RUN_LOCAL) examples/fastify-basic.ts 8081 \
 		sh -c 'npx artillery run --target http://localhost:8081 --config $(TEST_KIT)/configs/conformance.yml $(TEST_KIT)/scenarios/core/conformance.yml && \
 		       npx artillery run --target http://localhost:8081 --config $(TEST_KIT)/configs/conformance.yml $(TEST_KIT)/scenarios/s3proxy/error-contract.yml'
+	@echo "Running key-addressed (fetchWebKey) conformance against examples/hono-basic.ts on :8083..."
+	@$(RUN_LOCAL) examples/hono-basic.ts 8083 \
+		npx artillery run --target http://localhost:8083 --config $(TEST_KIT)/configs/conformance.yml $(TEST_KIT)/scenarios/s3proxy/key-addressed.yml
 
 .PHONY: validation-local
 validation-local:

@@ -30,6 +30,22 @@ app.get('/health', async (c) => {
 
 app.get('/', (c) => c.redirect('/index.html'));
 
+// fetchWebKey() names the S3 key explicitly — the URL does NOT select the key.
+// This alias map stands in for a real lookup (a DB row, a signed-token resolver,
+// a per-tenant prefix): the public id is decoupled from the storage key, and the
+// key is served verbatim, so keys with reserved characters (%, spaces, +, ...)
+// need no URL-encoding contortions — the exact failure fetchWeb's URL path can't
+// avoid. `special` points at an object whose key is a pile of reserved chars.
+const KEY_ALIASES: Record<string, string> = {
+  home: 'index.html',
+  special: 'specialCharacters!-_.*\'()&$@=;:+  ,?\\{^}%`]">[~<#|.',
+};
+app.get('/download/:id', (c) => {
+  const key = KEY_ALIASES[c.req.param('id')];
+  if (key === undefined) return new Response('unknown id', { status: 404 });
+  return proxy.fetchWebKey(key, c.req.raw);
+});
+
 // fetchWeb adapts the Web `Request` -> `Response` in one line, so nothing here
 // re-encodes the library's HttpRequest shape or the stream conversion. It throws
 // the typed S3ProxyError on 404/403/416, which the app's onError below renders.
