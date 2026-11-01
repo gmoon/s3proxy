@@ -3,6 +3,24 @@
 All notable changes to this project are documented in this file. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## [5.1.0](https://github.com/gmoon/s3proxy/compare/v5.0.0...v5.1.0) (2026-11-01)
+
+### 🚀 Features
+
+* **fetchWebKey:** add a public key-addressed Web seam,
+  `fetchWebKey(key, request)`. The caller names the S3 key and the `Request`
+  contributes only the method and `Range` header — the URL plays no role in key
+  selection. `fetchWeb` now delegates to it. Use it when the key doesn't come
+  from the URL path (a lookup, a prefix, a mount point); the key is served
+  verbatim, avoiding the URL encode/decode round-trip that corrupts keys with
+  `%`, `+`, spaces, or other reserved characters. Invalid keys (null byte) throw
+  the typed `InvalidRequest`, consistent with the URL-addressed entry points.
+  ([#203](https://github.com/gmoon/s3proxy/pull/203),
+  [#162](https://github.com/gmoon/s3proxy/issues/162))
+* **examples:** `examples/hono-basic.ts` gains a `/download/:id` route
+  demonstrating `fetchWebKey`, covered end-to-end by the conformance gate
+  ([#204](https://github.com/gmoon/s3proxy/pull/204)).
+
 ## [5.0.0](https://github.com/gmoon/s3proxy/compare/v4.2.1...v5.0.0) (2026-10-31)
 
 ### ⚠ BREAKING CHANGES
