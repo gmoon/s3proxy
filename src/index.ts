@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { pipeline, Readable } from 'node:stream';
 import { GetObjectCommand, HeadBucketCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
-import { S3Forbidden, S3NotFound, S3ProxyError } from './errors.js';
+import { InvalidRequest, S3Forbidden, S3NotFound, S3ProxyError } from './errors.js';
 import { mapHeaderToParam, parseRequest } from './request-parser.js';
 import { S3Gateway } from './s3-gateway.js';
 import type {
@@ -102,15 +102,56 @@ export class S3Proxy extends EventEmitter {
    * `Response` yourself.
    */
   public async fetchWeb(request: Request): Promise<Response> {
-    const { stream, status, headers } = await this.fetch({
+    // URL picks the key: derive it from the request path (percent-decoded by
+    // parseRequest), then hand off to the key-addressed seam. Key derivation
+    // reads only the path — method, headers, and the query string play no role
+    // (`url` is required by the HttpRequest type but unused when `path` is set).
+    const key = parseRequest({
       url: request.url,
-      // Pass the parsed pathname as `path` so parseRequest uses it directly
-      // rather than re-parsing the URL. The S3 key derives from the path
-      // alone, so the query string is irrelevant here.
       path: new URL(request.url).pathname,
+      headers: {},
+    }).key;
+    return this.fetchWebKey(key, request);
+  }
+
+  /**
+   * Adapt a WHATWG `Request` to the internal `HttpRequest` shape. Shared by the
+   * two web entry points so the method/header lift lives in one place.
+   */
+  private webToHttpRequest(request: Request): HttpRequest {
+    return {
+      url: request.url,
       method: request.method,
       headers: Object.fromEntries(request.headers),
-    });
+    };
+  }
+
+  /**
+   * Key-addressed sibling of `fetchWeb`: the *caller* names the S3 key and the
+   * `Request` contributes only the method (GET/HEAD) and the `Range` header —
+   * the request URL plays no role in key selection. Returns the same
+   * Web `Response` with the same HTTP <-> S3 translation as `fetchWeb`
+   * (`Range` -> 206, missing/denied -> typed 404/403, header mapping, HEAD
+   * semantics, Node -> Web stream), and likewise throws the typed
+   * `S3ProxyError` on classified failures rather than rendering them.
+   *
+   * Use this when your URL -> key mapping is not identity (e.g. a bucket
+   * mounted under `/files/*`). It avoids round-tripping the key through URL
+   * encode/decode, which otherwise forces your encoder and s3proxy's decoder to
+   * agree exactly for keys containing `%`, `+`, spaces, or other reserved
+   * characters — or the wrong object is served / a valid key 404s. The key is
+   * used verbatim as the S3 object key.
+   */
+  public async fetchWebKey(key: string, request: Request): Promise<Response> {
+    // The key is used verbatim (never decoded); still reject the null byte S3
+    // rejects and that every other entry point guards via parseRequest, so the
+    // typed-error contract (InvalidRequest, not a generic 500) holds here too.
+    if (key.includes('\0')) {
+      throw new InvalidRequest('null byte in key');
+    }
+    // fetchKey consumes only the method and Range header; the `url` carried by
+    // webToHttpRequest is unused for a key-addressed call.
+    const { stream, status, headers } = await this.fetchKey(key, this.webToHttpRequest(request));
     // No body for HEAD; otherwise adapt the Node stream to a Web stream.
     // Backpressure propagates through the wrapper, so nothing buffers.
     const body = request.method === 'HEAD' ? null : (Readable.toWeb(stream) as ReadableStream);

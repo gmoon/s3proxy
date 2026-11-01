@@ -217,6 +217,16 @@ The public repo is <a href="https://github.com/gmoon/s3proxy">here</a>.
       },
     });
 
+  // Mock an object whose key contains a literal '%' — a key the URL-addressed
+  // path can't carry safely (decodeURIComponent on the path throws), but the
+  // key-addressed seam (fetchWebKey) serves verbatim.
+  s3Mock.on(GetObjectCommand, { Bucket: '.test-bucket', Key: 'reports/q1 50%.txt' }).resolves({
+    Body: mockBody('fifty percent'),
+    ContentLength: 13,
+    ContentType: 'text/plain',
+    $metadata: { httpStatusCode: 200, requestId: 'mock-request-id' },
+  });
+
   // Mock range requests for large.bin (for MockExpress test)
   s3Mock
     .on(GetObjectCommand, {

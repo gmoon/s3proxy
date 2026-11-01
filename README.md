@@ -339,6 +339,35 @@ const { stream, status, headers } = await proxy.fetch({
 return new Response(Readable.toWeb(stream) as ReadableStream, { status, headers });
 ```
 
+#### Custom URL → key mapping (`fetchWebKey`)
+
+When the S3 key doesn't come straight from the request URL — a lookup table, a
+database id, a key you've already resolved — use
+**`proxy.fetchWebKey(key, request)`**. The caller names the key; the `Request`
+still supplies the method and `Range` header, and you get the same `Response`
+with the same HTTP translation as `fetchWeb`:
+
+```typescript
+// The key comes from your own mapping, not the URL path.
+app.get('/download/:id', async (c) => {
+  const key = await resolveS3Key(c.req.param('id')); // → the exact S3 object key
+  return proxy.fetchWebKey(key, c.req.raw);
+});
+```
+
+Because you pass the key directly it is used **verbatim** — s3proxy never
+re-parses it out of a URL. That sidesteps the subtle bug where a key containing
+`%`, `+`, spaces, or other reserved characters serves the wrong object (or 404s)
+because a URL-encode step and s3proxy's decode step disagree. (If you *do*
+derive the key from the URL path, you still own decoding it correctly — note
+that some frameworks pre-decode their path accessor, e.g. Hono's `c.req.path`;
+read the raw URL when the exact bytes matter. For the identity case, just use
+`fetchWeb`.)
+
+> If you don't need an HTTP `Response` at all (backend processing, ETL, an API
+> shaping its own headers), use the AWS SDK directly — s3proxy adds nothing
+> there. Its job is serving S3 objects over HTTP, correctly.
+
 > **Performance note.** On Node, Hono goes through `@hono/node-server`
 > which converts `IncomingMessage` and `Web Request/Response` on every
 > request, two extra layers compared with Express's direct
@@ -506,6 +535,15 @@ does **not** render errors: it throws the typed `S3ProxyError` on 404/403/416,
 so your framework's error handler owns the error-body format. HEAD responses
 have a `null` body. Uses the runtime's global `Request` / `Response`; no extra
 dependency.
+
+##### `await proxy.fetchWebKey(key: string, request: Request): Promise<Response>`
+Key-addressed sibling of `fetchWeb`: the caller supplies the S3 `key` and the
+`Request` contributes only the method and `Range` header — the URL is not
+consulted for key selection. Same HTTP translation and typed-error behavior as
+`fetchWeb`. Use it when the key doesn't come from the URL path (a lookup, a
+prefix, a mount point); the `key` is used verbatim, avoiding the URL
+encode/decode round-trip that corrupts keys containing `%`, `+`, spaces, or
+other reserved characters.
 
 ##### `await proxy.healthCheck(): Promise<void>`
 Verify bucket connectivity. Resolves on success, throws a typed
