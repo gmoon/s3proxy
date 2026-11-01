@@ -106,12 +106,22 @@ export class S3Proxy extends EventEmitter {
     // parseRequest), then hand off to the key-addressed seam. The query string
     // plays no role in key selection.
     const key = parseRequest({
-      url: request.url,
+      ...this.webToHttpRequest(request),
       path: new URL(request.url).pathname,
-      method: request.method,
-      headers: Object.fromEntries(request.headers),
     }).key;
     return this.fetchWebKey(key, request);
+  }
+
+  /**
+   * Adapt a WHATWG `Request` to the internal `HttpRequest` shape. Shared by the
+   * two web entry points so the method/header lift lives in one place.
+   */
+  private webToHttpRequest(request: Request): HttpRequest {
+    return {
+      url: request.url,
+      method: request.method,
+      headers: Object.fromEntries(request.headers),
+    };
   }
 
   /**
@@ -135,13 +145,9 @@ export class S3Proxy extends EventEmitter {
    * nothing there. s3proxy's job is serving S3 objects over HTTP, correctly.
    */
   public async fetchWebKey(key: string, request: Request): Promise<Response> {
-    // The URL is unused for key selection here; fetchKey reads only the method
-    // and Range header. Passing request.url keeps the HttpRequest well-formed.
-    const { stream, status, headers } = await this.fetchKey(key, {
-      url: request.url,
-      method: request.method,
-      headers: Object.fromEntries(request.headers),
-    });
+    // fetchKey reads only the method and Range header; the URL carried by
+    // webToHttpRequest is unused for key selection but keeps the shape valid.
+    const { stream, status, headers } = await this.fetchKey(key, this.webToHttpRequest(request));
     // No body for HEAD; otherwise adapt the Node stream to a Web stream.
     // Backpressure propagates through the wrapper, so nothing buffers.
     const body = request.method === 'HEAD' ? null : (Readable.toWeb(stream) as ReadableStream);
