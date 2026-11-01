@@ -6,19 +6,20 @@ import { catchError } from './helpers/http-mocks.js';
 
 const url = (path: string) => `http://localhost${path}`;
 
+// Shared setup for both suites below: a fresh mocked proxy per test.
+let proxy: S3Proxy;
+
+beforeEach(async () => {
+  setupS3Mocks();
+  proxy = new S3Proxy({ bucket: '.test-bucket' });
+  await proxy.init();
+});
+
+afterEach(() => {
+  teardownS3Mocks();
+});
+
 describe('proxy.fetchWeb', () => {
-  let proxy: S3Proxy;
-
-  beforeEach(async () => {
-    setupS3Mocks();
-    proxy = new S3Proxy({ bucket: '.test-bucket' });
-    await proxy.init();
-  });
-
-  afterEach(() => {
-    teardownS3Mocks();
-  });
-
   it('returns a 200 Web Response with headers and a streamed body for GET', async () => {
     const res = await proxy.fetchWeb(new Request(url('/index.html')));
     expect(res).toBeInstanceOf(Response);
@@ -71,18 +72,6 @@ describe('proxy.fetchWeb', () => {
 });
 
 describe('proxy.fetchWebKey', () => {
-  let proxy: S3Proxy;
-
-  beforeEach(async () => {
-    setupS3Mocks();
-    proxy = new S3Proxy({ bucket: '.test-bucket' });
-    await proxy.init();
-  });
-
-  afterEach(() => {
-    teardownS3Mocks();
-  });
-
   it('serves the caller-supplied key, ignoring the request URL', async () => {
     // URL path is "/" but the key argument selects index.html.
     const res = await proxy.fetchWebKey('index.html', new Request(url('/')));
