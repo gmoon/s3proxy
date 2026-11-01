@@ -136,4 +136,12 @@ describe('proxy.fetchWebKey', () => {
       InvalidRequest
     );
   });
+
+  it('rejects a key containing a null byte with the typed InvalidRequest', async () => {
+    // Matches the guard parseRequest applies on the URL-addressed entry points,
+    // so the typed-error contract is consistent across the API.
+    await expect(
+      proxy.fetchWebKey('reports/bad\0key.txt', new Request(url('/')))
+    ).rejects.toBeInstanceOf(InvalidRequest);
+  });
 });

@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { pipeline, Readable } from 'node:stream';
 import { GetObjectCommand, HeadBucketCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
-import { S3Forbidden, S3NotFound, S3ProxyError } from './errors.js';
+import { InvalidRequest, S3Forbidden, S3NotFound, S3ProxyError } from './errors.js';
 import { mapHeaderToParam, parseRequest } from './request-parser.js';
 import { S3Gateway } from './s3-gateway.js';
 import type {
@@ -103,11 +103,13 @@ export class S3Proxy extends EventEmitter {
    */
   public async fetchWeb(request: Request): Promise<Response> {
     // URL picks the key: derive it from the request path (percent-decoded by
-    // parseRequest), then hand off to the key-addressed seam. The query string
-    // plays no role in key selection.
+    // parseRequest), then hand off to the key-addressed seam. Key derivation
+    // reads only the path — method, headers, and the query string play no role
+    // (`url` is required by the HttpRequest type but unused when `path` is set).
     const key = parseRequest({
-      ...this.webToHttpRequest(request),
+      url: request.url,
       path: new URL(request.url).pathname,
+      headers: {},
     }).key;
     return this.fetchWebKey(key, request);
   }
@@ -126,8 +128,8 @@ export class S3Proxy extends EventEmitter {
 
   /**
    * Key-addressed sibling of `fetchWeb`: the *caller* names the S3 key and the
-   * `Request` contributes only the method (GET/HEAD) and conditional/`Range`
-   * headers — the request URL plays no role in key selection. Returns the same
+   * `Request` contributes only the method (GET/HEAD) and the `Range` header —
+   * the request URL plays no role in key selection. Returns the same
    * Web `Response` with the same HTTP <-> S3 translation as `fetchWeb`
    * (`Range` -> 206, missing/denied -> typed 404/403, header mapping, HEAD
    * semantics, Node -> Web stream), and likewise throws the typed
@@ -139,14 +141,16 @@ export class S3Proxy extends EventEmitter {
    * agree exactly for keys containing `%`, `+`, spaces, or other reserved
    * characters — or the wrong object is served / a valid key 404s. The key is
    * used verbatim as the S3 object key.
-   *
-   * If you do not need an HTTP `Response` at all (backend processing, ETL, an
-   * API shaping its own headers), use the AWS SDK directly — s3proxy adds
-   * nothing there. s3proxy's job is serving S3 objects over HTTP, correctly.
    */
   public async fetchWebKey(key: string, request: Request): Promise<Response> {
-    // fetchKey reads only the method and Range header; the URL carried by
-    // webToHttpRequest is unused for key selection but keeps the shape valid.
+    // The key is used verbatim (never decoded); still reject the null byte S3
+    // rejects and that every other entry point guards via parseRequest, so the
+    // typed-error contract (InvalidRequest, not a generic 500) holds here too.
+    if (key.includes('\0')) {
+      throw new InvalidRequest('null byte in key');
+    }
+    // fetchKey consumes only the method and Range header; the `url` carried by
+    // webToHttpRequest is unused for a key-addressed call.
     const { stream, status, headers } = await this.fetchKey(key, this.webToHttpRequest(request));
     // No body for HEAD; otherwise adapt the Node stream to a Web stream.
     // Backpressure propagates through the wrapper, so nothing buffers.
